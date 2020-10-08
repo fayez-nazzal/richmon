@@ -10,6 +10,7 @@ class Editor extends React.Component<EditorProps> {
   private textColor: string = this.props.defaultTextColor
   private hgColor: string = this.props.defaultHgColor
   private fontSize: string = this.props.defaultFontSize
+
   constructor(props: EditorProps) {
     super(props)
   }
@@ -41,7 +42,6 @@ class Editor extends React.Component<EditorProps> {
         : node.nodeName === 'SPAN'
         ? (node.parentNode as Element)
         : (node as Element)
-
     assert(this.currentDiv)
   }
 
@@ -107,50 +107,36 @@ class Editor extends React.Component<EditorProps> {
   }
 
   getCaretPos = () => {
-    let top
-    let left
-
     const boundingRect = window
       .getSelection()!
       .getRangeAt(0)
       .getBoundingClientRect()
-
-    console.log(this.currentChild)
-    top = boundingRect.y + window.scrollY
-    left = boundingRect.x + window.scrollX
     try {
       const childRect = (this.currentChild as Element).getBoundingClientRect()
 
-      console.log(boundingRect.x, boundingRect.y)
-      console.log(
-        'x should be',
-        boundingRect.left === 0
-          ? boundingRect.left + childRect.left
-          : boundingRect.left
-      )
-      console.log(
-        'y should be',
-        boundingRect.top === 0
-          ? boundingRect.top + childRect.top
-          : boundingRect.top
-      )
-      return {
-        top:
-          boundingRect.top === 0
-            ? boundingRect.top + childRect.top
-            : boundingRect.top,
-        left:
-          boundingRect.left === 0
-            ? boundingRect.left + childRect.left
-            : boundingRect.left
+      console.log('!!')
+      let top = boundingRect.top
+      if (top === 0) {
+        let parent = this.currentChild as Element
+        let c = 0
+        while (parent.parentElement !== null) {
+          parent = parent.parentElement
+          top += parent.getBoundingClientRect().top
+          console.log(top === 0)
+          c++
+        }
+        if (c == 0) console.log(',,', parent)
       }
+      const obj = {
+        top: top,
+        left: boundingRect.left === 0 ? childRect.left : boundingRect.left
+      }
+      console.log(obj)
+      return obj
     } catch {
+      alert('!!')
       return { top: 414, left: 211 }
     }
-
-    console.log('top ' + top, 'left' + left)
-
-    return { top: 432, left: 42 }
   }
 
   updateCaretPos = () => {
@@ -171,46 +157,24 @@ class Editor extends React.Component<EditorProps> {
   }
 
   handleBackspace(e: React.KeyboardEvent) {
-    const sel = window.getSelection()
-    if (sel === null) {
-      alert('sel is null')
-      return
-    }
-    const node = sel.anchorNode
+    const node = this.currentChild as HTMLDivElement
     if (node === null) {
       alert('node is null')
       return
     }
-    switch (node.nodeName) {
-      case '#text':
-        let prevNode = node.parentNode!.previousSibling
-        console.log('prev node', prevNode)
-        if (
-          (node as CharacterData).data === '\u200b' &&
-          this.currentDiv.isEqualNode(
-            (this.selfRef.current as Element).children[0]
-          ) &&
-          !prevNode
-        ) {
+    let prevNode = node.previousSibling as HTMLDivElement
+    if (node.innerHTML === '\u200b') {
+      if (prevNode && prevNode.nodeName === 'SPAN') {
+        node.parentNode?.removeChild(node)
+        this.currentChild = prevNode
+      } else if (prevNode) {
+        alert('UNHANDELED CASE, prev node is not span!')
+      } else {
+        if (node.isEqualNode(this.selfRef.current.children[0]))
           e.preventDefault()
-        } else if ((node as CharacterData).data === '\u200b') {
-          if (node.parentNode!.isEqualNode(this.currentDiv.children[0])) {
-            console.log('removing', node.parentNode)
-            this.currentDiv.removeChild(node.parentNode!)
-            if (this.currentDiv.previousSibling) {
-              const prevDivLastChild = this.currentDiv.previousSibling.lastChild
-              if (prevDivLastChild && prevDivLastChild.nodeName === 'SPAN')
-                (prevDivLastChild as Element).innerHTML += '\u200b'
-            }
-          } else if (prevNode) {
-            ;(prevNode as HTMLElement).innerText = (prevNode as HTMLElement).innerText.slice(
-              0,
-              -1
-            )
-            console.log('prevnode innertext sliced')
-          }
+        else {
         }
-        console.log('parent', node.parentNode)
+      }
     }
   }
 
@@ -236,12 +200,16 @@ class Editor extends React.Component<EditorProps> {
   }
 
   onSelect = () => {
+    console.log(
+      window.getSelection()?.anchorNode?.nodeName === '#text'
+        ? window.getSelection()?.anchorNode?.parentNode
+        : window.getSelection()?.anchorNode
+    )
     this.updateCaretPos()
   }
 
   onKeyUp = (e: React.KeyboardEvent) => {
     // const sel = window.getSelection()
-    console.log(this.currentDiv)
     if (e.key === 'Enter') {
       if (
         this.currentDiv.previousSibling &&

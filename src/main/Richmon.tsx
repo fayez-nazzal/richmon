@@ -63,7 +63,6 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
 
   // Example actions=["textColor(red)"]
   public setTextColor = (textColor: string) => {
-    console.log('setting textcolor to ' + textColor)
     this.setState({ ...this.state, textColor })
   }
 
@@ -180,7 +179,6 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   }
 
   getHtml = () => {
-    console.log(this.state)
     return this.state.html
   }
 

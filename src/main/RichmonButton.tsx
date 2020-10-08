@@ -64,7 +64,6 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
       }
       if (cb) this.clickCbs.push(cb)
     }
-    console.log(this.clickCbs)
   }
   render() {
     return (
