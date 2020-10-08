@@ -1,0 +1,44 @@
+body {
+  margin: 0;
+  caret-color: transparent;
+}
+
+.menubar {
+  background-color: whitesmoke;
+  border: 1px solid black;
+}
+
+.caret-container {
+  position: absolute;
+}
+
+.caret {
+  white-space: pre;
+  position: absolute;
+  pointer-events: none;
+  width: 200px;
+  height: 332px;
+  background-color: tomato;
+  border-right: 1.4px solid black;
+  transition: left 67ms linear, top 67ms linear;
+}
+
+.newline-span {
+  display: block;
+}
+
+.content-editable {
+  height: 100%;
+  background-color: rgb(230, 230, 230);
+  border: 1px solid black;
+  padding: 10px;
+  overflow: scroll;
+  white-space: pre-wrap;
+}
+
+.editor-container {
+  margin: 20px auto;
+  width: 400px;
+  height: 700px;
+  background-color: greenyellow;
+}

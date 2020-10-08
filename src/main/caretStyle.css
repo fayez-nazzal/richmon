@@ -1,0 +1,10 @@
+.caret {
+  white-space: pre;
+  position: absolute;
+  pointer-events: none;
+  width: 200px;
+  height: 332px;
+  background-color: black;
+  border-right: 1.4px solid black;
+  transition: left 67ms linear, top 67ms linear;
+}
