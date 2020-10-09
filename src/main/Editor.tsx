@@ -6,7 +6,7 @@ import { attribute, EditorProps } from './types'
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
   public currentDiv: Element
-  public currentChild: Node
+  public currentChild: HTMLElement
   private textColor: string = this.props.defaultTextColor
   private hgColor: string = this.props.defaultHgColor
   private fontSize: string = this.props.defaultFontSize
@@ -18,7 +18,7 @@ class Editor extends React.Component<EditorProps> {
   componentDidMount() {
     const selfElem = this.selfRef.current as Element
     this.currentDiv = selfElem.children[0]
-    this.currentChild = this.appendTextSpan()
+    this.currentChild = this.appendTextSpan(true)
     this.commitChanges()
     // this.lastTextColor = this.props.textColor
     // this.lastHgColor = this.props.hgColor
@@ -28,21 +28,29 @@ class Editor extends React.Component<EditorProps> {
     return false
   }
 
-  setCurrentDiv() {
+  setCurrentElements() {
     const sel = window.getSelection()
+    console.log(sel)
     if (sel === null) return
     const node = sel.anchorNode
     if (node === null) return
     const parentNode = node.parentNode
     if (parentNode === null) return
-
     this.currentDiv =
       parentNode.nodeName === 'SPAN'
         ? (parentNode.parentNode as Element)
         : node.nodeName === 'SPAN'
         ? (node.parentNode as Element)
         : (node as Element)
+    this.currentChild =
+    parentNode.nodeName === 'SPAN'
+      ? (parentNode as HTMLElement)
+      : node.nodeName === 'SPAN'
+      ? (node as HTMLElement)
+      : (node as HTMLElement)
     assert(this.currentDiv)
+    assert(this.currentChild)
+
   }
 
   commitChanges = () => {
@@ -52,23 +60,27 @@ class Editor extends React.Component<EditorProps> {
   }
 
   highlightText = (color: string) => {
-    this.hgColor = color
-    this.currentChild = this.appendTextSpan()
-    this.select(this.currentChild as Element, 1)
+    
+    this.hgColor = color===this.hgColor? this.props.defaultHgColor:color
+    this.currentChild = this.appendTextSpan(true)
+    this.select(this.currentChild, 1)
   }
 
-  appendElement = (type: string, ...attrs: attribute[]) => {
+  appendElement = (type: string, addZeroSpace: boolean, ...attrs: attribute[]) => {
     const elem = document.createElement(type)
     for (let i = 0; i < attrs.length; i++) {
       elem.setAttribute(attrs[i].name, attrs[i].value)
     }
+    if (addZeroSpace)
+      elem.innerHTML = '\u200b'
     this.currentDiv.append(elem)
     return elem
   }
 
-  appendTextSpan = () => {
+  appendTextSpan = (addZeroSpace=false) => {
     const elem = this.appendElement(
       'span',
+      addZeroSpace,
       {
         name: 'style',
         value: `color:${this.textColor};background-color:${this.hgColor};font-size:${this.fontSize};`
@@ -78,29 +90,14 @@ class Editor extends React.Component<EditorProps> {
         value: 'text'
       }
     )
-    elem.innerHTML = '\u200b'
-    return elem
+    return elem as HTMLSpanElement
   }
 
   onInput = (blur = false) => {
-    // const sel = window.getSelection() as Selection
-    // const node = sel.anchorNode as Node
-    // const parentNode = node.parentNode as Element
-    // if (node.nodeName === '#text' && parentNode.className === 'text') {
-    //   const style = parentNode.getAttribute('style') as string
-    //   const colorAttrIndex = style.indexOf('color:')
-    //   const colorStart = style.indexOf(':', colorAttrIndex)
-    //   const colorEnd = style.indexOf(';', colorStart)
-    //   const hgColorAttrIndex = style.indexOf('background-color:')
-    //   const hgColorStart = style.indexOf(':', hgColorAttrIndex)
-    //   const hgColorEnd = style.indexOf(';', hgColorStart)
-    //   const textColor = style.substring(colorStart + 1, colorEnd)
-    //   const hgColor = style.substring(hgColorStart + 1, hgColorEnd)
-    //   this.props.setTextColor(textColor)
-    //   this.props.setHgColor(hgColor)
-    //   this.lastTextColor = textColor
-    //   this.lastHgColor = hgColor
-    // }
+    if (!this.currentChild.isEqualNode((this.selfRef.current as Element).firstChild!.firstChild) && this.currentChild.innerHTML.startsWith("\u200b")) {
+      this.currentChild.innerHTML = this.currentChild.innerHTML.slice(1)
+      this.select(this.currentChild.childNodes[0], 1)
+    }
 
     this.commitChanges()
     this.props.setIsCaretHidden(blur)
@@ -112,26 +109,16 @@ class Editor extends React.Component<EditorProps> {
       .getRangeAt(0)
       .getBoundingClientRect()
     try {
-      const childRect = (this.currentChild as Element).getBoundingClientRect()
-
-      console.log('!!')
       let top = boundingRect.top
-      if (top === 0) {
-        let parent = this.currentChild as Element
-        let c = 0
-        while (parent.parentElement !== null) {
-          parent = parent.parentElement
-          top += parent.getBoundingClientRect().top
-          console.log(top === 0)
-          c++
-        }
-        if (c == 0) console.log(',,', parent)
-      }
+      let left = boundingRect.left
+      let parent = this.currentChild as Element
+      if (top === 0) top = parent.getBoundingClientRect().top
+      if (left === 0) left = parent.getBoundingClientRect().left
       const obj = {
         top: top,
-        left: boundingRect.left === 0 ? childRect.left : boundingRect.left
+        left: left
       }
-      console.log(obj)
+      console.log(parent, obj)
       return obj
     } catch {
       alert('!!')
@@ -140,11 +127,11 @@ class Editor extends React.Component<EditorProps> {
   }
 
   updateCaretPos = () => {
-    this.setCurrentDiv()
+    this.setCurrentElements()
     this.props.setCaretPos(this.getCaretPos())
   }
 
-  select = (elem: Element, at: number) => {
+  select = (elem: Node, at: number) => {
     const sel = window.getSelection()
     const range = document.createRange()
     range.setStart(elem, at)
@@ -156,42 +143,11 @@ class Editor extends React.Component<EditorProps> {
     sel.addRange(range)
   }
 
-  handleBackspace(e: React.KeyboardEvent) {
-    const node = this.currentChild as HTMLDivElement
-    if (node === null) {
-      alert('node is null')
-      return
-    }
-    let prevNode = node.previousSibling as HTMLDivElement
-    if (node.innerHTML === '\u200b') {
-      if (prevNode && prevNode.nodeName === 'SPAN') {
-        node.parentNode?.removeChild(node)
-        this.currentChild = prevNode
-      } else if (prevNode) {
-        alert('UNHANDELED CASE, prev node is not span!')
-      } else {
-        if (node.isEqualNode(this.selfRef.current.children[0]))
-          e.preventDefault()
-        else {
-        }
-      }
-    }
-  }
-
   onKeyDown = (event: React.KeyboardEvent) => {
     this.updateCaretPos()
+    console.log(event)
     // const sel = window.getSelection()
-    this.setCurrentDiv()
-    if (event.key === 'Backspace') this.handleBackspace(event)
-    const firstChild = this.currentDiv.children[0]
-    if (
-      this.currentChild.previousSibling &&
-      firstChild.isEqualNode(this.currentChild.previousSibling) &&
-      firstChild.innerHTML === '\u200b'
-    ) {
-      alert('removing empty cild')
-      this.currentDiv.removeChild(this.currentChild.previousSibling)
-    }
+    this.setCurrentElements()
     this.commitChanges()
   }
 
@@ -200,38 +156,13 @@ class Editor extends React.Component<EditorProps> {
   }
 
   onSelect = () => {
-    console.log(
-      window.getSelection()?.anchorNode?.nodeName === '#text'
-        ? window.getSelection()?.anchorNode?.parentNode
-        : window.getSelection()?.anchorNode
-    )
     this.updateCaretPos()
   }
 
   onKeyUp = (e: React.KeyboardEvent) => {
     // const sel = window.getSelection()
     if (e.key === 'Enter') {
-      if (
-        this.currentDiv.previousSibling &&
-        this.currentDiv.previousSibling.lastChild
-      ) {
-        const lastChild = this.currentDiv.previousSibling.lastChild
-        const childCount = (this.currentDiv.previousSibling as Element).children
-          .length
-        if (childCount > 1 && (lastChild as Element).innerHTML === '\u200b') {
-          this.currentDiv.previousSibling.removeChild(this.currentChild)
-        } else if ((lastChild as Element).innerHTML === '<br>') {
-          ;(lastChild as Element).innerHTML = '\u200b'
-        }
-        this.commitChanges()
-      }
-      if (this.currentDiv && this.currentDiv.lastChild) {
-        const lastChild = this.currentDiv.lastChild
-        if ((lastChild as Element).innerHTML === '<br>') {
-          ;(lastChild as Element).innerHTML = '\u200b'
-        }
-      }
-      this.currentChild = this.currentDiv.childNodes[0]
+      console.log(this.currentDiv)
     }
   }
 
