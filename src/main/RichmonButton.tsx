@@ -38,7 +38,14 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
               cb = () => this.props.setTextColor(arg)
               break
             case 'highlightText':
-              cb = () => this.props.highlightText(arg)
+              cb = () => this.props.setTextHighlight(arg)
+              break
+            case 'fontSize':
+              cb = () =>
+                this.props.setFontSize(isNaN(+arg.slice(-1)) ? arg : arg + 'px')
+              break
+            case 'css':
+              cb = () => this.props.setCss(arg)
               break
             default:
               alert('unknown action')

@@ -102,10 +102,12 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
 
   public getComponentProps = () => {
     return {
-      setTextColor: this.setTextColor,
+      setTextColor: (this.editor.current as Editor).setTextColor,
+      setTextHighlight: (this.editor.current as Editor).setTextHighlight,
+      setFontSize: (this.editor.current as Editor).setFontSize,
       setBold: this.setBold,
       setItalic: this.setItalic,
-      highlightText: (this.editor.current as Editor).highlightText
+      setCss: (this.editor.current as Editor).setCss
     } as RichmonComponentProps
   }
 

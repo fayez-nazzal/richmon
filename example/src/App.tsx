@@ -9,10 +9,16 @@ const App = () => {
       struct={{
         tools: [
           <RichButton
-            actions={['highlightText(red)', 'bold', () => console.log('hello')]}
-            text='custom'
+            actions={[
+              'css(color: red;font-weight: bolder;)',
+              () => console.log('hello')
+            ]}
+            text='css'
           />,
-          'bold'
+          <RichButton
+            actions={['highlightText(red)', () => console.log('hello')]}
+            text='hg'
+          />
         ]
       }}
     />

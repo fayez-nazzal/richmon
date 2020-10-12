@@ -1,24 +1,15 @@
 import React from 'react'
 import './style.css'
 import assert from 'assert'
-import { attribute, EditorProps } from './types'
+import { EditorProps, Styles } from './types'
 import styled from 'styled-components'
-
-enum Action {
-  None,
-  Highlight,
-  Color,
-  Size
-}
+import { start } from 'repl'
 
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
   public currentDiv: Element
   public currentChild: HTMLElement
-  private textColor: string = this.props.defaultTextColor
-  private hgColor: string = this.props.defaultHgColor
-  private fontSize: string = this.props.defaultFontSize
-  private nextAction = Action.None
+  private lastCurrentChild: HTMLElement
 
   constructor(props: EditorProps) {
     super(props)
@@ -27,12 +18,14 @@ class Editor extends React.Component<EditorProps> {
   componentDidMount() {
     const selfElem = this.selfRef.current as Element
     this.currentDiv = selfElem.children[0]
-    this.currentChild = this.addNewSpan(
-      this.getTextAttributes(),
-      undefined,
-      undefined
-    )
+    this.currentChild = this.createNewElement('span')
+    this.setElementStyles(this.currentChild, {
+      textColor: this.props.defaultTextColor,
+      fontSize: this.props.defaultFontSize,
+      hgColor: this.props.defaultHgColor
+    })
     this.currentChild.innerText = '\u200b'
+    this.currentDiv.append(this.currentChild)
     this.commitChanges()
   }
 
@@ -69,88 +62,58 @@ class Editor extends React.Component<EditorProps> {
     this.props.setEditorHTML(html)
   }
 
-  highlightText = (color: string) => {
-    this.hgColor = color
-    this.nextAction = Action.Highlight
+  styleText = (styles: Styles) => {
+    const sel = window.getSelection()
+    if (!sel) return
+    const isRanged = !(
+      sel.anchorNode!.isSameNode(sel.focusNode!) &&
+      sel.anchorOffset === sel.focusOffset
+    )
+
+    if (!isRanged) {
+      const elem = this.createNewElement('span')
+      this.setElementStyles(elem, styles)
+      elem.innerText = '\u200b'
+      this.currentDiv.insertBefore(elem, this.currentChild.nextElementSibling)
+      this.currentChild = elem
+      this.select(this.currentChild, 1)
+    } else this.styleTextInRange(styles)
   }
 
-  appendElement = (type: string, attrs: attribute[], text = '') => {
+  setTextColor = (textColor: string) => {
+    this.styleText({ textColor })
+  }
+
+  setTextHighlight = (hgColor: string) => {
+    this.styleText({ hgColor })
+  }
+
+  setFontSize = (fontSize: string) => {
+    this.styleText({ fontSize })
+  }
+
+  setCss = (css: string) => {
+    this.styleText({ css })
+  }
+
+  createNewElement = (type: string) => {
     const elem = document.createElement(type)
-    for (let i = 0; i < attrs.length; i++) {
-      elem.setAttribute(attrs[i].name, attrs[i].value)
-    }
-    elem.innerHTML = text
-    this.currentDiv.append(elem)
     return elem
   }
 
-  createNewElement = (type: string, attrs: attribute[]) => {
-    const elem = document.createElement(type)
-    for (let i = 0; i < attrs.length; i++) {
-      elem.setAttribute(attrs[i].name, attrs[i].value)
+  setElementStyles(elem: HTMLElement, styles: Styles) {
+    if (styles.css) {
+      alert('css set')
+      elem.setAttribute('style', styles.css)
     }
-    this.currentDiv.append(elem)
-    return elem
-  }
-
-  getTextAttributes(hgColor = this.hgColor) {
-    return [
-      {
-        name: 'style',
-        value: `color:${this.textColor};background-color:${hgColor};font-size:${this.fontSize};`
-      },
-      {
-        name: 'class',
-        value: 'text'
-      }
-    ]
-  }
-
-  insertAfter(newNode: HTMLElement, existingNode: HTMLElement) {
-    existingNode.parentNode!.insertBefore(newNode, existingNode.nextSibling)
-  }
-
-  insertNewAfter = (
-    type: string,
-    text: string,
-    elemBefore: HTMLElement,
-    attrs: attribute[]
-  ) => {
-    const elem = document.createElement(type)
-    for (let i = 0; i < attrs.length; i++) {
-      elem.setAttribute(attrs[i].name, attrs[i].value)
-    }
-    elem.innerHTML = text
-    elem.onmousedown = (e) => {
-      e.preventDefault()
-    }
-    this.insertAfter(elem, elemBefore)
-    return elem as HTMLElement
-  }
-
-  addNewSpan = (attrs: attribute[], text = '', elemBefore?: HTMLElement) => {
-    const elem = elemBefore
-      ? this.insertNewAfter('span', text, elemBefore, attrs)
-      : this.appendElement('span', attrs, text)
-    return elem as HTMLSpanElement
+    if (styles.fontSize) elem.style.fontSize = styles.fontSize
+    if (styles.hgColor) elem.style.backgroundColor = styles.hgColor
+    if (styles.textColor) elem.style.color = styles.textColor
   }
 
   onInput = (blur = false) => {
-    if (!blur && this.nextAction === Action.Highlight) {
-      const text = this.currentChild.innerText.slice(-1)
-      this.currentChild.innerText = this.currentChild.innerText.slice(0, -1)
-      this.currentChild = this.addNewSpan(
-        this.getTextAttributes(this.hgColor),
-        text
-      )
-      this.nextAction = Action.None
-      this.hgColor = this.props.defaultHgColor
-      this.select(this.currentChild, 1)
-    }
-
     if (
       !blur &&
-      this.currentChild.isEqualNode(this.currentDiv.children[0]) &&
       this.currentChild.innerText.length === 2 &&
       this.currentChild.innerHTML.includes('\u200b')
     ) {
@@ -194,6 +157,14 @@ class Editor extends React.Component<EditorProps> {
 
   update = () => {
     this.setCurrentElements()
+    if (
+      this.lastCurrentChild &&
+      !this.lastCurrentChild.isSameNode(this.currentDiv.children[0]) &&
+      !this.lastCurrentChild.isSameNode(this.currentChild) &&
+      this.lastCurrentChild.innerHTML === '\u200b'
+    )
+      this.lastCurrentChild.remove()
+    this.lastCurrentChild = this.currentChild
     this.props.setCaretPos(this.getCaretPos())
   }
 
@@ -223,26 +194,47 @@ class Editor extends React.Component<EditorProps> {
     sel.addRange(range)
   }
 
-  highlightRange() {
-    const sel = window.getSelection()!
-    const startOffset = Math.min(sel.anchorOffset, sel.focusOffset)
-    const endOffset = Math.max(sel.anchorOffset, sel.focusOffset)
-    const startNode = this.findSelectedSpan(sel.anchorNode!)
-    const endNode = this.findSelectedSpan(sel.focusNode!)
+  isBefore(node1: Node, node2: Node) {
+    return (
+      (node1.compareDocumentPosition(node2) &
+        Node.DOCUMENT_POSITION_FOLLOWING) >
+      0
+    )
+  }
 
-    console.log(`start: ${startNode} at ${startOffset}
-                  end: ${endNode} at ${endOffset}`)
+  styleTextInRange(styles: Styles) {
+    const sel = window.getSelection()!
+    let startOffset = sel.anchorOffset
+    let endOffset = sel.focusOffset
+    let startNode = this.findSelectedSpan(sel.anchorNode!)
+    let endNode = this.findSelectedSpan(sel.focusNode!)
+    const oneNode = startNode.isSameNode(endNode)
+
+    console.log(`start: ${startNode.innerText} at ${startOffset}
+                  end: ${endNode.innerText} at ${endOffset}`)
+
+    if (
+      (oneNode && startOffset > endOffset) ||
+      this.isBefore(endNode, startNode)
+    ) {
+      const tempNode = startNode
+      const tempOffset = startOffset
+      startNode = endNode
+      endNode = tempNode
+      startOffset = endOffset
+      endOffset = tempOffset
+    }
 
     let elem: HTMLElement | null = startNode
     const buff = [
-      elem.innerText.slice(
-        startOffset + 1,
-        startNode.isEqualNode(endNode) ? endOffset : undefined
-      )
+      elem.innerText.slice(startOffset, oneNode ? endOffset : undefined)
     ]
+
     let i = 0
     let elems: HTMLElement[] = []
-    while (elem && !startNode.isEqualNode(endNode)) {
+
+    while (elem && !oneNode) {
+      console.log(elem.parentElement)
       if (elem.nextElementSibling) {
         elem = elem.nextElementSibling as HTMLElement | null
       } else {
@@ -252,17 +244,58 @@ class Editor extends React.Component<EditorProps> {
       }
 
       if (elem) {
-        const txt = elem.isEqualNode(endNode)
-          ? elem.innerText.slice(0, endOffset - 1)
+        const txt = elem.isSameNode(endNode)
+          ? elem.innerText.slice(0, endOffset)
           : elem.innerText
         buff[i] = buff[i] ? buff[i] + txt : txt
-        if (elem.isEqualNode(endNode)) break
+        if (elem.isSameNode(endNode)) {
+          break
+        }
         elems.push(elem)
       }
     }
 
-    startNode.innerText = startNode.innerText.slice(0, startOffset + 1)
-    endNode.innerText = endNode.innerText.slice(endOffset - 1)
+    if (oneNode) {
+      const txt = startNode.innerText.slice(endOffset)
+      startNode.innerText = startNode.innerText.slice(0, startOffset)
+      const afterNode = this.createNewElement('span')
+      afterNode.setAttribute('style', startNode.getAttribute('style')!)
+      afterNode.setAttribute('class', 'stext')
+      afterNode.innerText = txt
+      this.currentDiv.insertBefore(afterNode, startNode.nextElementSibling)
+    } else {
+      startNode.innerText = startNode.innerText.slice(0, startOffset)
+      endNode.innerText = endNode.innerText.slice(endOffset)
+    }
+
+    if (styles.textColor) {
+      const isAllColored = [startNode, ...elems, endNode].every(
+        (el) => el.style.color === styles.textColor
+      )
+      styles.textColor = isAllColored
+        ? this.props.defaultTextColor
+        : styles.textColor
+    }
+
+    if (styles.hgColor) {
+      const isAllHighlighted = [startNode, ...elems, endNode].every(
+        (el) => el.style.backgroundColor === styles.hgColor
+      )
+      styles.hgColor = isAllHighlighted
+        ? this.props.defaultHgColor
+        : styles.hgColor
+    }
+
+    if (styles.fontSize) {
+      const isAllFontSized = [startNode, ...elems, endNode].every(
+        (el) => el.style.fontSize === styles.fontSize
+      )
+      styles.fontSize = isAllFontSized
+        ? this.props.defaultFontSize
+        : styles.fontSize
+    }
+
+    console.log(styles)
 
     elems.forEach((elem) => elem.remove())
     elems = []
@@ -270,12 +303,11 @@ class Editor extends React.Component<EditorProps> {
     const startLine = startNode.parentElement as HTMLElement
     let line = startLine
 
-    this.hgColor = 'blue'
-
     buff.forEach((text, index) => {
-      const span = this.createNewElement('span', this.getTextAttributes())
+      const span = this.createNewElement('span')
+      this.setElementStyles(span, styles)
       span.innerText = text
-      if (!index) line!.append(span)
+      if (!index) line!.insertBefore(span, startNode.nextElementSibling)
       else line!.prepend(span)
       elems.push(span)
       line = line!.nextElementSibling as HTMLElement
@@ -283,13 +315,19 @@ class Editor extends React.Component<EditorProps> {
 
     console.log(`selstartNode: ${elems[0].childNodes[0]} at ${0}
                   selEndNode: ${elems[elems.length - 1].childNodes[0]} at ${3}`)
+
+    const selectionEnd = (elems[elems.length - 1]
+      .childNodes[0] as CharacterData).data.length
+
     this.selectRange(
       elems[0].childNodes[0],
       0,
       elems[elems.length - 1].childNodes[0],
-      3
+      selectionEnd
     )
-    console.log(buff)
+
+    if (!endNode.innerText) endNode.remove()
+    if (!startNode.innerText) startNode.remove()
   }
 
   findSelectedSpan = (node: Node) => {
@@ -309,13 +347,10 @@ class Editor extends React.Component<EditorProps> {
     this.update()
   }
 
-  onKeyDown = (event: React.KeyboardEvent) => {
-    if (event.ctrlKey) this.highlightRange()
-  }
+  onKeyDown = (_event: React.KeyboardEvent) => {}
 
   onSelect = () => {
     this.update()
-    console.log(window.getSelection())
   }
 
   render() {
