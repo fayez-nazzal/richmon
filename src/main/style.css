@@ -1,4 +1,9 @@
 body {
   margin: 0;
-  caret-color: blue;
+  caret-color: transparent;
+}
+
+::selection {
+  color: unset;
+  background-color: #68b0ab50;
 }

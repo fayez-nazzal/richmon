@@ -1,15 +1,23 @@
 import React from 'react'
 import './style.css'
 import assert from 'assert'
-import { EditorProps, Styles } from './types'
+import { EditorProps } from './types'
 import styled from 'styled-components'
-import { start } from 'repl'
+import {
+  cssObjToString,
+  stringToCssObj,
+  isBefore,
+  isMatchingKeysEqual
+} from './richmonUtils'
+import isEqual from 'lodash.isequal'
 
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
   public currentDiv: Element
   public currentChild: HTMLElement
   private lastCurrentChild: HTMLElement
+  private defaultCss = `color:${this.props.defaultTextColor};font-size:${this.props.defaultFontSize};`
+  private cssSet: any = []
 
   constructor(props: EditorProps) {
     super(props)
@@ -19,13 +27,9 @@ class Editor extends React.Component<EditorProps> {
     const selfElem = this.selfRef.current as Element
     this.currentDiv = selfElem.children[0]
     this.currentChild = this.createNewElement('span')
-    this.setElementStyles(this.currentChild, {
-      textColor: this.props.defaultTextColor,
-      fontSize: this.props.defaultFontSize,
-      hgColor: this.props.defaultHgColor
-    })
     this.currentChild.innerText = '\u200b'
     this.currentDiv.append(this.currentChild)
+    this.currentChild.setAttribute('style', this.defaultCss)
     this.commitChanges()
   }
 
@@ -33,6 +37,7 @@ class Editor extends React.Component<EditorProps> {
     return false
   }
 
+  // This may produce some propblems, especially with tables
   setCurrentElements() {
     const sel = window.getSelection()!
     const node = sel.anchorNode!
@@ -62,53 +67,200 @@ class Editor extends React.Component<EditorProps> {
     this.props.setEditorHTML(html)
   }
 
-  styleText = (styles: Styles) => {
+  // How to make it work with tables?, too... this.currentChild should be...
+  styleText = (styles: any, canToggle: boolean) => {
     const sel = window.getSelection()
+
     if (!sel) return
+
     const isRanged = !(
       sel.anchorNode!.isSameNode(sel.focusNode!) &&
       sel.anchorOffset === sel.focusOffset
     )
 
     if (!isRanged) {
+      const cssIndex = this.cssSet.findIndex((obj: any) =>
+        isEqual(obj.styles, styles)
+      )
+
+      const currentStyles = stringToCssObj(
+        this.currentChild.getAttribute('style')!
+      )
+
+      if (canToggle && isMatchingKeysEqual(currentStyles, styles)) {
+        styles = this.cssSet[cssIndex].before
+      } else if (canToggle) {
+        const before = this.getElementBeforeStyle(this.currentChild, styles)
+        this.cssSet.push({
+          styles: styles,
+          before: before
+        })
+      }
+
       const elem = this.createNewElement('span')
-      this.setElementStyles(elem, styles)
+      elem.setAttribute(
+        'style',
+        cssObjToString({ ...currentStyles, ...styles })
+      )
       elem.innerText = '\u200b'
       this.currentDiv.insertBefore(elem, this.currentChild.nextElementSibling)
       this.currentChild = elem
-      this.select(this.currentChild, 1)
-    } else this.styleTextInRange(styles)
+      this.select(elem.childNodes[0], 1)
+    } else this.styleTextInRange(styles, canToggle)
   }
 
-  setTextColor = (textColor: string) => {
-    this.styleText({ textColor })
+  styleTextInRange(styles: any, canToggle: boolean) {
+    const sel = window.getSelection()!
+    let startOffset = sel.anchorOffset
+    let endOffset = sel.focusOffset
+    let startNode = this.findSelectedSpan(sel.anchorNode!)
+    let endNode = this.findSelectedSpan(sel.focusNode!)
+    const oneNode = startNode.isSameNode(endNode)
+
+    if ((oneNode && startOffset > endOffset) || isBefore(endNode, startNode)) {
+      const tempNode = startNode
+      const tempOffset = startOffset
+      startNode = endNode
+      endNode = tempNode
+      startOffset = endOffset
+      endOffset = tempOffset
+    }
+
+    let elem: HTMLElement | null = startNode
+    const buff: any[] = [
+      {
+        text: elem.innerText.slice(
+          startOffset,
+          oneNode ? endOffset : undefined
+        ),
+        style: stringToCssObj(elem.getAttribute('style')!),
+        selectionLine: 0
+      }
+    ]
+
+    let n = 0
+    let elems: HTMLElement[] = []
+
+    while (elem && !oneNode) {
+      if (elem.nextElementSibling) {
+        elem = elem.nextElementSibling as HTMLElement | null
+      } else {
+        elem = elem.parentElement!.nextElementSibling
+          ?.children[0] as HTMLElement | null
+        n++
+      }
+
+      if (elem) {
+        const txt = elem.isSameNode(endNode)
+          ? elem.innerText.slice(0, endOffset)
+          : elem.innerText
+        buff.push({
+          text: txt,
+          style: stringToCssObj(elem.getAttribute('style')!),
+          selectionLine: n
+        })
+        if (elem.isSameNode(endNode)) {
+          break
+        }
+        elems.push(elem)
+      }
+    }
+
+    if (oneNode) {
+      const txt = startNode.innerText.slice(endOffset)
+      startNode.innerText = startNode.innerText.slice(0, startOffset)
+      const afterNode = this.createNewElement('span')
+      afterNode.setAttribute('style', startNode.getAttribute('style')!)
+      afterNode.setAttribute('class', 'stext')
+      afterNode.innerText = txt
+      this.currentDiv.insertBefore(afterNode, startNode.nextElementSibling)
+    } else {
+      startNode.innerText = startNode.innerText.slice(0, startOffset)
+      endNode.innerText = endNode.innerText.slice(endOffset)
+    }
+
+    const cssIndex = this.cssSet.findIndex((obj: any) =>
+      isEqual(obj.styles, styles)
+    )
+
+    if (cssIndex !== -1) {
+      const isAllSameStyle = [startNode, ...elems, endNode].every((el) =>
+        isMatchingKeysEqual(stringToCssObj(el.getAttribute('style')!), styles)
+      )
+
+      if (isAllSameStyle) {
+        styles = this.cssSet[cssIndex].before
+      }
+    } else if (canToggle) {
+      const before = this.getElementBeforeStyle(startNode, styles)
+
+      this.cssSet.push({
+        styles,
+        before
+      })
+    }
+
+    elems.forEach((elem) => elem.remove())
+    elems = []
+
+    const startLine = startNode.parentElement as HTMLElement
+    let line = startLine
+    let node: Element | null = startNode
+
+    buff.forEach((elemObj, index) => {
+      const span = this.createNewElement('span')
+      span.innerText = elemObj.text
+      const css = cssObjToString({ ...elemObj.style!, ...styles })
+      span.setAttribute('style', css)
+      if (
+        elemObj.selectionLine === 0 ||
+        elemObj.selectionLine === buff[index - 1].selectionLine
+      ) {
+        line!.insertBefore(span, node!.nextElementSibling)
+        node = node!.nextElementSibling
+      } else if (elemObj.selectionLine > buff[index - 1].selectionLine) {
+        line = line!.nextElementSibling as HTMLElement
+        line!.prepend(span)
+        node = line!.children[0]
+      } else {
+        alert('something wrong')
+      }
+      elems.push(span)
+    })
+
+    const selectionEnd = (elems[elems.length - 1]
+      .childNodes[0] as CharacterData).data.length
+
+    this.selectRange(
+      elems[0].childNodes[0],
+      0,
+      elems[elems.length - 1].childNodes[0],
+      selectionEnd
+    )
+
+    if (!endNode.innerText) endNode.remove()
+    if (!startNode.innerText) startNode.remove()
   }
 
-  setTextHighlight = (hgColor: string) => {
-    this.styleText({ hgColor })
+  getElementBeforeStyle(elem: HTMLElement, styles: any) {
+    const stylesKeys = Object.keys(styles)
+    const before: any = {}
+    const elemStyles = stringToCssObj(elem.getAttribute('style')!)
+    for (let i = 0; i < stylesKeys.length; i++) {
+      before[stylesKeys[i]] = elemStyles[stylesKeys[i]]
+        ? elemStyles[stylesKeys[i]]
+        : 'initial'
+    }
+    return before
   }
 
-  setFontSize = (fontSize: string) => {
-    this.styleText({ fontSize })
-  }
-
-  setCss = (css: string) => {
-    this.styleText({ css })
+  setCss = (css: any, canToggle = false) => {
+    this.styleText(css, canToggle)
   }
 
   createNewElement = (type: string) => {
     const elem = document.createElement(type)
     return elem
-  }
-
-  setElementStyles(elem: HTMLElement, styles: Styles) {
-    if (styles.css) {
-      alert('css set')
-      elem.setAttribute('style', styles.css)
-    }
-    if (styles.fontSize) elem.style.fontSize = styles.fontSize
-    if (styles.hgColor) elem.style.backgroundColor = styles.hgColor
-    if (styles.textColor) elem.style.color = styles.textColor
   }
 
   onInput = (blur = false) => {
@@ -129,6 +281,20 @@ class Editor extends React.Component<EditorProps> {
   }
 
   getCaretPos = () => {
+    const supportPageOffset = window.pageXOffset !== undefined
+    const isCSS1Compat = (document.compatMode || '') === 'CSS1Compat'
+
+    const scrollX = supportPageOffset
+      ? window.pageXOffset
+      : isCSS1Compat
+      ? document.documentElement.scrollLeft
+      : document.body.scrollLeft
+    const scrollY = supportPageOffset
+      ? window.pageYOffset
+      : isCSS1Compat
+      ? document.documentElement.scrollTop
+      : document.body.scrollTop
+
     const boundingRect = window
       .getSelection()!
       .getRangeAt(0)
@@ -138,15 +304,15 @@ class Editor extends React.Component<EditorProps> {
       let left = boundingRect.left
       let parent = this.currentChild as Element
       if (top === 0) top = parent.getBoundingClientRect().top
+
       if (left === 0) {
         left =
           parent.getBoundingClientRect().left +
           parent.getBoundingClientRect().width
-        console.log('left: ' + left)
       }
       const obj = {
-        top: top,
-        left: left
+        top: top + scrollY,
+        left: left + scrollX
       }
       return obj
     } catch {
@@ -192,142 +358,6 @@ class Editor extends React.Component<EditorProps> {
     range.setEnd(endElem, endOffset)
     sel.removeAllRanges()
     sel.addRange(range)
-  }
-
-  isBefore(node1: Node, node2: Node) {
-    return (
-      (node1.compareDocumentPosition(node2) &
-        Node.DOCUMENT_POSITION_FOLLOWING) >
-      0
-    )
-  }
-
-  styleTextInRange(styles: Styles) {
-    const sel = window.getSelection()!
-    let startOffset = sel.anchorOffset
-    let endOffset = sel.focusOffset
-    let startNode = this.findSelectedSpan(sel.anchorNode!)
-    let endNode = this.findSelectedSpan(sel.focusNode!)
-    const oneNode = startNode.isSameNode(endNode)
-
-    console.log(`start: ${startNode.innerText} at ${startOffset}
-                  end: ${endNode.innerText} at ${endOffset}`)
-
-    if (
-      (oneNode && startOffset > endOffset) ||
-      this.isBefore(endNode, startNode)
-    ) {
-      const tempNode = startNode
-      const tempOffset = startOffset
-      startNode = endNode
-      endNode = tempNode
-      startOffset = endOffset
-      endOffset = tempOffset
-    }
-
-    let elem: HTMLElement | null = startNode
-    const buff = [
-      elem.innerText.slice(startOffset, oneNode ? endOffset : undefined)
-    ]
-
-    let i = 0
-    let elems: HTMLElement[] = []
-
-    while (elem && !oneNode) {
-      console.log(elem.parentElement)
-      if (elem.nextElementSibling) {
-        elem = elem.nextElementSibling as HTMLElement | null
-      } else {
-        elem = elem.parentElement!.nextElementSibling
-          ?.children[0] as HTMLElement | null
-        i++
-      }
-
-      if (elem) {
-        const txt = elem.isSameNode(endNode)
-          ? elem.innerText.slice(0, endOffset)
-          : elem.innerText
-        buff[i] = buff[i] ? buff[i] + txt : txt
-        if (elem.isSameNode(endNode)) {
-          break
-        }
-        elems.push(elem)
-      }
-    }
-
-    if (oneNode) {
-      const txt = startNode.innerText.slice(endOffset)
-      startNode.innerText = startNode.innerText.slice(0, startOffset)
-      const afterNode = this.createNewElement('span')
-      afterNode.setAttribute('style', startNode.getAttribute('style')!)
-      afterNode.setAttribute('class', 'stext')
-      afterNode.innerText = txt
-      this.currentDiv.insertBefore(afterNode, startNode.nextElementSibling)
-    } else {
-      startNode.innerText = startNode.innerText.slice(0, startOffset)
-      endNode.innerText = endNode.innerText.slice(endOffset)
-    }
-
-    if (styles.textColor) {
-      const isAllColored = [startNode, ...elems, endNode].every(
-        (el) => el.style.color === styles.textColor
-      )
-      styles.textColor = isAllColored
-        ? this.props.defaultTextColor
-        : styles.textColor
-    }
-
-    if (styles.hgColor) {
-      const isAllHighlighted = [startNode, ...elems, endNode].every(
-        (el) => el.style.backgroundColor === styles.hgColor
-      )
-      styles.hgColor = isAllHighlighted
-        ? this.props.defaultHgColor
-        : styles.hgColor
-    }
-
-    if (styles.fontSize) {
-      const isAllFontSized = [startNode, ...elems, endNode].every(
-        (el) => el.style.fontSize === styles.fontSize
-      )
-      styles.fontSize = isAllFontSized
-        ? this.props.defaultFontSize
-        : styles.fontSize
-    }
-
-    console.log(styles)
-
-    elems.forEach((elem) => elem.remove())
-    elems = []
-
-    const startLine = startNode.parentElement as HTMLElement
-    let line = startLine
-
-    buff.forEach((text, index) => {
-      const span = this.createNewElement('span')
-      this.setElementStyles(span, styles)
-      span.innerText = text
-      if (!index) line!.insertBefore(span, startNode.nextElementSibling)
-      else line!.prepend(span)
-      elems.push(span)
-      line = line!.nextElementSibling as HTMLElement
-    })
-
-    console.log(`selstartNode: ${elems[0].childNodes[0]} at ${0}
-                  selEndNode: ${elems[elems.length - 1].childNodes[0]} at ${3}`)
-
-    const selectionEnd = (elems[elems.length - 1]
-      .childNodes[0] as CharacterData).data.length
-
-    this.selectRange(
-      elems[0].childNodes[0],
-      0,
-      elems[elems.length - 1].childNodes[0],
-      selectionEnd
-    )
-
-    if (!endNode.innerText) endNode.remove()
-    if (!startNode.innerText) startNode.remove()
   }
 
   findSelectedSpan = (node: Node) => {

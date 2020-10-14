@@ -8,16 +8,13 @@ const App = () => {
     <Richmon
       struct={{
         tools: [
+          <RichButton actions={['lighter!']} text='lighter' />,
+          <RichButton actions={['bold']} text='hg' />,
+          <RichButton actions={['oblique']} text='oblique' />,
+          <RichButton actions={['italic']} text='italic' />,
           <RichButton
-            actions={[
-              'css(color: red;font-weight: bolder;)',
-              () => console.log('hello')
-            ]}
-            text='css'
-          />,
-          <RichButton
-            actions={['highlightText(red)', () => console.log('hello')]}
-            text='hg'
+            actions={['table(5, 5)', 'textColor(brown)!@#']}
+            text='normal'
           />
         ]
       }}

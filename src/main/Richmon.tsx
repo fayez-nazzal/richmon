@@ -17,7 +17,7 @@ const defaultProps = {
   config: {
     defaultTheme: 'light',
     defaultTextColor: 'black',
-    defaultFontSize: '14px',
+    defaultFontSize: '18px',
     defaultHighlightColor: 'transparent'
   }
 }
@@ -102,9 +102,6 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
 
   public getComponentProps = () => {
     return {
-      setTextColor: (this.editor.current as Editor).setTextColor,
-      setTextHighlight: (this.editor.current as Editor).setTextHighlight,
-      setFontSize: (this.editor.current as Editor).setFontSize,
       setBold: this.setBold,
       setItalic: this.setItalic,
       setCss: (this.editor.current as Editor).setCss

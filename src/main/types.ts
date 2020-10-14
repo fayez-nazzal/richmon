@@ -44,12 +44,8 @@ export interface Text {
 }
 
 export interface RichmonComponentProps {
-  setTextColor: { (color: string): void }
-  setTextHighlight: { (hgColor: string): void }
-  setFontSize: { (fontSize: string): void }
-  setBold: { (): void }
-  setItalic: { (): void }
-  setCss: { (css: string): void }
+  setCss: { (css: {}, canToggle?: boolean): void }
+  insertTable?: { (rows: number, cols: number, css?: string): void }
 }
 
 export interface RichmonButtonProps extends RichmonComponentProps {
@@ -65,13 +61,6 @@ export interface EditorProps {
   defaultTextColor: string
   defaultHgColor: string
   defaultFontSize: string
-}
-
-export interface Styles {
-  textColor?: string
-  hgColor?: string
-  fontSize?: string
-  css?: string
 }
 
 export interface attribute {
