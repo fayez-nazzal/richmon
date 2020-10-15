@@ -8,5 +8,6 @@
     "node_modules": true
   },
   "scm.inputFontFamily": "Hack",
+  "editor.multiCursorModifier": "ctrlCmd",
   "editor.fontFamily": "'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback', 'Hack'"
 }

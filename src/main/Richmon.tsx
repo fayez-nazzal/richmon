@@ -102,9 +102,8 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
 
   public getComponentProps = () => {
     return {
-      setBold: this.setBold,
-      setItalic: this.setItalic,
-      setCss: (this.editor.current as Editor).setCss
+      setCss: (this.editor.current as Editor).setCss,
+      insertTable: (this.editor.current as Editor).insertTable
     } as RichmonComponentProps
   }
 

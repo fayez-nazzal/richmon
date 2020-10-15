@@ -40,6 +40,8 @@ class Editor extends React.Component<EditorProps> {
   // This may produce some propblems, especially with tables
   setCurrentElements() {
     const sel = window.getSelection()!
+    console.log(sel.anchorNode?.nodeName)
+    console.log(sel.anchorNode?.childNodes)
     const node = sel.anchorNode!
     const parentNode = node.parentNode!
 
@@ -55,6 +57,13 @@ class Editor extends React.Component<EditorProps> {
         ? (parentNode as HTMLElement)
         : node.nodeName === 'SPAN'
         ? (node as HTMLElement)
+        : node.nodeName === 'DIV' && parentNode.nodeName === 'DIV'?
+          (node as HTMLElement).children[0].children[0]==="SPAN"?
+          (node as HTMLElement).children[0].children[0]:(node as HTMLElement).children[0].children[0].nodeName==="TABLE"?
+          (node as HTMLElement).children[0].children[0].children[0].children[0]:(node as HTMLElement).children[0].children[0].nodeName==="IMG"?null:null
+        ? ((node as HTMLElement).children[0] as HTMLElement)
+        : node.nodeName === 'TD' || node.nodeName === 'TH'
+        ? ((node as HTMLElement).children[0].children[0] as HTMLElement)
         : (node as HTMLElement)
 
     assert(this.currentDiv.nodeName === 'DIV')
@@ -274,6 +283,7 @@ class Editor extends React.Component<EditorProps> {
         ''
       )
       this.select(this.currentChild, 1)
+      alert('removing zero width space')
     }
 
     this.commitChanges()
@@ -323,13 +333,16 @@ class Editor extends React.Component<EditorProps> {
 
   update = () => {
     this.setCurrentElements()
-    if (
-      this.lastCurrentChild &&
-      !this.lastCurrentChild.isSameNode(this.currentDiv.children[0]) &&
-      !this.lastCurrentChild.isSameNode(this.currentChild) &&
-      this.lastCurrentChild.innerHTML === '\u200b'
-    )
-      this.lastCurrentChild.remove()
+    // if (
+    //   this.lastCurrentChild &&
+    //   !this.lastCurrentChild.isSameNode(this.currentDiv.children[0]) &&
+    //   !this.lastCurrentChild.isSameNode(this.currentChild) &&
+    //   this.lastCurrentChild.innerHTML === '\u200b'
+    // ) {
+    //   this.lastCurrentChild.remove()
+    //   alert('rmv')
+    // }
+    console.debug(this.lastCurrentChild)
     this.lastCurrentChild = this.currentChild
     this.props.setCaretPos(this.getCaretPos())
   }
@@ -381,6 +394,36 @@ class Editor extends React.Component<EditorProps> {
 
   onSelect = () => {
     this.update()
+  }
+
+  insertTable = (rows: number, cols: number, css: string) => {
+    const table = this.createNewElement('table')
+    this.currentDiv.parentElement!.appendChild(table)
+    for (let i = 0; i < rows; i++) {
+      const tr = this.createNewElement('tr')
+      table.appendChild(tr)
+      table.style.borderCollapse = 'collapse'
+      for (let j = 0; j < cols; j++) {
+        const col =
+          i === 0 ? this.createNewElement('th') : this.createNewElement('td')
+        col.style.border = '1px solid black'
+        col.style.padding = '10px 20px'
+        col.style.margin = '0'
+        const div = this.createNewElement('div')
+        const span = this.createNewElement('span')
+        span.innerHTML = '\u200b'
+        tr.appendChild(col)
+        col.appendChild(div)
+        div.appendChild(span)
+      }
+    }
+    this.currentDiv = table.firstElementChild!.firstElementChild!
+      .firstElementChild! as HTMLElement
+    this.currentChild = table.firstElementChild!.firstElementChild!
+      .firstElementChild!.firstElementChild! as HTMLElement
+
+    this.select(this.currentChild, 1)
+    console.log(css)
   }
 
   render() {

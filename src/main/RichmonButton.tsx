@@ -62,7 +62,18 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
               cb = () => this.props.setCss(stringToCssObj(args[0]), canToggle)
               break
             case 'table':
-              break
+              let rows: number = 0
+              let cols: number = 0
+              let css: string = ''
+              if (args.length === 1) css = args[0]
+              else {
+                rows = parseInt(args[0])
+                cols = parseInt(args[1])
+                css = args[2]
+              }
+              if (!rows) rows = parseInt(prompt('set row')!)
+              if (!cols) cols = parseInt(prompt('set cols')!)
+              cb = () => this.props.insertTable(rows, cols, css)
             default:
               alert('unknown action')
           }
