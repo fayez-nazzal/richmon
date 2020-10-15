@@ -14,11 +14,13 @@ import isEqual from 'lodash.isequal'
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
   public currentDiv: Element
+  public nextMainCurrentDiv: HTMLElement | null
   public currentChild: HTMLElement
   private lastCurrentChild: HTMLElement
   private defaultCss = `color:${this.props.defaultTextColor};font-size:${this.props.defaultFontSize};`
   private cssSet: any = []
-
+  private onTable = false
+  private wasOnTable = false
   constructor(props: EditorProps) {
     super(props)
   }
@@ -43,7 +45,9 @@ class Editor extends React.Component<EditorProps> {
     console.log(sel.anchorNode?.nodeName)
     console.log(sel.anchorNode?.childNodes)
     const node = sel.anchorNode!
+    const nodeName = node.nodeName
     const parentNode = node.parentNode!
+    const parentName = parentNode.nodeName
 
     this.currentDiv =
       parentNode.nodeName === 'SPAN'
@@ -52,19 +56,57 @@ class Editor extends React.Component<EditorProps> {
         ? (node.parentNode as Element)
         : (node as Element)
 
-    this.currentChild =
-      parentNode.nodeName === 'SPAN'
-        ? (parentNode as HTMLElement)
-        : node.nodeName === 'SPAN'
-        ? (node as HTMLElement)
-        : node.nodeName === 'DIV' && parentNode.nodeName === 'DIV'?
-          (node as HTMLElement).children[0].children[0]==="SPAN"?
-          (node as HTMLElement).children[0].children[0]:(node as HTMLElement).children[0].children[0].nodeName==="TABLE"?
-          (node as HTMLElement).children[0].children[0].children[0].children[0]:(node as HTMLElement).children[0].children[0].nodeName==="IMG"?null:null
-        ? ((node as HTMLElement).children[0] as HTMLElement)
-        : node.nodeName === 'TD' || node.nodeName === 'TH'
-        ? ((node as HTMLElement).children[0].children[0] as HTMLElement)
-        : (node as HTMLElement)
+    if (nodeName === 'SPAN') {
+      this.currentDiv = parentNode as HTMLElement
+      this.currentChild = node as HTMLElement
+    } else if (nodeName === '#text') {
+      this.currentDiv = parentNode.parentElement as HTMLElement
+      this.currentChild = parentNode as HTMLElement
+    } else if (nodeName === 'IMG') alert('IMG')
+    else if (nodeName === 'TD') {
+      this.currentDiv = (node as HTMLElement).firstElementChild! as HTMLElement
+      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
+    } else if (parentName === 'TD') {
+      this.currentDiv = node as HTMLElement
+      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
+    } else if (nodeName === 'TABLE') {
+      this.currentDiv = (node as HTMLElement).firstElementChild!.firstElementChild!.firstElementChild!
+      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
+    } else if (
+      nodeName === 'DIV' &&
+      (node as HTMLElement).firstElementChild!.nodeName === 'DIV'
+    ) {
+      this.currentDiv = (node as HTMLElement).firstElementChild!
+      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
+    } else if (
+      nodeName === 'DIV' &&
+      (node as HTMLElement).firstElementChild!.nodeName === 'TABLE'
+    ) {
+      this.currentDiv = (node as HTMLElement).firstElementChild!.firstElementChild!.firstElementChild!.firstElementChild!
+      this.currentChild = this.currentDiv.firstElementChild as HTMLElement
+    } else alert(nodeName)
+
+    this.wasOnTable = this.onTable
+    this.onTable =
+      nodeName === 'TABLE' ||
+      parentName === 'TABLE' ||
+      parentNode.parentElement?.nodeName === 'TABLE' ||
+      parentNode.parentElement?.parentElement?.nodeName === 'TABLE' ||
+      parentNode.parentElement?.parentElement?.parentElement?.nodeName ===
+        'TABLE' ||
+      parentNode.parentElement?.parentElement?.parentElement?.parentElement
+        ?.nodeName === 'TABLE'
+
+    this.nextMainCurrentDiv = this.onTable
+      ? this.currentDiv.parentElement!.parentElement!.nodeName === 'TR'
+        ? (this.currentDiv.parentElement!.parentElement!.parentElement!
+            .nextElementSibling as HTMLElement)
+        : null
+      : (this.currentDiv.nextElementSibling as HTMLElement)
+
+    console.log(
+      parentNode.parentElement?.parentElement?.parentElement?.nodeName
+    )
 
     assert(this.currentDiv.nodeName === 'DIV')
     assert(this.currentChild.nodeName === 'SPAN')
@@ -283,7 +325,6 @@ class Editor extends React.Component<EditorProps> {
         ''
       )
       this.select(this.currentChild, 1)
-      alert('removing zero width space')
     }
 
     this.commitChanges()
@@ -333,15 +374,19 @@ class Editor extends React.Component<EditorProps> {
 
   update = () => {
     this.setCurrentElements()
-    // if (
-    //   this.lastCurrentChild &&
-    //   !this.lastCurrentChild.isSameNode(this.currentDiv.children[0]) &&
-    //   !this.lastCurrentChild.isSameNode(this.currentChild) &&
-    //   this.lastCurrentChild.innerHTML === '\u200b'
-    // ) {
-    //   this.lastCurrentChild.remove()
-    //   alert('rmv')
-    // }
+    if (
+      this.lastCurrentChild?.parentElement?.previousElementSibling?.nodeName !==
+        'TABLE' &&
+      !this.onTable &&
+      !this.wasOnTable &&
+      this.lastCurrentChild &&
+      !this.lastCurrentChild.isSameNode(this.currentDiv.children[0]) &&
+      !this.lastCurrentChild.isSameNode(this.currentChild) &&
+      this.lastCurrentChild.innerHTML === '\u200b'
+    ) {
+      this.lastCurrentChild.remove()
+      alert('rmv')
+    }
     console.debug(this.lastCurrentChild)
     this.lastCurrentChild = this.currentChild
     this.props.setCaretPos(this.getCaretPos())
@@ -398,22 +443,31 @@ class Editor extends React.Component<EditorProps> {
 
   insertTable = (rows: number, cols: number, css: string) => {
     const table = this.createNewElement('table')
-    this.currentDiv.parentElement!.appendChild(table)
+    if (!this.nextMainCurrentDiv) {
+      const div = this.createNewElement('div')
+      const span = this.createNewElement('span')
+      span.innerHTML = '\u200b'
+      div.appendChild(span)
+      this.selfRef.current.appendChild(div)
+      this.nextMainCurrentDiv = div
+    }
+    this.selfRef.current.insertBefore(table, this.nextMainCurrentDiv)
     for (let i = 0; i < rows; i++) {
       const tr = this.createNewElement('tr')
       table.appendChild(tr)
       table.style.borderCollapse = 'collapse'
       for (let j = 0; j < cols; j++) {
-        const col =
+        const cell =
           i === 0 ? this.createNewElement('th') : this.createNewElement('td')
-        col.style.border = '1px solid black'
-        col.style.padding = '10px 20px'
-        col.style.margin = '0'
+        cell.style.border = '1px solid black'
+        cell.style.padding = '10px 20px'
+        cell.style.margin = '0'
+        cell.style.textAlign = 'center'
         const div = this.createNewElement('div')
         const span = this.createNewElement('span')
         span.innerHTML = '\u200b'
-        tr.appendChild(col)
-        col.appendChild(div)
+        tr.appendChild(cell)
+        cell.appendChild(div)
         div.appendChild(span)
       }
     }

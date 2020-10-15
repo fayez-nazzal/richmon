@@ -74,6 +74,7 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
               if (!rows) rows = parseInt(prompt('set row')!)
               if (!cols) cols = parseInt(prompt('set cols')!)
               cb = () => this.props.insertTable(rows, cols, css)
+              break
             default:
               alert('unknown action')
           }
