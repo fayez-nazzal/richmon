@@ -23,6 +23,8 @@ class Editor extends React.Component<EditorProps> {
   private wasOnTable = false
   private mouseDown = false
   private selRect: HTMLElement
+  private selTable: HTMLElement
+  // private rowsCopy: HTMLElement[] = []
   private selRectCoords: { x1: number; y1: number; x2: number; y2: number } = {
     x1: 0,
     x2: 0,
@@ -45,41 +47,17 @@ class Editor extends React.Component<EditorProps> {
     this.selRect = this.createNewElement('div')
     this.selRect.hidden = true
     this.selRect.style.position = 'absolute'
-    this.selRect.style.border = '1px solid black'
+    this.selRect.style.borderLeft = '1px solid yellow'
+    this.selRect.style.borderRight = '1px solid blue'
+    this.selRect.style.borderTop = '1px solid yellow'
+    this.selRect.style.borderBottom = '1px solid blue'
+
     this.selfRef.current.appendChild(this.selRect)
     document.addEventListener('mousedown', () => {
       this.mouseDown = true
     })
     document.addEventListener('mouseup', () => {
       this.mouseDown = false
-    })
-    document.addEventListener('mousemove', (e: MouseEvent) => {
-      if (this.selRect.hidden) return
-      this.selRectCoords.x2 = e.clientX
-      this.selRectCoords.y2 = e.clientY
-      this.makeSelectRect()
-      let table = this.getTableOnCoords(e.clientX - 2, e.clientY - 2)
-      if (!table) return
-      const selCRect = this.selRect.getBoundingClientRect()
-      for (let i = 0; i < table.children.length; i++)
-        for (let j = 0; j < table.children[i].children.length; j++) {
-          const rect = table.children[i].children[j].getBoundingClientRect()
-          if (
-            ((rect.right > selCRect.left && rect.left < selCRect.left) ||
-              (rect.left > selCRect.left && rect.right < selCRect.right) ||
-              (rect.left < selCRect.right && rect.right > selCRect.right)) &&
-            ((rect.top > selCRect.top && rect.bottom < selCRect.bottom) ||
-              (rect.top < selCRect.bottom && rect.bottom > selCRect.bottom) ||
-              (rect.bottom > selCRect.top && rect.top < selCRect.top))
-          )
-            (table.children[i].children[
-              j
-            ] as HTMLElement).style.backgroundColor = 'red'
-          else
-            (table.children[i].children[
-              j
-            ] as HTMLElement).style.backgroundColor = 'initial'
-        }
     })
   }
 
@@ -150,23 +128,19 @@ class Editor extends React.Component<EditorProps> {
         : null
       : (this.currentDiv.nextElementSibling as HTMLElement)
 
-    console.log(
-      parentNode.parentElement?.parentElement?.parentElement?.nodeName
-    )
-
     assert(this.currentDiv.nodeName === 'DIV')
     assert(this.currentChild.nodeName === 'SPAN')
   }
 
-  getTableOnCoords(x: number, y: number) {
-    let node = document.elementFromPoint(x, y)
-    while (node) {
-      console.log(node.nodeName)
-      if (node.nodeName === 'TABLE') return node
-      node = node.parentElement
-    }
-    return false
-  }
+  // getTableOnCoords(x: number, y: number) {
+  //   let node = document.elementFromPoint(x, y)
+  //   while (node) {
+  //     if (node.nodeName === 'TABLE') return node
+  //     node = node.parentElement
+  //   }
+  //   console.log(node)
+  //   return false
+  // }
 
   commitChanges = () => {
     const selfElem = this.selfRef.current as Element
@@ -488,6 +462,7 @@ class Editor extends React.Component<EditorProps> {
   }
 
   onMouseUp = (ev: React.MouseEvent) => {
+    this.selRect.hidden = true
     this.update()
     console.log(ev)
     // if (this.isMovingCells) {
@@ -533,12 +508,11 @@ class Editor extends React.Component<EditorProps> {
     this.selfRef.current.insertBefore(table, this.nextMainCurrentDiv)
     table.addEventListener('mousedown', (e: MouseEvent) => {
       this.selRect.hidden = false
+      this.selTable = table
       this.selRectCoords.x1 = e.clientX
       this.selRectCoords.y1 = e.clientY
       this.makeSelectRect()
-    })
-    table.addEventListener('mouseup', () => {
-      this.selRect.hidden = true
+      e.preventDefault()
     })
     for (let i = 0; i < rows; i++) {
       const tr = this.createNewElement('tr')
@@ -628,6 +602,55 @@ class Editor extends React.Component<EditorProps> {
         onInput={() => this.onInput()}
         onFocus={() => this.onInput()}
         onBlur={() => this.onInput(true)}
+        onMouseMove={(e: React.MouseEvent) => {
+          if (this.selRect.hidden) return
+          let table = this.selTable
+          const selCRect = this.selRect.getBoundingClientRect()
+
+          if (!table) {
+            console.log('ret')
+            return
+          }
+
+          const selectedCells: any = {}
+          // this.rowsCopy = []
+          if (selCRect.width < 0) alert('sm')
+          for (let i = 0; i < table.children.length; i++)
+            for (let j = 0; j < table.children[i].children.length; j++) {
+              const rect = table.children[i].children[j].getBoundingClientRect()
+              if (
+                ((rect.right > selCRect.left && rect.left < selCRect.left) ||
+                  (rect.left > selCRect.left && rect.right < selCRect.right) ||
+                  (rect.left < selCRect.right &&
+                    rect.right > selCRect.right)) &&
+                ((rect.top > selCRect.top && rect.bottom < selCRect.bottom) ||
+                  (rect.top < selCRect.bottom &&
+                    rect.bottom > selCRect.bottom) ||
+                  (rect.bottom > selCRect.top && rect.top < selCRect.top))
+              ) {
+                ;(table.children[i].children[
+                  j
+                ] as HTMLElement).style.backgroundColor = 'red'
+                selectedCells[rect.left] = selectedCells[rect.left]
+                  ? [
+                      ...selectedCells[rect.left],
+                      table.children[i].children[j] as HTMLElement
+                    ]
+                  : [table.children[i].children[j]]
+              } else
+                (table.children[i].children[
+                  j
+                ] as HTMLElement).style.backgroundColor = 'initial'
+            }
+          this.selRectCoords.x2 = e.clientX
+          this.selRectCoords.y2 = e.clientY
+          this.makeSelectRect()
+          // const sortedRows = Object.keys(selectedCells).sort()
+          // for (let i = 0; i < sortedRows.length; i++)
+          //   if (!this.rowsCopy.includes(selectedCells[sortedRows[i]]))
+          //     this.rowsCopy.push(selectedCells[sortedRows[i]])
+          // console.debug(this.rowsCopy)
+        }}
         onMouseUp={this.onMouseUp}
         onKeyDown={this.onKeyDown}
         onSelect={this.onSelect}
