@@ -21,6 +21,15 @@ class Editor extends React.Component<EditorProps> {
   private cssSet: any = []
   private onTable = false
   private wasOnTable = false
+  private mouseDown = false
+  private selRect: HTMLElement
+  private selRectCoords: { x1: number; y1: number; x2: number; y2: number } = {
+    x1: 0,
+    x2: 0,
+    y1: 0,
+    y2: 0
+  }
+
   constructor(props: EditorProps) {
     super(props)
   }
@@ -33,6 +42,45 @@ class Editor extends React.Component<EditorProps> {
     this.currentDiv.append(this.currentChild)
     this.currentChild.setAttribute('style', this.defaultCss)
     this.commitChanges()
+    this.selRect = this.createNewElement('div')
+    this.selRect.hidden = true
+    this.selRect.style.position = 'absolute'
+    this.selRect.style.border = '1px solid black'
+    this.selfRef.current.appendChild(this.selRect)
+    document.addEventListener('mousedown', () => {
+      this.mouseDown = true
+    })
+    document.addEventListener('mouseup', () => {
+      this.mouseDown = false
+    })
+    document.addEventListener('mousemove', (e: MouseEvent) => {
+      if (this.selRect.hidden) return
+      this.selRectCoords.x2 = e.clientX
+      this.selRectCoords.y2 = e.clientY
+      this.makeSelectRect()
+      let table = this.getTableOnCoords(e.clientX - 2, e.clientY - 2)
+      if (!table) return
+      const selCRect = this.selRect.getBoundingClientRect()
+      for (let i = 0; i < table.children.length; i++)
+        for (let j = 0; j < table.children[i].children.length; j++) {
+          const rect = table.children[i].children[j].getBoundingClientRect()
+          if (
+            ((rect.right > selCRect.left && rect.left < selCRect.left) ||
+              (rect.left > selCRect.left && rect.right < selCRect.right) ||
+              (rect.left < selCRect.right && rect.right > selCRect.right)) &&
+            ((rect.top > selCRect.top && rect.bottom < selCRect.bottom) ||
+              (rect.top < selCRect.bottom && rect.bottom > selCRect.bottom) ||
+              (rect.bottom > selCRect.top && rect.top < selCRect.top))
+          )
+            (table.children[i].children[
+              j
+            ] as HTMLElement).style.backgroundColor = 'red'
+          else
+            (table.children[i].children[
+              j
+            ] as HTMLElement).style.backgroundColor = 'initial'
+        }
+    })
   }
 
   shouldComponentUpdate() {
@@ -42,8 +90,6 @@ class Editor extends React.Component<EditorProps> {
   // This may produce some propblems, especially with tables
   setCurrentElements() {
     const sel = window.getSelection()!
-    console.log(sel.anchorNode?.nodeName)
-    console.log(sel.anchorNode?.childNodes)
     const node = sel.anchorNode!
     const nodeName = node.nodeName
     const parentNode = node.parentNode!
@@ -110,6 +156,16 @@ class Editor extends React.Component<EditorProps> {
 
     assert(this.currentDiv.nodeName === 'DIV')
     assert(this.currentChild.nodeName === 'SPAN')
+  }
+
+  getTableOnCoords(x: number, y: number) {
+    let node = document.elementFromPoint(x, y)
+    while (node) {
+      console.log(node.nodeName)
+      if (node.nodeName === 'TABLE') return node
+      node = node.parentElement
+    }
+    return false
   }
 
   commitChanges = () => {
@@ -431,8 +487,19 @@ class Editor extends React.Component<EditorProps> {
     return n as HTMLElement
   }
 
-  onMouseUp = () => {
+  onMouseUp = (ev: React.MouseEvent) => {
     this.update()
+    console.log(ev)
+    // if (this.isMovingCells) {
+    //   let x = ev.clientX
+    //   let y = ev.clientY
+    //   const el = document.elementFromPoint(x, y)
+    //   console.log(el)
+    //   this.selectedCells = []
+    //   for (let i = 0; i < this.selectedCells.length; i++)
+    //     this.selectedCells[i].style.backgroundColor = 'initial'
+    // }
+    // if (this.isMovingCells) this.isMovingCells = false
   }
 
   onKeyDown = (_event: React.KeyboardEvent) => {}
@@ -441,7 +508,19 @@ class Editor extends React.Component<EditorProps> {
     this.update()
   }
 
+  makeSelectRect = () => {
+    let x1 = Math.min(this.selRectCoords.x1, this.selRectCoords.x2)
+    let x2 = Math.max(this.selRectCoords.x1, this.selRectCoords.x2)
+    let y1 = Math.min(this.selRectCoords.y1, this.selRectCoords.y2)
+    let y2 = Math.max(this.selRectCoords.y1, this.selRectCoords.y2)
+    this.selRect.style.left = x1 + 'px'
+    this.selRect.style.top = y1 + 'px'
+    this.selRect.style.width = x2 - x1 + 'px'
+    this.selRect.style.height = y2 - y1 + 'px'
+  }
+
   insertTable = (rows: number, cols: number, css: string) => {
+    console.log(this.mouseDown)
     const table = this.createNewElement('table')
     if (!this.nextMainCurrentDiv) {
       const div = this.createNewElement('div')
@@ -452,6 +531,15 @@ class Editor extends React.Component<EditorProps> {
       this.nextMainCurrentDiv = div
     }
     this.selfRef.current.insertBefore(table, this.nextMainCurrentDiv)
+    table.addEventListener('mousedown', (e: MouseEvent) => {
+      this.selRect.hidden = false
+      this.selRectCoords.x1 = e.clientX
+      this.selRectCoords.y1 = e.clientY
+      this.makeSelectRect()
+    })
+    table.addEventListener('mouseup', () => {
+      this.selRect.hidden = true
+    })
     for (let i = 0; i < rows; i++) {
       const tr = this.createNewElement('tr')
       table.appendChild(tr)
@@ -460,12 +548,61 @@ class Editor extends React.Component<EditorProps> {
         const cell =
           i === 0 ? this.createNewElement('th') : this.createNewElement('td')
         cell.style.border = '1px solid black'
-        cell.style.padding = '10px 20px'
+        cell.style.width = '10px'
+        cell.style.height = '20px'
         cell.style.margin = '0'
         cell.style.textAlign = 'center'
+        cell.style.fontWeight = 'normal'
+        // cell.addEventListener('mousemove', () => {
+        //   if (this.isMovingCells) {
+        //   } else if (this.mouseDown) {
+        //     if (cell.className !== 'sel-cel') {
+        //       cell.className = 'sel-cel'
+        //       cell.style.backgroundColor = 'blue'
+        //       if (!this.selectedCells.first) {
+        //         this.selectedCells.first = cell
+        //       } else {
+        //         const cellRect = cell.getBoundingClientRect()
+        //         const firstCellRect = this.selectedCells.first.getBoundingClientRect()
+        //         const lastTouchedRect = this.lastTouchedCell.getBoundingClientRect()
+        //         if (firstCellRect && firstCellRect.left === cellRect.left)
+        //           this.selectedCells.table[0] = [this.selectedCells.first, cell]
+        //         else if (firstCellRect && firstCellRect.top === cellRect.top) {
+        //           this.selectedCells.table[0] = [this.selectedCells.first]
+        //           this.selectedCells.table[1] = [cell]
+        //         } else if (
+        //           lastTouchedRect && lastTouchedRect.top===cellRect.top
+        //         ) {
+        //           let travCell = cell
+        //           let travRect = cellRect
+        //           document.elementFromPoint(trav, y)
+        //           while(travCell.getBoundingClientRect().)
+        //         }
+        //       }
+        //       console.log('over and down')
+        //     }
+        //     this.lastTouchedCell = cell
+        //   }
+        // })
+        // cell.addEventListener('mousedown', (ev: Event) => {
+        //   if (this.selectedCells.length > 0) {
+        //     console.log('down')
+        //     this.isMovingCells = true
+        //     for (let i = 0; i < this.selectedCells.length; i++)
+        //       this.selectedCells[i].style.backgroundColor = 'red'
+        //     ev.preventDefault()
+        //   }
+        // })
         const div = this.createNewElement('div')
         const span = this.createNewElement('span')
         span.innerHTML = '\u200b'
+        span.draggable = true
+        span.addEventListener('dragstart', () => {
+          console.log('drag start')
+        })
+        span.addEventListener('dragend', () => {
+          console.log('drag end')
+        })
         tr.appendChild(cell)
         cell.appendChild(div)
         div.appendChild(span)
