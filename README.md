@@ -1,6 +1,6 @@
 # richmon
 
-> The modern rich text editor for react
+> The very rich-text editor
 
 [![NPM](https://img.shields.io/npm/v/richmon.svg)](https://www.npmjs.com/package/richmon) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
