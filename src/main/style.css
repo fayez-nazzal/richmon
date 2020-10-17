@@ -7,3 +7,7 @@ body {
   color: unset;
   background-color: #68b0ab50;
 }
+
+table {
+  -moz-user-select: none;
+}

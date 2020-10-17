@@ -568,7 +568,7 @@ class Editor extends React.Component<EditorProps> {
               (rect.top < selCRect.bottom && rect.bottom > selCRect.bottom) ||
               (rect.bottom > selCRect.top && rect.top < selCRect.top))
           ) {
-            cell.style.backgroundColor = 'red'
+            cell.style.backgroundColor = '#68b0ab50'
             this.selectedCells[rect.top] = this.selectedCells[rect.top]
               ? [...this.selectedCells[rect.top], cell]
               : [table.children[i].children[j]]
@@ -616,6 +616,7 @@ class Editor extends React.Component<EditorProps> {
       if (!isEmpty(this.selectedCells)) {
         this.isMovingRows = true
         document.body.style.cursor = 'copy'
+        e.preventDefault()
       } else {
         this.selRectangle.hidden = false
         this.selTable = table
