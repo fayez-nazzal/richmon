@@ -644,9 +644,10 @@ class Editor extends React.Component<EditorProps> {
       const sel = window.getSelection()
       switch (e.key) {
         case 'Backspace':
-          if (this.currentChild.innerHTML.length == 1)
+          if (this.currentChild.innerHTML.length == 1) {
             this.currentChild.innerHTML = '\u200b'
-          e.preventDefault()
+            e.preventDefault()
+          }
           break
         case 'ArrowLeft': {
           if (
@@ -743,14 +744,7 @@ class Editor extends React.Component<EditorProps> {
   // cell.style.textAlign = 'center'
   // cell.style.fontWeight = 'normal'
 
-  insertTable = (
-    rows: number,
-    cols: number,
-    cssString: string = `
-    table{color: thistle;}
-    td{background-color: cyan;}
-    `
-  ) => {
+  insertTable = (rows: number, cols: number, cssString: string = '') => {
     const cssArr = parseCSS(cssString)
     console.log(cssArr)
     const insertRuleIfNotFound = (
@@ -795,7 +789,7 @@ class Editor extends React.Component<EditorProps> {
     for (let i = 0; i < cssArr.length; i++) {
       if (cssArr[i].selector === 'table') tableIndex = i
       else if (cssArr[i].selector === 'td') tdIndex = i
-      else if (cssArr[i].selector === 'th') tdIndex = i
+      else if (cssArr[i].selector === 'th') thIndex = i
     }
 
     tableIndex = makeSureKeyExist(tableIndex, 'td')
@@ -813,8 +807,10 @@ class Editor extends React.Component<EditorProps> {
     insertRuleIfNotFound(tdIndex, 'word-break', 'break-all', 'td')
     insertRuleIfNotFound(tdIndex, 'white-space', 'pre-wrap', 'td')
     insertRuleIfNotFound(tdIndex, 'text-align', 'center', 'td')
-    insertRuleIfNotFound(tdIndex, 'border', '1px solid black', 'td')
-    insertRuleIfNotFound(thIndex, 'border', '1px solid black', 'th')
+    insertRuleIfNotFound(tdIndex, 'border', 'thin solid #5e646e70', 'th')
+    insertRuleIfNotFound(tdIndex, 'border', 'thin solid #9ba4b470', 'td')
+    insertRuleIfNotFound(thIndex, 'background-color', '#ebecf1', 'th')
+    insertRuleIfNotFound(thIndex, 'font-weight', 'normal', 'th')
 
     let tdDefaultStyle: any = {}
     let thDefaultStyle: any = {}
@@ -900,7 +896,9 @@ class Editor extends React.Component<EditorProps> {
         const div = this.createNewElement('div')
         const span = this.createNewElement('span')
 
-        this.cellsStyles[i][j] = i == 0 ? thDefaultStyle : tdDefaultStyle
+        this.cellsStyles[i][j] =
+          cell.nodeName === 'TH' ? thDefaultStyle : tdDefaultStyle
+        console.error(tdDefaultStyle)
         div.contentEditable = 'true'
         span.innerHTML = '\u200b'
         tr.appendChild(cell)
