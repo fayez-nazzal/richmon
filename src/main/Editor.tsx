@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 import './style.css'
 import assert from 'assert'
 import { EditorProps } from './types'
@@ -7,26 +8,25 @@ import {
   cssObjToString,
   stringToCssObj,
   isBefore,
-  isMatchingKeysEqual
+  isMatchingKeysEqual,
+  createElementFromHTML
 } from './richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
+import { parseCSS } from 'css-parser'
 
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
   public currentDiv: Element
   public nextMainCurrentDiv: HTMLElement | null
   public currentChild: HTMLElement
-  private lastCurrentChild: HTMLElement
   private defaultCss = `color:${this.props.defaultTextColor};font-size:${this.props.defaultFontSize};`
   private cssSet: any = []
-  private onTable = false
-  private wasOnTable = false
-  private mouseDown = false
   private selTable: HTMLElement
-  private selTabelCellStyles: string[][] = []
   private isMovingRows = false
   private selectedCells: any = {}
+  private selectedCellsStyles: any = {}
+  private cellsStyles: string[][] = []
   private selRectangle: HTMLElement
   private selRectangleCoords: {
     x1: number
@@ -55,7 +55,9 @@ class Editor extends React.Component<EditorProps> {
     this.selRectangle = this.createNewElement('div')
     this.selRectangle.hidden = true
     this.selRectangle.style.position = 'absolute'
-    this.selRectangle.draggable = false
+    this.selRectangle.style.border = '1px dashed #6C747680'
+    this.selRectangle.style.backgroundColor = '#68b0ab50'
+    this.selRectangle.style.pointerEvents = 'none'
     this.selfRef.current.prepend(this.selRectangle)
   }
 
@@ -69,23 +71,35 @@ class Editor extends React.Component<EditorProps> {
     if (!sel) return
     const node = sel.anchorNode
     if (!node) return
+    console.log(node)
+
+    if (
+      node.isSameNode(this.selRectangle) ||
+      node.isSameNode(this.selfRef.current)
+    ) {
+      this.select(
+        this.currentChild.childNodes[0]
+          ? this.currentChild.childNodes[0]
+          : this.currentChild,
+        this.currentChild.childNodes[0]
+          ? (this.currentChild.childNodes[0] as CharacterData).data.length
+          : 1
+      )
+      return
+    }
+
     const nodeName = node.nodeName
     const parentNode = node.parentNode!
     const parentName = parentNode.nodeName
-
-    this.currentDiv =
-      parentNode.nodeName === 'SPAN'
-        ? (parentNode.parentNode as Element)
-        : node.nodeName === 'SPAN'
-        ? (node.parentNode as Element)
-        : (node as Element)
-
     if (nodeName === 'SPAN') {
       this.currentDiv = parentNode as HTMLElement
       this.currentChild = node as HTMLElement
     } else if (nodeName === '#text') {
-      this.currentDiv = parentNode.parentElement as HTMLElement
+      this.currentDiv = parentNode.parentNode as HTMLElement
       this.currentChild = parentNode as HTMLElement
+      console.log(this.currentDiv)
+
+      console.log(this.currentDiv)
     } else if (nodeName === 'IMG') alert('IMG')
     else if (nodeName === 'TD') {
       this.currentDiv = (node as HTMLElement).firstElementChild! as HTMLElement
@@ -110,20 +124,12 @@ class Editor extends React.Component<EditorProps> {
       this.currentChild = this.currentDiv.firstElementChild as HTMLElement
     } else return
 
-    this.wasOnTable = this.onTable
-    this.onTable =
-      nodeName === 'TABLE' ||
-      parentName === 'TABLE' ||
-      parentNode.parentElement?.nodeName === 'TABLE' ||
-      parentNode.parentElement?.parentElement?.nodeName === 'TABLE' ||
-      parentNode.parentElement?.parentElement?.parentElement?.nodeName ===
-        'TABLE' ||
-      parentNode.parentElement?.parentElement?.parentElement?.parentElement
-        ?.nodeName === 'TABLE'
-
     this.nextMainCurrentDiv = this.selTable
       ? (this.selTable.nextElementSibling as HTMLElement)
       : (this.currentDiv.nextElementSibling as HTMLElement)
+
+    console.debug(this.currentDiv)
+    console.debug(this.currentChild)
 
     assert(this.currentDiv.nodeName === 'DIV')
     assert(this.currentChild.nodeName === 'SPAN')
@@ -363,15 +369,33 @@ class Editor extends React.Component<EditorProps> {
       ? document.documentElement.scrollTop
       : document.body.scrollTop
 
+    if (this.currentDiv.innerHTML.includes('<br>')) {
+      this.currentDiv.innerHTML = this.currentDiv.innerHTML.replace('<br>', '')
+      if (this.currentDiv.children[0]) {
+        this.currentDiv.children[0]!.innerHTML = '\u200b'
+        this.select(this.currentDiv.children[0].childNodes[0], 1)
+        return { top: 0, left: 0 }
+      } else {
+        const span = this.createNewElement('span')
+        span.innerText = '\u200b'
+        this.currentDiv.append(span)
+        this.currentChild = span
+      }
+    }
+
     const boundingRect = window
       .getSelection()!
       .getRangeAt(0)
       .getBoundingClientRect()
     try {
+      console.error(this.currentDiv.innerHTML)
       let top = boundingRect.top
       let left = boundingRect.left
       let parent = this.currentChild as Element
-      if (top === 0) top = parent.getBoundingClientRect().top
+      if (top === 0)
+        top = parent.getBoundingClientRect().top
+          ? parent.getBoundingClientRect().top
+          : this.currentDiv.getBoundingClientRect().top
 
       if (left === 0) {
         left =
@@ -384,28 +408,12 @@ class Editor extends React.Component<EditorProps> {
       }
       return obj
     } catch {
-      alert('!!')
       return { top: 414, left: 211 }
     }
   }
 
   update = () => {
     this.setCurrentElements()
-    if (
-      this.lastCurrentChild?.parentElement?.previousElementSibling?.nodeName !==
-        'TABLE' &&
-      !this.onTable &&
-      !this.wasOnTable &&
-      this.lastCurrentChild &&
-      !this.lastCurrentChild.isSameNode(this.currentDiv.children[0]) &&
-      !this.lastCurrentChild.isSameNode(this.currentChild) &&
-      this.lastCurrentChild.innerHTML === '\u200b'
-    ) {
-      this.lastCurrentChild.remove()
-      alert('rmv')
-    }
-    console.debug(this.lastCurrentChild)
-    this.lastCurrentChild = this.currentChild
     this.props.setCaretPos(this.getCaretPos())
   }
 
@@ -449,23 +457,31 @@ class Editor extends React.Component<EditorProps> {
   }
 
   onMouseUp = (ev: React.MouseEvent) => {
-    this.selRectangle.hidden = true
+    this.hideSelRectangle()
+    this.selRectangle.className = ''
     if (this.isMovingRows && !isEmpty(this.selectedCells)) {
       const sortedRows = Object.keys(this.selectedCells).sort()
-      const rows: HTMLElement[][] = []
+
+      const cells: HTMLElement[][] = []
+      const sellectedCellsStyles: string[][] = []
 
       const rowsCopy = []
 
       for (let i = 0; i < sortedRows.length; i++) {
         const row = this.selectedCells[sortedRows[i]] as HTMLElement[]
-        if (!rows.includes(row)) rows.push(row)
+        const stylesRow = this.selectedCellsStyles[sortedRows[i]] as string[]
+        if (!cells.includes(row)) {
+          cells.push(row)
+          sellectedCellsStyles.push(stylesRow)
+        }
       }
 
-      for (let i = 0; i < rows.length; i++) {
+      console.error(sellectedCellsStyles)
+      for (let i = 0; i < cells.length; i++) {
         const tr = this.createNewElement('tr')
-        for (let j = 0; j < rows[i].length; j++) {
-          const cell = rows[i][j]
-          cell.setAttribute('style', this.selTabelCellStyles[i][j])
+        for (let j = 0; j < cells[i].length; j++) {
+          const cell = cells[i][j]
+          cell.setAttribute('style', sellectedCellsStyles[i][j])
           const clonedCell = cell.cloneNode(true) as HTMLElement
           tr.append(clonedCell)
         }
@@ -496,11 +512,6 @@ class Editor extends React.Component<EditorProps> {
               ? this.selTable.lastElementChild!.nextElementSibling
               : this.selTable.firstElementChild
           )
-          this.selTabelCellStyles.splice(
-            isNextOfTable ? this.selTabelCellStyles.length : 0,
-            0,
-            []
-          )
 
           let colNumber = rowsCopy[i].childElementCount
           let totalSpan = 0
@@ -508,16 +519,25 @@ class Editor extends React.Component<EditorProps> {
           for (let j = 0; j < colNumber; j++) {
             let colSpan = Math.ceil(tableSpan / colNumber)
             totalSpan += colSpan
-            const col = rowsCopy[i].children[j] as HTMLTableDataCellElement
-            this.selTabelCellStyles[i][j] = col.getAttribute('style')!
+            const cell = rowsCopy[i].children[j] as HTMLTableDataCellElement
 
             for (let k = 0; totalSpan >= tableSpan && j < colNumber - 1; k++) {
-              const col = rowsCopy[i].children[k] as HTMLTableDataCellElement
-              col.colSpan--
+              const cell = rowsCopy[i].children[k] as HTMLTableDataCellElement
+              cell.colSpan--
               totalSpan--
             }
 
-            col.colSpan = colSpan
+            cell.colSpan = colSpan
+            this.addCellMouseDown(cell, this.selTable)
+          }
+        }
+
+        this.cellsStyles = []
+        for (let i = 0; i < this.selTable.children.length; i++) {
+          this.cellsStyles.push([])
+          for (let j = 0; j < this.selTable.children[i].children.length; j++) {
+            const cell = this.selTable.children[i].children[j]
+            this.cellsStyles[i][j] = cell.getAttribute('style')!
           }
         }
       } else if (
@@ -526,7 +546,7 @@ class Editor extends React.Component<EditorProps> {
       ) {
         const newTable = this.createNewElement('table')
         for (let i = 0; i < rowsCopy.length; i++) newTable.append(rowsCopy[i])
-        this.selfRef.current.insertBefore(newTable, node)
+        this.selfRef.current.insertBefore(newTable, node.nextElementSibling)
         newTable.setAttribute('style', this.selTable.getAttribute('style')!)
         this.select(
           newTable.children[0].children[0].children[0].children[0]
@@ -540,17 +560,28 @@ class Editor extends React.Component<EditorProps> {
       }
 
       document.body.style.cursor = 'auto'
-      this.selectedCells = {}
+      this.clearSelecedCells()
       this.isMovingRows = false
     }
   }
 
+  hideSelRectangle() {
+    this.selRectangle.hidden = true
+    this.selRectangle.className = ''
+  }
+
+  clearSelecedCells() {
+    this.selectedCells = {}
+    this.selectedCellsStyles = {}
+  }
+
   onMouseMove = (e: React.MouseEvent) => {
     if (!this.isMovingRows) {
-      if (this.selRectangle.hidden) return
+      if (!this.selRectangle.className) return
+      this.selRectangle.hidden = false
       let table = this.selTable
       const selCRect = this.selRectangle.getBoundingClientRect()
-      this.selectedCells = {}
+      this.clearSelecedCells()
 
       if (!table) {
         return
@@ -568,23 +599,129 @@ class Editor extends React.Component<EditorProps> {
               (rect.top < selCRect.bottom && rect.bottom > selCRect.bottom) ||
               (rect.bottom > selCRect.top && rect.top < selCRect.top))
           ) {
+            const addToSelectedCells = (selObj: any, pushObj: any) => {
+              selObj[rect.top] = selObj[rect.top]
+                ? [...selObj[rect.top], pushObj]
+                : [pushObj]
+            }
+
+            addToSelectedCells(
+              this.selectedCells,
+              table.children[i].children[j]
+            )
+
+            addToSelectedCells(this.selectedCellsStyles, this.cellsStyles[i][j])
+            if (!this.cellsStyles[i][j]) console.log('!!!')
             cell.style.backgroundColor = '#68b0ab50'
-            this.selectedCells[rect.top] = this.selectedCells[rect.top]
-              ? [...this.selectedCells[rect.top], cell]
-              : [table.children[i].children[j]]
+            cell.className = 'selected'
           } else {
             cell.style.backgroundColor = 'initial'
+            cell.className = ''
           }
         }
 
       this.selRectangleCoords.x2 = e.pageX
       this.selRectangleCoords.y2 = e.pageY
       this.makeSelectRect()
+    } else {
+      this.hideSelRectangle()
+      const rowsKeys = Object.keys(this.selectedCells)
+      for (let i = 0; i < rowsKeys.length; i++) {
+        const row = this.selectedCells[rowsKeys[i]]
+        for (let j = 0; j < row.length; j++)
+          row[j].style.backgroundColor = 'yellow'
+      }
     }
   }
 
-  onKeyDown = (_event: React.KeyboardEvent) => {}
-
+  onKeyDown = (e: React.KeyboardEvent) => {
+    if (
+      this.currentChild.parentNode &&
+      this.currentChild.parentNode.parentNode &&
+      (this.currentChild.parentNode.parentNode.nodeName === 'TD' ||
+        this.currentChild.parentNode.parentNode.nodeName === 'TH')
+    ) {
+      const sel = window.getSelection()
+      switch (e.key) {
+        case 'Backspace':
+          if (this.currentChild.innerHTML.length == 1)
+            this.currentChild.innerHTML = '\u200b'
+          e.preventDefault()
+          break
+        case 'ArrowLeft': {
+          if (
+            sel?.anchorOffset === 0 ||
+            (sel?.anchorOffset === 1 &&
+              this.currentChild.innerHTML === '\u200b')
+          ) {
+            const prevCell = this.currentChild.parentElement!.parentElement!
+              .previousElementSibling?.lastElementChild!.lastElementChild!
+              .childNodes[0] as CharacterData
+            const prevUpCell = this.currentChild.parentElement!.parentElement!
+              .parentElement!.previousElementSibling?.lastElementChild!
+              .lastElementChild!.lastElementChild!
+              .childNodes[0] as CharacterData
+            if (prevCell) this.select(prevCell, prevCell.data.length)
+            else if (prevUpCell) this.select(prevUpCell, prevUpCell.data.length)
+            e.preventDefault()
+          }
+          break
+        }
+        case 'ArrowRight': {
+          if (
+            sel?.anchorOffset === this.currentChild.innerHTML.length ||
+            (sel?.anchorOffset === 1 &&
+              this.currentChild.innerHTML === '\u200b')
+          ) {
+            const nextCell = this.currentChild.parentElement!.parentElement!
+              .nextElementSibling?.lastElementChild!.lastElementChild!
+              .childNodes[0] as CharacterData
+            const nextDownCell = this.currentChild.parentElement!.parentElement!
+              .parentElement!.nextElementSibling?.firstElementChild!
+              .lastElementChild!.lastElementChild!
+              .childNodes[0] as CharacterData
+            if (nextCell) this.select(nextCell, nextCell.data.length)
+            else if (nextDownCell)
+              this.select(nextDownCell, nextDownCell.data.length)
+            e.preventDefault()
+          }
+          break
+        }
+        case 'ArrowUp': {
+          let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
+          const prevUpCellTop = cellRect.top
+          let prevUpCell: any = document.elementFromPoint(
+            cellRect.left + 5,
+            prevUpCellTop - 5
+          )!
+          if (prevUpCell.nodeName === 'SPAN')
+            prevUpCell = prevUpCell.childNodes[0] as CharacterData
+          else prevUpCell = prevUpCell.lastElementChild.childNodes[0]
+          this.select(prevUpCell, prevUpCell.data.length)
+          e.preventDefault()
+          break
+        }
+        case 'ArrowDown': {
+          let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
+          const nextDownCellBottom = cellRect.bottom
+          let nextDownCell: any = document.elementFromPoint(
+            cellRect.left + 5,
+            nextDownCellBottom + 5
+          )
+          if (nextDownCell.nodeName === 'SPAN')
+            nextDownCell = nextDownCell.childNodes[0] as CharacterData
+          else nextDownCell = nextDownCell.lastElementChild.childNodes[0]
+          this.select(nextDownCell, nextDownCell.data.length)
+          e.preventDefault()
+          break
+        }
+      }
+    } else if (
+      e.key === 'Backspace' &&
+      this.currentChild.innerHTML === '\u200b'
+    )
+      this.currentChild.innerHTML = '\u200b'
+  }
   onSelect = () => {
     this.update()
   }
@@ -599,10 +736,76 @@ class Editor extends React.Component<EditorProps> {
     this.selRectangle.style.width = x2 - x1 + 'px'
     this.selRectangle.style.height = y2 - y1 + 'px'
   }
+  // cell.style.border = '1px solid black'
+  // cell.style.width = '10px'
+  // cell.style.height = '20px'
+  // cell.style.margin = '0'
+  // cell.style.textAlign = 'center'
+  // cell.style.fontWeight = 'normal'
 
-  insertTable = (rows: number, cols: number, css: string) => {
-    console.log(this.mouseDown)
-    const table = this.createNewElement('table')
+  insertTable = (
+    rows: number,
+    cols: number,
+    cssString: string = `
+    table{color: thistle;}
+    td{background-color: red;}
+    `
+  ) => {
+    console.log(parseCSS(cssString))
+    const tableStrIndex = cssString.indexOf('table')
+    const lastPara = cssString.indexOf('}', tableStrIndex)
+    if (tableStrIndex) {
+      cssString =
+        cssString.slice(0, tableStrIndex) +
+        cssString.slice(tableStrIndex + 6, lastPara) +
+        cssString.slice(lastPara + 1)
+      console.log(cssString)
+    }
+    // if (!cssString.includes('table')) {
+    //   cssString =
+    //     cssString +
+    //     `
+    //     table-layput: fixed;
+    //     whitespace: nowrap;
+    //   `
+    // }
+    // if (!cssString.includes('td')) {
+    //   cssString =
+    //     cssString +
+    //     `
+    //   td {
+    //     border: 1px solid black;
+    //     text-align: center;
+    //     font-weight: normal;
+    //     margin: 0;
+    //   }`
+    // }
+    // if (!cssString.includes('th')) {
+    //   cssString =
+    //     cssString +
+    //     `
+    //   th {
+    //     background-color: blue;
+    //     border: 1px solid black;
+    //     text-align: center;
+    //     font-weight: normal;
+    //     margin: 0;
+    //   }`
+    // }
+    // if (!cssString.includes('width')) {
+    //   cssString =
+    //     cssString +
+    //     `td, th {
+    //     width: ${celLWidth}px;
+    //   }`
+    // }
+    const Table = styled.table`
+      ${cssString}
+    `
+
+    let table = createElementFromHTML(
+      ReactDOMServer.renderToStaticMarkup(<Table />)
+    )
     if (!this.nextMainCurrentDiv) {
       const div = this.createNewElement('div')
       const span = this.createNewElement('span')
@@ -612,40 +815,33 @@ class Editor extends React.Component<EditorProps> {
       this.nextMainCurrentDiv = div
     }
     this.selfRef.current.insertBefore(table, this.nextMainCurrentDiv)
-    table.addEventListener('mousedown', (e: MouseEvent) => {
-      if (!isEmpty(this.selectedCells)) {
-        this.isMovingRows = true
-        document.body.style.cursor = 'copy'
-        e.preventDefault()
-      } else {
-        this.selRectangle.hidden = false
-        this.selTable = table
-        this.selRectangleCoords.x1 = e.pageX
-        this.selRectangleCoords.y1 = e.pageY
-        this.makeSelectRect()
-      }
-    })
 
     for (let i = 0; i < rows; i++) {
       const tr = this.createNewElement('tr')
       table.appendChild(tr)
-      this.selTabelCellStyles.push([])
       table.style.borderCollapse = 'collapse'
+      this.cellsStyles.push([])
       for (let j = 0; j < cols; j++) {
         const cell =
           i === 0 ? this.createNewElement('th') : this.createNewElement('td')
+        this.addCellMouseDown(cell, table)
 
-        cell.style.border = '1px solid black'
-        cell.style.width = '10px'
-        cell.style.height = '20px'
-        cell.style.margin = '0'
-        cell.style.textAlign = 'center'
-        cell.style.fontWeight = 'normal'
-
-        this.selTabelCellStyles[i][j] = cell.getAttribute('style')!
+        cell.addEventListener('mousemove', () => {
+          if (!isEmpty(this.selectedCells)) {
+            this.select(
+              cell.lastElementChild!.lastElementChild!.childNodes[0],
+              1
+            )
+            this.props.setIsCaretHidden(true)
+          }
+        })
 
         const div = this.createNewElement('div')
         const span = this.createNewElement('span')
+
+        this.cellsStyles[i][j] = cell.getAttribute('style')!
+
+        div.contentEditable = 'true'
         span.innerHTML = '\u200b'
         tr.appendChild(cell)
         cell.appendChild(div)
@@ -658,9 +854,37 @@ class Editor extends React.Component<EditorProps> {
       .firstElementChild!.firstElementChild! as HTMLElement
 
     this.select(this.currentChild, 1)
-    console.log(css)
+    console.log(cssString)
   }
 
+  addCellMouseDown(cell: HTMLElement, table: HTMLElement) {
+    cell.addEventListener('mousedown', (e: MouseEvent) => {
+      this.props.setIsCaretHidden(false)
+      if (!isEmpty(this.selectedCells) && cell.className === 'selected') {
+        this.isMovingRows = true
+        document.body.style.cursor = 'copy'
+        e.preventDefault()
+      } else {
+        document.body.style.cursor = 'text'
+        this.selRectangle.className = 'sel'
+        this.selTable = table
+        this.selRectangleCoords.x1 = e.pageX
+        this.selRectangleCoords.y1 = e.pageY
+
+        const rowsKeys = Object.keys(this.selectedCells)
+
+        for (let i = 0; i < rowsKeys.length; i++) {
+          const row = this.selectedCells[rowsKeys[i]] as HTMLElement[]
+          for (let j = 0; j < row.length; j++) {
+            const cell = row[j]
+            cell.setAttribute('style', this.selectedCellsStyles[rowsKeys[i]][j])
+          }
+        }
+        this.isMovingRows = false
+        this.makeSelectRect()
+      }
+    })
+  }
   render() {
     const ContentEditable = styled.div`
       width: 300px;
@@ -675,6 +899,7 @@ class Editor extends React.Component<EditorProps> {
         onMouseMove={this.onMouseMove}
         onMouseUp={this.onMouseUp}
         onKeyDown={this.onKeyDown}
+        onKeyUp={() => {}}
         onSelect={this.onSelect}
         ref={this.selfRef}
         onDragEnter={(e: React.DragEvent) => {

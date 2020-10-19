@@ -22,3 +22,9 @@ export function isBefore(node1: Node, node2: Node) {
 export function isMatchingKeysEqual(obj1: any, obj2: any) {
   return Object.entries(obj1).some(([key, val]) => obj2[key] === val)
 }
+
+export function createElementFromHTML(htmlString: string) {
+  let div = document.createElement('div') as HTMLElement
+  div.innerHTML = htmlString.trim()
+  return div.firstChild as HTMLElement
+}
