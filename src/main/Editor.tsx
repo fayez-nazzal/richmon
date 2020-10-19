@@ -615,7 +615,7 @@ class Editor extends React.Component<EditorProps> {
             cell.style.backgroundColor = '#68b0ab50'
             cell.className = 'selected'
           } else {
-            cell.style.backgroundColor = 'initial'
+            cell.setAttribute('style', this.cellsStyles[i][j])
             cell.className = ''
           }
         }
@@ -748,27 +748,88 @@ class Editor extends React.Component<EditorProps> {
     cols: number,
     cssString: string = `
     table{color: thistle;}
-    td{background-color: red;}
+    td{background-color: cyan;}
     `
   ) => {
-    console.log(parseCSS(cssString))
+    const cssArr = parseCSS(cssString)
+    console.log(cssArr)
+    const insertRuleIfNotFound = (
+      index: number,
+      key: string,
+      value: string,
+      selector: any = false
+    ) => {
+      if (!cssArr[index].rules.includes(key)) {
+        cssString =
+          cssString +
+          `
+          ${selector ? selector + '{' : ''}
+          ${key}:${value};
+          ${selector ? '}' : ''}
+        `
+        cssArr[index].rules.push({ key, value })
+      }
+    }
+
+    const makeSureKeyExist = (index: number, key: string) => {
+      if (index === -1) {
+        cssArr.push({ selector: key, rules: [] })
+      }
+      return index === -1 ? cssArr.length - 1 : index
+    }
+
     const tableStrIndex = cssString.indexOf('table')
     const lastPara = cssString.indexOf('}', tableStrIndex)
-    if (tableStrIndex) {
+    if (tableStrIndex !== -1) {
       cssString =
         cssString.slice(0, tableStrIndex) +
         cssString.slice(tableStrIndex + 6, lastPara) +
         cssString.slice(lastPara + 1)
       console.log(cssString)
     }
-    // if (!cssString.includes('table')) {
-    //   cssString =
-    //     cssString +
-    //     `
-    //     table-layput: fixed;
-    //     whitespace: nowrap;
-    //   `
-    // }
+
+    let tableIndex = -1
+    let tdIndex = -1
+    let thIndex = -1
+
+    for (let i = 0; i < cssArr.length; i++) {
+      if (cssArr[i].selector === 'table') tableIndex = i
+      else if (cssArr[i].selector === 'td') tdIndex = i
+      else if (cssArr[i].selector === 'th') tdIndex = i
+    }
+
+    tableIndex = makeSureKeyExist(tableIndex, 'td')
+    tdIndex = makeSureKeyExist(tdIndex, 'td')
+    thIndex = makeSureKeyExist(thIndex, 'th')
+
+    insertRuleIfNotFound(tableIndex, 'table-layout', 'fixed')
+    insertRuleIfNotFound(tableIndex, 'margin', '5px')
+
+    const currDiv = this.currentDiv as HTMLElement
+    const colWidth = currDiv.getBoundingClientRect().width / (cols + 1)
+
+    insertRuleIfNotFound(tdIndex, 'width', `${colWidth}px`, 'td')
+    insertRuleIfNotFound(tdIndex, 'max-width', `${colWidth}px`, 'td')
+    insertRuleIfNotFound(tdIndex, 'word-break', 'break-all', 'td')
+    insertRuleIfNotFound(tdIndex, 'white-space', 'pre-wrap', 'td')
+    insertRuleIfNotFound(tdIndex, 'text-align', 'center', 'td')
+    insertRuleIfNotFound(tdIndex, 'border', '1px solid black', 'td')
+    insertRuleIfNotFound(thIndex, 'border', '1px solid black', 'th')
+
+    let tdDefaultStyle: any = {}
+    let thDefaultStyle: any = {}
+
+    const tdRules = cssArr[tdIndex].rules
+    const thRules = cssArr[thIndex].rules
+    for (let i = 0; i < tdRules.length; i++) {
+      tdDefaultStyle[tdRules[i].key] = tdRules[i].value
+    }
+    for (let i = 0; i < thRules.length; i++) {
+      thDefaultStyle[thRules[i].key] = thRules[i].value
+    }
+
+    tdDefaultStyle = cssObjToString(tdDefaultStyle)
+    thDefaultStyle = cssObjToString(thDefaultStyle)
     // if (!cssString.includes('td')) {
     //   cssString =
     //     cssString +
@@ -839,8 +900,7 @@ class Editor extends React.Component<EditorProps> {
         const div = this.createNewElement('div')
         const span = this.createNewElement('span')
 
-        this.cellsStyles[i][j] = cell.getAttribute('style')!
-
+        this.cellsStyles[i][j] = i == 0 ? thDefaultStyle : tdDefaultStyle
         div.contentEditable = 'true'
         span.innerHTML = '\u200b'
         tr.appendChild(cell)
