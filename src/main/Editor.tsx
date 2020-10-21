@@ -437,6 +437,8 @@ class Editor extends React.Component<EditorProps> {
     let node = document.elementFromPoint(ev.clientX, ev.clientY)! as HTMLElement
     let nodes = document.elementsFromPoint(ev.clientX, ev.clientY)!
 
+    document.body.style.cursor = 'auto'
+
     if (this.selImage) {
       let span
       let img
@@ -492,10 +494,10 @@ class Editor extends React.Component<EditorProps> {
 
       this.selImage.setAttribute(
         'style',
-        this.selImage.getAttribute('data-prevstyle')!
+        this.selImage.getAttribute('data-defaultstyle')!
       )
       this.selImage.removeAttribute('data-mousedown')
-      this.selImage.removeAttribute('data-prevstyle')
+      this.selImage.removeAttribute('data-defaultstyle')
     }
 
     if (!this.selTable || !this.selTable.getAttribute('data-selectable')) return
@@ -676,7 +678,6 @@ class Editor extends React.Component<EditorProps> {
         this.selTable = newTable
       }
 
-      document.body.style.cursor = 'auto'
       this.clearSelecedCells()
       this.selTable.removeAttribute('data-movingcells')
     }
@@ -1040,8 +1041,8 @@ class Editor extends React.Component<EditorProps> {
 
   insertImage = (
     src: string,
-    css = 'border: 1px solid blue;',
-    selectCss = '',
+    css = '',
+    selectCss = 'opacity: 0.5;border:1.5px dashed grey;',
     autoResize = true
   ) => {
     const Image = styled.image`
@@ -1054,10 +1055,12 @@ class Editor extends React.Component<EditorProps> {
 
     img.src = src
 
+    img.setAttribute('data-selectstyle', selectCss)
+    img.setAttribute('data-defaultstyle', css)
+
     img.addEventListener('mousedown', (ev: MouseEvent) => {
       this.selImage = img
       img.setAttribute('data-mousedown', 'true')
-      img.setAttribute('data-prevstyle', img.getAttribute('style')!)
       this.currentDiv = img.parentElement as HTMLElement
       this.currentChild = img.nextElementSibling as HTMLElement
       this.props.setIsCaretHidden(true)
@@ -1068,12 +1071,23 @@ class Editor extends React.Component<EditorProps> {
 
     img.addEventListener('mousemove', (ev: MouseEvent) => {
       if (img.hasAttribute('data-mousedown')) {
+        img.setAttribute('style', img.getAttribute('data-selectstyle')!)
         img.style.position = 'absolute'
         img.style.transform = `translate(-50%, -50%)`
         img.style.top = `${ev.pageY}px`
         img.style.left = ` ${ev.pageX}px`
         img.style.cursor = 'grabbing'
-        img.style.opacity = '0.4'
+        const selfRect = this.selfRef.current.getBoundingClientRect()
+        if (
+          ev.clientX > selfRect.right ||
+          ev.clientX < selfRect.left ||
+          ev.clientY > selfRect.bottom ||
+          ev.clientY < selfRect.top
+        ) {
+          img.setAttribute('style', img.getAttribute('data-defaultstyle')!)
+          img.removeAttribute('data-mousedown')
+          this.selImage = null
+        }
       }
     })
 
@@ -1176,6 +1190,10 @@ class Editor extends React.Component<EditorProps> {
     }
   }
 
+  onMouseLeave = () => {
+    document.body.style.cursor = 'auto'
+  }
+
   render() {
     const ContentEditable = styled.div`
       width: 300px;
@@ -1191,7 +1209,7 @@ class Editor extends React.Component<EditorProps> {
         onFocus={() => this.onInput()}
         onBlur={() => this.onInput(true)}
         onMouseMove={this.onMouseMove}
-        onMouseLeave={() => {}} // drop image
+        onMouseLeave={this.onMouseLeave}
         onMouseUp={this.onMouseUp}
         onMouseDown={this.onMouseDown}
         onKeyDown={this.onKeyDown}
