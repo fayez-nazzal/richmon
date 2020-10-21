@@ -12,7 +12,20 @@ const App = () => {
           <RichButton actions={['bold']} text='hg' />,
           <RichButton actions={['oblique']} text='oblique' />,
           <RichButton actions={['italic']} text='italic' />,
-          <RichButton actions={[`table(5, 5)`]} text='normal' />
+          <RichButton
+            actions={['img(https://dummyimage.com/700x700/0000ff/fff)']}
+            text='blue image'
+          />,
+          <RichButton
+            actions={['img(https://dummyimage.com/200x200/f23/fff)']}
+            text='red image'
+          />,
+          <RichButton
+            actions={['img(https://dummyimage.com/90x80/000/fff)']}
+            text='black image'
+          />,
+          <RichButton actions={[`delete`]} text='delete' />,
+          <RichButton actions={[`table(4, 4)`]} text='normal' />
         ]
       }}
     />

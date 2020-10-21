@@ -27,10 +27,10 @@ export interface ModalsStruct extends Record<string, Struct | undefined> {
 
 export interface RichmonPropTypes {
   config: {
-    defaultTheme?: string
     defaultTextColor: string
     defaultHighlightColor: string
     defaultFontSize: string
+    imageTools: (JSX.Element | string)[]
   }
   struct: Struct | TabsStruct
   modals?: ModalsStruct
@@ -46,6 +46,8 @@ export interface Text {
 export interface RichmonComponentProps {
   setCss: { (css: {}, canToggle?: boolean): void }
   insertTable: { (rows: number, cols: number, css?: string): void }
+  insertImage: { (src: string): void }
+  deleteSelectedImage: { (): void }
 }
 
 export interface RichmonButtonProps extends RichmonComponentProps {

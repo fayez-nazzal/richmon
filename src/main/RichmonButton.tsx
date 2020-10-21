@@ -75,6 +75,15 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
               if (!cols) cols = parseInt(prompt('set cols')!)
               cb = () => this.props.insertTable(rows, cols, css)
               break
+            case 'img':
+              if (args[0].includes('http')) {
+                const str = action.substring(
+                  action.indexOf('(') + 1,
+                  action.indexOf(')')
+                )
+                cb = () => this.props.insertImage(str)
+              }
+              break
             default:
               alert('unknown action')
           }
@@ -91,6 +100,9 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
                 stringToCssObj('font-weight:lighter;'),
                 canToggle
               )
+            break
+          case 'delete':
+            cb = () => this.props.deleteSelectedImage()
             break
           case 'bold':
             cb = () =>
@@ -122,6 +134,7 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
               )
             break
           default:
+            alert(actionName)
             alert('wrong action provided')
         }
       }

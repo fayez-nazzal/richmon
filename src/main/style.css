@@ -1,10 +1,10 @@
 body {
   margin: 0;
-  caret-color: transparent;
+  caret-color: blueviolet;
   outline: none;
 }
 
 ::selection {
   color: unset;
-  background-color: #68b0ab50;
+  background-color: #68aeb050;
 }

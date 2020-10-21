@@ -18,7 +18,8 @@ const defaultProps = {
     defaultTheme: 'light',
     defaultTextColor: 'black',
     defaultFontSize: '18px',
-    defaultHighlightColor: 'transparent'
+    defaultHighlightColor: 'transparent',
+    imageTools: ['delete']
   }
 }
 
@@ -26,6 +27,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   public static defaultProps = defaultProps
 
   private tools: any[] = []
+  private imageTools: any[] = []
   private editor: any = React.createRef()
 
   constructor(props: any) {
@@ -47,14 +49,15 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         left: ${(props) => props.left + 'px'};
         top: ${(props) => props.top + 'px'};
         pointer-events: none;
-        border-right: 1.4px solid black;
+        border-right: 1.4px solid blue;
         transition: left 65ms ease-in;
       `
     }
   }
 
   componentDidMount() {
-    this.constructTools()
+    this.constructTools(this.props.struct.tools as any[], this.tools)
+    this.constructTools(this.props.config.imageTools, this.imageTools)
   }
 
   isTabStruct(object: any): object is TabsStruct {
@@ -103,15 +106,17 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   public getComponentProps = () => {
     return {
       setCss: (this.editor.current as Editor).setCss,
-      insertTable: (this.editor.current as Editor).insertTable
+      insertTable: (this.editor.current as Editor).insertTable,
+      insertImage: (this.editor.current as Editor).insertImage,
+      deleteSelectedImage: (this.editor.current as Editor).deleteSelectedImage
     } as RichmonComponentProps
   }
 
-  private constructTools = () => {
+  private constructTools = (fromArray: any[], toArray: any[]) => {
     if (this.isTabStruct(this.props.struct))
       alert('tab struct, not implemented')
     else {
-      const toolsProp = this.props.struct.tools
+      const toolsProp = fromArray
       for (let i = 0; i < toolsProp.length; i++) {
         const toolProp = toolsProp[i]
         let tool
@@ -122,7 +127,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             case 'RichButton':
               tool = (
                 <RichmonButton
-                  key={`${this.tools.length}`}
+                  key={`${toArray.length}`}
                   text={`${props.text}`}
                   {...props}
                   {...this.getComponentProps()}
@@ -134,6 +139,16 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           }
         } else {
           switch (toolProp) {
+            case 'delete':
+              tool = (
+                <RichmonButton
+                  key={`${toArray.length}`}
+                  text='X'
+                  actions={['delete']}
+                  {...this.getComponentProps()}
+                />
+              )
+              break
             case 'bold':
               tool = (
                 <RichmonButton
@@ -156,7 +171,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
               break
           }
         }
-        this.tools.push(tool)
+        toArray.push(tool)
       }
     }
   }
