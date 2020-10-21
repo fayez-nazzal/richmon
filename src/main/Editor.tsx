@@ -439,12 +439,18 @@ class Editor extends React.Component<EditorProps> {
 
     if (this.selImage) {
       let span
+      let img
       let div
       let mainDiv
 
       for (let i = 0; i < nodes.length; i++) {
         if (nodes[i].nodeName === 'SPAN') span = nodes[i]
         else if (nodes[i].isSameNode(this.selfRef.current)) mainDiv = nodes[i]
+        else if (
+          nodes[i].nodeName === 'IMG' &&
+          !nodes[i].isSameNode(this.selImage)
+        )
+          img = nodes[i]
         else if (
           nodes[i].nodeName === 'DIV' &&
           !nodes[i].className &&
@@ -454,11 +460,22 @@ class Editor extends React.Component<EditorProps> {
         if (span && div && mainDiv) break
       }
 
-      if (span) {
-        const spanRect = span.getBoundingClientRect()
+      if (span || img) {
+        const elem = img ? (img as HTMLElement) : (span as HTMLElement)
+        const elemRect = elem.getBoundingClientRect()
         const insertPos =
-          ev.clientX > spanRect.right ? span.nextElementSibling : span
-        span.parentElement!.insertBefore(this.selImage, insertPos)
+          ev.clientX > elemRect.right ? elem.nextElementSibling : elem
+        if (ev.clientX > elemRect.right) alert('right')
+        elem.parentElement!.insertBefore(this.selImage, insertPos)
+        if (elem.nodeName === 'IMG') {
+          const newSpan = this.createNewElement('span')
+          newSpan.innerHTML = '\u200b'
+          elem.parentElement!.insertBefore(
+            newSpan,
+            this.selImage.nextElementSibling
+          )
+          this.select(newSpan.childNodes[0], 1)
+        }
       } else if (div) div.append(this.selImage)
       else if (
         mainDiv &&
@@ -1021,8 +1038,19 @@ class Editor extends React.Component<EditorProps> {
     this.commitChanges()
   }
 
-  insertImage = (src: string, autoResize = true) => {
-    const img = this.createNewElement('img') as HTMLImageElement
+  insertImage = (
+    src: string,
+    css = 'border: 1px solid blue;',
+    selectCss = '',
+    autoResize = true
+  ) => {
+    const Image = styled.image`
+      ${css}
+    `
+
+    const img = createElementFromHTML(
+      ReactDOMServer.renderToStaticMarkup(<Image />)
+    ) as HTMLImageElement
 
     img.src = src
 
