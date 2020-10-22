@@ -1,30 +1,3 @@
-export interface Struct {
-  tools: (JSX.Element | string)[]
-}
-
-export interface TabsStruct
-  extends Record<string, Struct | string | undefined> {
-  defaultTab?: string
-  tab1?: Struct
-  tab2?: Struct
-  tab3?: Struct
-  tab4?: Struct
-  tab5?: Struct
-  tab6?: Struct
-  tab7?: Struct
-  tab8?: Struct
-  tab9?: Struct
-  tab10?: Struct
-}
-
-export interface ModalsStruct extends Record<string, Struct | undefined> {
-  modal1?: Struct
-  modal2?: Struct
-  modal3?: Struct
-  modal4?: Struct
-  modal5?: Struct
-}
-
 export interface RichmonPropTypes {
   config: {
     defaultTextColor: string
@@ -32,8 +5,7 @@ export interface RichmonPropTypes {
     defaultFontSize: string
     imageTools: (JSX.Element | string)[]
   }
-  struct: Struct | TabsStruct
-  modals?: ModalsStruct
+  top: (JSX.Element | string)[]
 }
 
 export interface Text {
@@ -52,6 +24,12 @@ export interface RichmonComponentProps {
 
 export interface RichmonButtonProps extends RichmonComponentProps {
   actions: (string | { (): any })[]
+  text: string
+}
+
+export interface RichmonListProps extends RichmonComponentProps {
+  dir: string
+  tools: (JSX.Element | string)[]
   text: string
 }
 

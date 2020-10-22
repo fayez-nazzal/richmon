@@ -133,6 +133,20 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
                 canToggle
               )
             break
+          case 'underline':
+            cb = () =>
+              this.props.setCss(
+                stringToCssObj('text-decoration:underline;'),
+                canToggle
+              )
+            break
+          case 'super':
+            cb = () =>
+              this.props.setCss(
+                stringToCssObj('vertical-align:super;font-size:12px;'),
+                canToggle
+              )
+            break
           default:
             alert(actionName)
             alert('wrong action provided')

@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   RichmonPropTypes,
-  TabsStruct,
   Text,
   RichmonComponentProps,
   position
@@ -56,12 +55,8 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   }
 
   componentDidMount() {
-    this.constructTools(this.props.struct.tools as any[], this.tools)
+    this.constructTools(this.props.top as any[], this.tools)
     this.constructTools(this.props.config.imageTools, this.imageTools)
-  }
-
-  isTabStruct(object: any): object is TabsStruct {
-    return 'defaultTab' in object
   }
 
   // Example actions=["textColor(red)"]
@@ -113,66 +108,95 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   }
 
   private constructTools = (fromArray: any[], toArray: any[]) => {
-    if (this.isTabStruct(this.props.struct))
-      alert('tab struct, not implemented')
-    else {
-      const toolsProp = fromArray
-      for (let i = 0; i < toolsProp.length; i++) {
-        const toolProp = toolsProp[i]
-        let tool
+    const toolsProp = fromArray
+    for (let i = 0; i < toolsProp.length; i++) {
+      const toolProp = toolsProp[i]
+      let tool_s: any
 
-        if (typeof toolProp !== 'string') {
-          const props = toolProp.props
-          switch (toolProp.type.name) {
-            case 'RichButton':
-              tool = (
-                <RichmonButton
-                  key={`${toArray.length}`}
-                  text={`${props.text}`}
-                  {...props}
-                  {...this.getComponentProps()}
-                />
-              )
-              break
-            default:
-              alert('unknown tool type')
-          }
-        } else {
-          switch (toolProp) {
-            case 'delete':
-              tool = (
-                <RichmonButton
-                  key={`${toArray.length}`}
-                  text='X'
-                  actions={['delete']}
-                  {...this.getComponentProps()}
-                />
-              )
-              break
-            case 'bold':
-              tool = (
-                <RichmonButton
-                  key={`${this.tools.length}`}
-                  text='B'
-                  actions={['bold']}
-                  {...this.getComponentProps()}
-                />
-              )
-              break
-            case 'italic':
-              tool = (
-                <RichmonButton
-                  key={`${this.tools.length}`}
-                  text='i'
-                  actions={['italic']}
-                  {...this.getComponentProps()}
-                />
-              )
-              break
-          }
+      if (typeof toolProp !== 'string') {
+        const props = toolProp.props
+        switch (toolProp.type.name) {
+          case 'RichButton':
+            tool_s = (
+              <RichmonButton
+                key={`${toArray.length}`}
+                text={`${props.text}`}
+                {...props}
+                {...this.getComponentProps()}
+              />
+            )
+            break
+          default:
+            alert('unknown tool type')
         }
-        toArray.push(tool)
+      } else {
+        switch (toolProp) {
+          case 'BIU':
+            tool_s = [
+              <RichmonButton
+                key={`${this.tools.length}`}
+                text='B'
+                actions={['bold']}
+                {...this.getComponentProps()}
+              />,
+              <RichmonButton
+                key={`${this.tools.length + 1}`}
+                text='I'
+                actions={['italic']}
+                {...this.getComponentProps()}
+              />,
+              <RichmonButton
+                key={`${this.tools.length + 2}`}
+                text='U'
+                actions={['underline']}
+                {...this.getComponentProps()}
+              />
+            ]
+            break
+          case 'sup':
+            tool_s = (
+              <RichmonButton
+                key={`${toArray.length}`}
+                text='sup'
+                actions={['sup']}
+                {...this.getComponentProps()}
+              />
+            )
+            break
+          case 'delete':
+            tool_s = (
+              <RichmonButton
+                key={`${toArray.length}`}
+                text='X'
+                actions={['delete']}
+                {...this.getComponentProps()}
+              />
+            )
+            break
+          case 'bold':
+            tool_s = (
+              <RichmonButton
+                key={`${this.tools.length}`}
+                text='B'
+                actions={['bold']}
+                {...this.getComponentProps()}
+              />
+            )
+            break
+          case 'italic':
+            tool_s = (
+              <RichmonButton
+                key={`${this.tools.length}`}
+                text='i'
+                actions={['italic']}
+                {...this.getComponentProps()}
+              />
+            )
+            break
+        }
       }
+      if (tool_s.length) for (let tool of tool_s) toArray.push(tool)
+      else toArray.push(tool_s)
     }
   }
 
