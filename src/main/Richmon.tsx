@@ -7,6 +7,7 @@ import {
 } from './types'
 import { RichmonState } from './RichmonState'
 import RichmonButton from './RichmonButton'
+import RichmonList from './RichmonList'
 import Toolbar from './Toolbar'
 import Editor from './Editor'
 import Caret from './Caret'
@@ -152,6 +153,132 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 {...this.getComponentProps()}
               />
             ]
+            break
+          case 'textColors':
+            tool_s = (
+              <RichmonGrid
+                key={`${toArray.length}`}
+                text='colors'
+                cols='5'
+                rows='5'
+                tools={[
+                  <RichmonButton
+                    key={`${this.tools.length + 2}`}
+                    text=''
+                    actions={['textColor(black)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 2}`}
+                    text=''
+                    actions={['textColor(#7a7a7a)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 2}`}
+                    text=''
+                    actions={['textColor(#969696)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#bdbdbd)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#f08080)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#ff9999)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#ff7a7a)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#32cd32)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#008000)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#98fb98)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#d0f0c0)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#0000cd)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#4169e1)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#1e90ff)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#00bfff)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#ffd700)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#ffa500)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#ffff31)']}
+                    {...this.getComponentProps()}
+                  />,
+                  <RichmonButton
+                    key={`${this.tools.length + 1}`}
+                    text=''
+                    actions={['textColor(#dfff00)']}
+                    {...this.getComponentProps()}
+                  />
+                ]}
+              />
+            )
             break
           case 'sup':
             tool_s = (

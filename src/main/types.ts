@@ -27,7 +27,7 @@ export interface RichmonButtonProps extends RichmonComponentProps {
   text: string
 }
 
-export interface RichmonListProps extends RichmonComponentProps {
+export interface RichmonListProps {
   dir: string
   tools: (JSX.Element | string)[]
   text: string
