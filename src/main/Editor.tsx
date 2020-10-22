@@ -9,11 +9,12 @@ import {
   stringToCssObj,
   isBefore,
   isMatchingKeysEqual,
-  createElementFromHTML
+  createElementFromHTML,
+  createNewElement
 } from './richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
-import { parseCSS } from 'css-parser'
+import { createTable } from './richtable'
 
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
@@ -45,12 +46,12 @@ class Editor extends React.Component<EditorProps> {
   componentDidMount() {
     const selfElem = this.selfRef.current as Element
     this.currentDiv = selfElem.children[0] as HTMLElement
-    this.currentChild = this.createNewElement('span')
+    this.currentChild = createNewElement('span')
     this.currentChild.innerText = '\u200b'
     this.currentDiv.append(this.currentChild)
     this.currentChild.setAttribute('style', this.defaultCss)
     this.commitChanges()
-    this.RectanleSelector = this.createNewElement('div')
+    this.RectanleSelector = createNewElement('div')
     this.RectanleSelector.hidden = true
     this.RectanleSelector.style.position = 'absolute'
     this.RectanleSelector.style.border = '1px dashed #6C747680'
@@ -148,7 +149,7 @@ class Editor extends React.Component<EditorProps> {
         })
       }
 
-      const elem = this.createNewElement('span')
+      const elem = createNewElement('span')
       elem.setAttribute(
         'style',
         cssObjToString({ ...currentStyles, ...styles })
@@ -220,7 +221,7 @@ class Editor extends React.Component<EditorProps> {
     if (oneNode) {
       const txt = startNode.innerText.slice(endOffset)
       startNode.innerText = startNode.innerText.slice(0, startOffset)
-      const afterNode = this.createNewElement('span')
+      const afterNode = createNewElement('span')
       afterNode.setAttribute('style', startNode.getAttribute('style')!)
       afterNode.setAttribute('class', 'stext')
       afterNode.innerText = txt
@@ -259,7 +260,7 @@ class Editor extends React.Component<EditorProps> {
     let node: Element | null = startNode
 
     buff.forEach((elemObj, index) => {
-      const span = this.createNewElement('span')
+      const span = createNewElement('span')
       span.innerText = elemObj.text
       const css = cssObjToString({ ...elemObj.style!, ...styles })
       span.setAttribute('style', css)
@@ -309,11 +310,6 @@ class Editor extends React.Component<EditorProps> {
     this.styleText(css, canToggle)
   }
 
-  createNewElement = (type: string) => {
-    const elem = document.createElement(type)
-    return elem
-  }
-
   onInput = (blur = false) => {
     if (
       !blur &&
@@ -353,7 +349,7 @@ class Editor extends React.Component<EditorProps> {
         this.select(this.currentDiv.children[0].childNodes[0], 1)
         return { top: 0, left: 0 }
       } else {
-        const span = this.createNewElement('span')
+        const span = createNewElement('span')
         span.innerText = '\u200b'
         this.currentDiv.append(span)
         this.currentChild = span
@@ -470,7 +466,7 @@ class Editor extends React.Component<EditorProps> {
         if (ev.clientX > elemRect.right) alert('right')
         elem.parentElement!.insertBefore(this.selImage, insertPos)
         if (elem.nodeName === 'IMG') {
-          const newSpan = this.createNewElement('span')
+          const newSpan = createNewElement('span')
           newSpan.innerHTML = '\u200b'
           elem.parentElement!.insertBefore(
             newSpan,
@@ -485,7 +481,7 @@ class Editor extends React.Component<EditorProps> {
         mainDiv.lastElementChild?.nodeName === 'DIV' &&
         ev.clientY > mainDiv.lastElementChild.getBoundingClientRect().bottom
       ) {
-        const newSpan = this.createNewElement('span')
+        const newSpan = createNewElement('span')
         newSpan.innerHTML = '\u200b'
         mainDiv.lastElementChild.append(this.selImage)
         mainDiv.lastElementChild.append(newSpan)
@@ -497,7 +493,6 @@ class Editor extends React.Component<EditorProps> {
         this.selImage.getAttribute('data-defaultstyle')!
       )
       this.selImage.removeAttribute('data-mousedown')
-      this.selImage.removeAttribute('data-defaultstyle')
     }
 
     if (!this.selTable || !this.selTable.getAttribute('data-selectable')) return
@@ -528,7 +523,7 @@ class Editor extends React.Component<EditorProps> {
         this.addCellMouseMove(cell, table)
       }
 
-      const setToTdAttr = (cell: HTMLElement, attr: string) => {
+      const setCellAttr = (cell: HTMLElement, attr: string) => {
         cell.setAttribute(
           attr,
           this.selTable!.children[1].children[0].getAttribute(attr)!
@@ -536,17 +531,17 @@ class Editor extends React.Component<EditorProps> {
       }
 
       for (let i = 0; i < cells.length; i++) {
-        const tr = this.createNewElement('tr')
+        const tr = createNewElement('tr')
         for (let j = 0; j < cells[i].length; j++) {
           const cell = cells[i][j]
           this.colorizeCell(cell, 'data-defaultcolor', false)
           const clonedCell = cell.cloneNode(true) as HTMLElement
           tr.append(clonedCell)
           if (clonedCell.nodeName === 'TH') {
-            setToTdAttr(clonedCell, 'data-defaultcolor')
-            setToTdAttr(clonedCell, 'data-selectcolor')
-            setToTdAttr(clonedCell, 'data-dragcolor')
-            setToTdAttr(clonedCell, 'style')
+            setCellAttr(clonedCell, 'data-defaultcolor')
+            setCellAttr(clonedCell, 'data-selectcolor')
+            setCellAttr(clonedCell, 'data-dragcolor')
+            setCellAttr(clonedCell, 'style')
           }
         }
         tr.innerHTML = tr.innerHTML.replaceAll('<th', '<td')
@@ -880,155 +875,29 @@ class Editor extends React.Component<EditorProps> {
     cssString: string = '',
     selectable: boolean = true
   ) => {
-    const cssArr = parseCSS(cssString)
-    const insertRuleIfNotFound = (
-      index: number,
-      key: string,
-      value: string,
-      selector: any = false
-    ) => {
-      if (!cssArr[index].rules.includes(key)) {
-        cssString =
-          cssString +
-          `
-          ${selector ? selector + '{' : ''}
-          ${key}:${value};
-          ${selector ? '}' : ''}
-        `
-        cssArr[index].rules.push({ key, value })
-      }
-    }
-
-    const makeSureKeyExist = (index: number, key: string) => {
-      if (index === -1) {
-        cssArr.push({ selector: key, rules: [] })
-      }
-      return index === -1 ? cssArr.length - 1 : index
-    }
-
-    const tableStrIndex = cssString.indexOf('table')
-    const lastPara = cssString.indexOf('}', tableStrIndex)
-    if (tableStrIndex !== -1) {
-      cssString =
-        cssString.slice(0, tableStrIndex) +
-        cssString.slice(tableStrIndex + 6, lastPara) +
-        cssString.slice(lastPara + 1)
-    }
-
-    let tableIndex = -1
-    let tdIndex = -1
-    let thIndex = -1
-
-    for (let i = 0; i < cssArr.length; i++) {
-      if (cssArr[i].selector === 'table') tableIndex = i
-      else if (cssArr[i].selector === 'td') tdIndex = i
-      else if (cssArr[i].selector === 'th') thIndex = i
-    }
-
-    tableIndex = makeSureKeyExist(tableIndex, 'td')
-    tdIndex = makeSureKeyExist(tdIndex, 'td')
-    thIndex = makeSureKeyExist(thIndex, 'th')
-
-    insertRuleIfNotFound(tableIndex, 'table-layout', 'fixed')
-    insertRuleIfNotFound(tableIndex, 'margin', '5px')
-    insertRuleIfNotFound(tableIndex, 'border-collapse', 'collapse')
-
-    const currDiv = this.currentDiv as HTMLElement
-    const colWidth = currDiv.getBoundingClientRect().width / (cols + 1)
-
-    insertRuleIfNotFound(tdIndex, 'width', `${colWidth}px`, 'td')
-    insertRuleIfNotFound(tdIndex, 'max-width', `${colWidth}px`, 'td')
-    insertRuleIfNotFound(tdIndex, 'word-break', 'break-all', 'td')
-    insertRuleIfNotFound(tdIndex, 'white-space', 'pre-wrap', 'td')
-    insertRuleIfNotFound(tdIndex, 'text-align', 'center', 'td')
-    insertRuleIfNotFound(tdIndex, 'border', 'thin solid #5e646e70', 'th')
-    insertRuleIfNotFound(tdIndex, 'border', 'thin solid #9ba4b470', 'td')
-    insertRuleIfNotFound(thIndex, 'background-color', '#ebecf1', 'th')
-    insertRuleIfNotFound(thIndex, 'font-weight', 'normal', 'th')
-
-    if (selectable) {
-      insertRuleIfNotFound(thIndex, 'background-color', '#d2d3c970', 'th')
-      insertRuleIfNotFound(tdIndex, 'background-color', '#ffffff', 'td')
-      insertRuleIfNotFound(thIndex, 'select-color', '#5a868370', 'th')
-      insertRuleIfNotFound(tdIndex, 'select-color', '#68b0ab50', 'td')
-      insertRuleIfNotFound(tdIndex, 'drag-color', '#4ba4bb70', 'td')
-      insertRuleIfNotFound(thIndex, 'drag-color', '#3b666870', 'th')
-    }
-
-    let tdDefaultStyle: any = {}
-    let thDefaultStyle: any = {}
-
-    const tdRules = cssArr[tdIndex].rules
-    const thRules = cssArr[thIndex].rules
-    for (let i = 0; i < tdRules.length; i++) {
-      tdDefaultStyle[tdRules[i].key] = tdRules[i].value
-    }
-    for (let i = 0; i < thRules.length; i++) {
-      thDefaultStyle[thRules[i].key] = thRules[i].value
-    }
-
-    const Table = styled.table`
-      ${cssString}
-    `
-
-    let table = createElementFromHTML(
-      ReactDOMServer.renderToStaticMarkup(<Table />)
-    )
-
-    if (selectable) table.setAttribute('data-selectable', 'true')
-
     if (!this.nextMainCurrentDiv) {
-      const div = this.createNewElement('div')
-      const span = this.createNewElement('span')
+      const div = createNewElement('div')
+      const span = createNewElement('span')
       span.innerHTML = '\u200b'
       div.appendChild(span)
       this.selfRef.current.appendChild(div)
-      this.nextMainCurrentDiv = div
+      this.nextMainCurrentDiv = div as HTMLElement
     }
-    this.selfRef.current.insertBefore(table, this.nextMainCurrentDiv)
 
-    for (let i = 0; i < rows; i++) {
-      const tr = this.createNewElement('tr')
-      table.appendChild(tr)
+    const table = createTable(
+      rows,
+      cols,
+      cssString,
+      this.currentDiv.getBoundingClientRect().width,
+      this.nextMainCurrentDiv,
+      selectable
+    )
 
-      for (let j = 0; j < cols; j++) {
-        const cell =
-          i === 0 ? this.createNewElement('th') : this.createNewElement('td')
-
+    for (let i = 0; i < table.children.length; i++)
+      for (let cell of [].slice.call(table.children[i].children)) {
         this.addCellMouseDown(cell, table)
         this.addCellMouseMove(cell, table)
-
-        const div = this.createNewElement('div')
-        const span = this.createNewElement('span')
-
-        if (selectable) {
-          cell.setAttribute(
-            'data-selectcolor',
-            i === 0
-              ? thDefaultStyle['select-color']
-              : tdDefaultStyle['select-color']
-          )
-          cell.setAttribute(
-            'data-dragcolor',
-            i === 0
-              ? thDefaultStyle['drag-color']
-              : tdDefaultStyle['drag-color']
-          )
-          cell.setAttribute(
-            'data-defaultcolor',
-            i === 0
-              ? thDefaultStyle['background-color']
-              : tdDefaultStyle['background-color']
-          )
-        }
-
-        div.contentEditable = 'true'
-        span.innerHTML = '\u200b'
-        tr.appendChild(cell)
-        cell.appendChild(div)
-        div.appendChild(span)
       }
-    }
 
     this.currentDiv = table.firstElementChild!.firstElementChild!
       .firstElementChild! as HTMLElement
@@ -1036,6 +905,7 @@ class Editor extends React.Component<EditorProps> {
       .firstElementChild!.firstElementChild! as HTMLElement
 
     this.select(this.currentChild, 1)
+
     this.commitChanges()
   }
 
@@ -1055,10 +925,8 @@ class Editor extends React.Component<EditorProps> {
 
     img.src = src
 
-    img.setAttribute('data-selectstyle', selectCss)
-    img.setAttribute('data-defaultstyle', css)
-
     img.addEventListener('mousedown', (ev: MouseEvent) => {
+      if (ev.button !== 0) return
       this.selImage = img
       img.setAttribute('data-mousedown', 'true')
       this.currentDiv = img.parentElement as HTMLElement
@@ -1102,7 +970,15 @@ class Editor extends React.Component<EditorProps> {
       img.style.width = 'auto'
     }
 
-    const spanAfter = this.createNewElement('span')
+    const selectCssObj = stringToCssObj(selectCss)
+    if (!('width' in selectCssObj)) selectCssObj['width'] = img.style.width
+    if (!('height' in selectCssObj)) selectCssObj['height'] = img.style.height
+
+    selectCss = cssObjToString(selectCssObj)
+    img.setAttribute('data-selectstyle', selectCss)
+    img.setAttribute('data-defaultstyle', img.getAttribute('style')!)
+
+    const spanAfter = createNewElement('span')
 
     spanAfter.innerText = '\u200b'
 

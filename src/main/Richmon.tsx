@@ -49,7 +49,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         left: ${(props) => props.left + 'px'};
         top: ${(props) => props.top + 'px'};
         pointer-events: none;
-        border-right: 1.4px solid blue;
+        border-right: 1.2px solid black;
         transition: left 65ms ease-in;
       `
     }

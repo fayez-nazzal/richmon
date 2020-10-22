@@ -28,3 +28,8 @@ export function createElementFromHTML(htmlString: string) {
   div.innerHTML = htmlString.trim()
   return div.firstChild as HTMLElement
 }
+
+export function createNewElement(type: string) {
+  const elem = document.createElement(type)
+  return elem
+}
