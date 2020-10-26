@@ -23,7 +23,7 @@ class Caret extends React.Component<
   setBlinkInterval() {
     this.blinkInterval = setInterval(() => {
       this.blink()
-    }, 600)
+    }, 550)
   }
 
   componentDidMount() {
@@ -43,7 +43,7 @@ class Caret extends React.Component<
       clearTimeout(this.preserveTimeout)
       this.preserveTimeout = setTimeout(() => {
         this.setBlinkInterval()
-      }, 300)
+      }, 100)
     }
   }
 

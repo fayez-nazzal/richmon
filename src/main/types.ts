@@ -20,17 +20,30 @@ export interface RichmonComponentProps {
   insertTable: { (rows: number, cols: number, css?: string): void }
   insertImage: { (src: string): void }
   deleteSelectedImage: { (): void }
+  parent: React.Component
 }
 
 export interface RichmonButtonProps extends RichmonComponentProps {
   actions: (string | { (): any })[]
-  text: string
+  className?: string
+  style?: React.CSSProperties
+  css?: string
 }
 
 export interface RichmonListProps {
   dir: string
   tools: (JSX.Element | string)[]
-  text: string
+  parent: React.Component
+}
+
+export interface RichmonGridProps {
+  tools: (JSX.Element | string)[]
+  firstRow?: JSX.Element[] | JSX.Element
+  lastRow?: JSX.Element[] | JSX.Element
+  children?: any
+  templateCols: string
+  templateRows: string
+  css?: string
 }
 
 export interface EditorProps {

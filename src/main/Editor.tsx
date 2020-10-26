@@ -121,9 +121,15 @@ class Editor extends React.Component<EditorProps> {
 
   // How to make it work with tables?, too... this.currentChild should be...
   styleText = (styles: any, canToggle: boolean) => {
-    const sel = window.getSelection()
+    let sel = window.getSelection()
 
-    if (!sel) return
+    if (!sel || !sel.anchorNode) {
+      this.select(
+        this.currentChild.childNodes[0],
+        this.currentChild.innerHTML.length
+      )
+      sel = window.getSelection()!
+    }
 
     const isRanged = !(
       sel.anchorNode!.isSameNode(sel.focusNode!) &&

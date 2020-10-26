@@ -2,12 +2,19 @@ import React from 'react'
 import { RichmonButtonProps } from './types'
 import './richmonUtils'
 import { stringToCssObj } from './richmonUtils'
+import styled from 'styled-components'
 
-class RichmonButton extends React.Component<RichmonButtonProps> {
+class RichmonButton extends React.Component<
+  RichmonButtonProps,
+  { extraStyles: string }
+> {
   public clickCbs: { (): void }[] = []
 
   constructor(props: any) {
     super(props)
+    this.state = {
+      extraStyles: ''
+    }
   }
 
   onCLick = (e: React.MouseEvent) => {
@@ -29,13 +36,17 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
       } else if (/[a-zA-Z]*\(.+\).*/.test(action as string)) {
         action = action as string
         let actionName = action.match(/[a-zA-Z]*(?=\()/)![0]
-        let args = action.match(/(?<=\((?:\s*\w+\s*,)*\s*)\w+/g)!
+        let args = action.match(/\(\s*([^)]+?)\s*\)/)![1].split(', ')
         const extraArgs = action.match(/(?<=\)).*/)![0]
         let canToggle = extraArgs && !extraArgs.includes('!') ? true : false
         console.log(actionName, args, extraArgs)
         if (args && args.length) {
           switch (actionName) {
             case 'textColor':
+              this.setState({
+                ...this.state,
+                extraStyles: `padding: 6.4px;border:none;background-color:${args[0]}`
+              })
               cb = () =>
                 this.props.setCss(
                   stringToCssObj(`color:${args[0]};`),
@@ -156,14 +167,20 @@ class RichmonButton extends React.Component<RichmonButtonProps> {
     }
   }
   render() {
+    const Btn = styled.button`
+      ${this.state.extraStyles};
+      ${this.props.css};
+    `
     return (
-      <button
+      <Btn
         onClick={this.onCLick}
         onMouseDown={(e) => e.preventDefault()}
         onMouseUp={(e) => e.preventDefault()}
+        className={this.props.className}
+        style={this.props.style}
       >
-        {this.props.text}
-      </button>
+        {this.props.children}
+      </Btn>
     )
   }
 }

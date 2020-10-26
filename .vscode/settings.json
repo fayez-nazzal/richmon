@@ -9,5 +9,22 @@
   },
   "scm.inputFontFamily": "Hack",
   "editor.multiCursorModifier": "ctrlCmd",
-  "editor.fontFamily": "'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback', 'Hack'"
+  "editor.fontFamily": "'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback', 'Hack'",
+  "colorize.languages": [
+    "css",
+    "sass",
+    "scss",
+    "less",
+    "postcss",
+    "sss",
+    "stylus",
+    "xml",
+    "svg",
+    "typescript",
+    "javascript"
+  ],
+  "colorize.include": [],
+  "colorize.files_extensions": [
+    ".tsx"
+  ]
 }
