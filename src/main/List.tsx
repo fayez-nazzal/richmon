@@ -1,6 +1,6 @@
 import React from 'react'
 import styled, { keyframes } from 'styled-components'
-
+import Grid from './Grid'
 interface ListPropTypes {
   css?: string
   parent: any
@@ -27,6 +27,18 @@ const openKeyFrames = keyframes`
         transform: translateY(0);
       }
     `
+
+const Main = styled.div`
+  position: absolute;
+  left: 0;
+  padding: 6px 4px;
+  background-color: white;
+  -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+  -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+  box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+  z-index: 10;
+  animation: ${openKeyFrames} 0.14s ease-in-out;
+`
 
 class List extends React.Component<ListPropTypes, ListState> {
   private selfRef: any = React.createRef()
@@ -105,23 +117,6 @@ class List extends React.Component<ListPropTypes, ListState> {
   }
 
   render() {
-    const Main = styled.div`
-      position: absolute;
-      left: 0;
-      width: ${this.props.width ? this.props.width : 'auto'};
-      height: ${this.props.height ? this.props.height : 'auto'};
-      visibility: ${this.state.showContents ? 'visible' : 'hidden'};
-      padding: 6px 4px;
-      background-color: white;
-      -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-      -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-      box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-      z-index: 10;
-      animation: ${openKeyFrames}
-        ${this.state.isAnimationEnabled ? '0.14s' : '0s'} ease-in-out;
-      ${this.props.css};
-    `
-
     return (
       <span style={{ position: 'relative' }} ref={this.selfRef}>
         <button
@@ -132,6 +127,11 @@ class List extends React.Component<ListPropTypes, ListState> {
           {this.props.buttonChildren}
         </button>
         <Main
+          style={{
+            width: `${this.props.width ? this.props.width : 'auto'}`,
+            height: `${this.props.height ? this.props.height : 'auto'}`,
+            visibility: this.state.showContents ? 'visible' : 'hidden'
+          }}
           onClick={(e: React.MouseEvent) => {
             const target = e.target as HTMLElement
             if (
@@ -145,9 +145,26 @@ class List extends React.Component<ListPropTypes, ListState> {
             }
           }}
         >
-          <React.Fragment key='pala'>
-            {this.props.children[0].props.children}
-          </React.Fragment>
+          <Grid
+            key='grid3'
+            rows={2}
+            cols={6}
+            items={[
+              'textColor(#00bcd4)',
+              'textColor(#b2ebf2)',
+              'textColor(#dddddd)',
+              'textColor(#d9adad)',
+              'textColor(#faf3dd)',
+              'textColor(#d789d7)',
+              'textColor(#bbd196)',
+              'textColor(#fcf876)',
+              'textColor(#ee6f57)',
+              'textColor(#f0daa4)',
+              'textColor(#eaac9d)',
+              'textColor(#a09d9c)'
+            ]}
+            parent={parent}
+          />
         </Main>
       </span>
     )
