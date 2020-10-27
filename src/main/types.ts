@@ -16,11 +16,8 @@ export interface Text {
 }
 
 export interface RichmonComponentProps {
-  setCss: { (css: {}, canToggle?: boolean): void }
-  insertTable: { (rows: number, cols: number, css?: string): void }
-  insertImage: { (src: string): void }
-  deleteSelectedImage: { (): void }
-  parent: React.Component
+  parent?: any
+  css?: string
 }
 
 export interface RichmonButtonProps extends RichmonComponentProps {

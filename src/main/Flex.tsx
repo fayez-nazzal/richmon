@@ -1,18 +1,19 @@
 import React from 'react'
 import './richmonUtils'
 import styled from 'styled-components'
+import isEqual from 'lodash.isequal'
 
 interface FlexProps {
   items: (string | JSX.Element)[]
   css?: string
-  parent: any
+  parent?: any
 }
 
 interface FlexState {
   items: (string | JSX.Element)[]
 }
 
-class RichmonGrid extends React.Component<FlexProps, FlexState> {
+class Flex extends React.Component<FlexProps, FlexState> {
   constructor(props: any) {
     super(props)
 
@@ -31,28 +32,39 @@ class RichmonGrid extends React.Component<FlexProps, FlexState> {
     }
   }
 
+  shouldComponentUpdate(prevProps: any, prevState: any) {
+    console.log(prevProps, this.props)
+    console.log(prevState, this.state)
+    return !isEqual(prevProps, this.props) || !isEqual(prevState, this.state)
+  }
+
   updateItems = () => {
-    const items = this.props.parent.constructTools(
-      this.props.items,
-      this.state.items,
-      this
-    )
-    this.setState({ ...this.state, items })
-    console.log(this.state.items)
+    // let richmon = this.props.parent
+    // console.log(richmon)
+    // while (richmon.constructor.name !== 'Richmon') {
+    //   richmon = richmon.props.parent
+    // }
+    // const items = richmon.constructTools(this.props.items, this)
+    // this.setState({ ...this.state, items })
+    // console.log(this.state.items)
   }
 
   render() {
     const Div = styled.div`
-      grid-template-rows: repeat(${this.props.rows}, 1fr);
-      grid-template-columns: repeat(${this.props.cols}, 1fr);
-      display: grid;
-      grid-auto-flow: column;
-      grid-gap: 6px;
+      display: flex;
+      flex: 1 1 auto;
+      justify-content: center;
       ${this.props.css}
     `
 
-    return <Div>{this.state.items}</Div>
+    return (
+      <Div>
+        {React.Children.map(this.state.items, (child: any) =>
+          React.cloneElement(child, { parent: this.props.parent })
+        )}
+      </Div>
+    )
   }
 }
 
-export default RichmonGrid
+export default Flex

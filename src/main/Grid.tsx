@@ -7,11 +7,12 @@ interface GridProps {
   cols: number
   items: (string | JSX.Element)[]
   css?: string
-  parent: any
+  parent?: any
 }
 
 interface GridState {
   items: (string | JSX.Element)[]
+  itemKeys: string[]
 }
 
 class RichmonGrid extends React.Component<GridProps, GridState> {
@@ -19,11 +20,13 @@ class RichmonGrid extends React.Component<GridProps, GridState> {
     super(props)
 
     this.state = {
-      items: []
+      items: [],
+      itemKeys: []
     }
   }
 
   componentDidMount() {
+    console.log('grid mount')
     this.updateItems()
   }
 
@@ -34,13 +37,16 @@ class RichmonGrid extends React.Component<GridProps, GridState> {
   }
 
   updateItems = () => {
-    const items = this.props.parent.constructTools(
-      this.props.items,
-      this.state.items,
-      this
-    )
-    this.setState({ ...this.state, items })
-    console.log(this.state.items)
+    console.log('grid udate')
+
+    // let richmon = this.props.parent
+
+    // while (richmon.constructor.name !== 'Richmon') {
+    //   richmon = richmon.props.parent
+    // }
+
+    // const items = richmon.constructTools(this.props.items, this)
+    // this.setState({ ...this.state, items })
   }
 
   render() {

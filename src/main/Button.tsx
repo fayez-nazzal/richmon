@@ -3,17 +3,19 @@ import { RichmonButtonProps } from './types'
 import './richmonUtils'
 import { stringToCssObj } from './richmonUtils'
 import styled from 'styled-components'
+import isEqual from 'lodash.isequal'
 
 class RichmonButton extends React.Component<
   RichmonButtonProps,
-  { extraStyles: string }
+  { extraStyles: string; className: string }
 > {
   public clickCbs: { (): void }[] = []
 
   constructor(props: any) {
     super(props)
     this.state = {
-      extraStyles: ''
+      extraStyles: '',
+      className: this.props.className ? this.props.className : ''
     }
   }
 
@@ -25,6 +27,26 @@ class RichmonButton extends React.Component<
   }
 
   componentDidMount() {
+    this.constructCallbacks()
+  }
+
+  componentDidUpdate(prevProps: any) {
+    if (!isEqual(prevProps, this.props)) {
+      this.constructCallbacks()
+    }
+  }
+
+  constructCallbacks = () => {
+    if (parent === null) return
+
+    let richmon = this.props.parent
+
+    while (richmon.constructor.name !== 'Richmon') {
+      richmon = richmon.props.parent
+    }
+
+    this.clickCbs = []
+
     const actions = this.props.actions
 
     for (let i = 0; i < actions.length; i++) {
@@ -39,30 +61,36 @@ class RichmonButton extends React.Component<
         let args = action.match(/\(\s*([^)]+?)\s*\)/)![1].split(', ')
         const extraArgs = action.match(/(?<=\)).*/)![0]
         let canToggle = extraArgs && !extraArgs.includes('!') ? true : false
-        console.log(actionName, args, extraArgs)
         if (args && args.length) {
           switch (actionName) {
             case 'textColor':
               this.setState({
                 ...this.state,
-                extraStyles: `padding: 6.4px;border:none;background-color:${args[0]}`
+                extraStyles: `
+                padding: 6.4px;
+                border:none;background-color:${args[0]};
+                &:hover {
+                  -webkit-box-shadow: 0px 0px 4px -1px grey;
+                  box-shadow: 0px 0px 4px -1px grey;
+                }
+                `
               })
               cb = () =>
-                this.props.setCss(
+                richmon.editor.current.setCss(
                   stringToCssObj(`color:${args[0]};`),
                   canToggle
                 )
               break
             case 'highlightText':
               cb = () =>
-                this.props.setCss(
+                richmon.editor.current.setCss(
                   stringToCssObj(`background-color:${args[0]};`),
                   canToggle
                 )
               break
             case 'fontSize':
               cb = () =>
-                this.props.setCss(
+                richmon.editor.current.setCss(
                   `font-size: ${
                     isNaN(+args[0].slice(-1)) ? args[0] : args[0] + 'px'
                   }`,
@@ -70,7 +98,11 @@ class RichmonButton extends React.Component<
                 )
               break
             case 'css':
-              cb = () => this.props.setCss(stringToCssObj(args[0]), canToggle)
+              cb = () =>
+                richmon.editor.current.setCss(
+                  stringToCssObj(args[0]),
+                  canToggle
+                )
               break
             case 'table':
               let rows: number = 0
@@ -84,7 +116,7 @@ class RichmonButton extends React.Component<
               }
               if (!rows) rows = parseInt(prompt('set row')!)
               if (!cols) cols = parseInt(prompt('set cols')!)
-              cb = () => this.props.insertTable(rows, cols, css)
+              cb = () => richmon.editor.current.insertTable(rows, cols, css)
               break
             case 'img':
               if (args[0].includes('http')) {
@@ -92,7 +124,7 @@ class RichmonButton extends React.Component<
                   action.indexOf('(') + 1,
                   action.indexOf(')')
                 )
-                cb = () => this.props.insertImage(str)
+                cb = () => richmon.editor.current.insertImage(str)
               }
               break
             default:
@@ -107,56 +139,76 @@ class RichmonButton extends React.Component<
         switch (actionName) {
           case 'lighter':
             cb = () =>
-              this.props.setCss(
+              richmon.editor.current.setCss(
                 stringToCssObj('font-weight:lighter;'),
                 canToggle
               )
             break
           case 'delete':
-            cb = () => this.props.deleteSelectedImage()
+            cb = () => richmon.editor.current.deleteSelectedImage()
             break
           case 'bold':
             cb = () =>
-              this.props.setCss(stringToCssObj('font-weight:bold;'), canToggle)
+              richmon.editor.current.setCss(
+                stringToCssObj('font-weight:bold;'),
+                canToggle
+              )
             break
           case 'normal':
             cb = () =>
-              this.props.setCss(
+              richmon.editor.current.setCss(
                 stringToCssObj('font-weight:normal;font-style:normal;'),
                 canToggle
               )
             break
           case 'bolder':
             cb = () =>
-              this.props.setCss(
+              richmon.editor.current.setCss(
                 stringToCssObj('font-weight:bolder;'),
                 canToggle
               )
             break
           case 'italic':
             cb = () =>
-              this.props.setCss(stringToCssObj('font-style:italic;'), canToggle)
+              richmon.editor.current.setCss(
+                stringToCssObj('font-style:italic;'),
+                canToggle
+              )
             break
           case 'oblique':
             cb = () =>
-              this.props.setCss(
+              richmon.editor.current.setCss(
                 stringToCssObj('font-style:oblique;'),
                 canToggle
               )
             break
           case 'underline':
             cb = () =>
-              this.props.setCss(
+              richmon.editor.current.setCss(
                 stringToCssObj('text-decoration:underline;'),
                 canToggle
               )
             break
           case 'super':
             cb = () =>
-              this.props.setCss(
+              richmon.editor.current.setCss(
                 stringToCssObj('vertical-align:super;font-size:12px;'),
                 canToggle
               )
+            break
+          case 'nextPage':
+            this.setState({
+              ...this.state,
+              className: this.state.className + ' static'
+            })
+            cb = () => this.props.parent.nextPage()
+            break
+          case 'previousPage':
+            this.setState({
+              ...this.state,
+              className: this.state.className + ' static'
+            })
+            cb = () => this.props.parent.previousPage()
             break
           default:
             alert(actionName)
@@ -166,6 +218,7 @@ class RichmonButton extends React.Component<
       if (cb) this.clickCbs.push(cb)
     }
   }
+
   render() {
     const Btn = styled.button`
       ${this.state.extraStyles};
@@ -176,7 +229,7 @@ class RichmonButton extends React.Component<
         onClick={this.onCLick}
         onMouseDown={(e) => e.preventDefault()}
         onMouseUp={(e) => e.preventDefault()}
-        className={this.props.className}
+        className={this.state.className}
         style={this.props.style}
       >
         {this.props.children}

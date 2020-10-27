@@ -312,7 +312,7 @@ class Editor extends React.Component<EditorProps> {
     return before
   }
 
-  setCss = (css: any, canToggle = false) => {
+  public setCss = (css: any, canToggle = false) => {
     this.styleText(css, canToggle)
   }
 

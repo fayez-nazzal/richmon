@@ -13,4 +13,5 @@ export type RichmonState = {
   caretPosition: position
   isCaretHidden: boolean
   StyledCaret: any
+  choosedColor: string
 }

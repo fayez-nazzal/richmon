@@ -2,7 +2,8 @@ import React from 'react'
 
 export default (_props: {
   actions: (string | { (): any })[]
-  text: string
+  children?: any
+  css?: string
 }) => {
-  return <div></div>
+  return <div>{_props.children}</div>
 }

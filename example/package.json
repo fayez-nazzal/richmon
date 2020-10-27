@@ -21,8 +21,7 @@
     "react-dom": "file:../node_modules/react-dom",
     "react-scripts": "file:../node_modules/react-scripts",
     "richmon": "file:..",
-    "typescript": "file:../node_modules/typescript",
-    "uuidv4": "^6.2.4"
+    "typescript": "file:../node_modules/typescript"
   },
   "devDependencies": {
     "@babel/plugin-syntax-object-rest-spread": "^7.8.3"

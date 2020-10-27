@@ -6,11 +6,15 @@ interface ListPropTypes {
   parent: any
   children?: any
   buttonChildren: any
+  width?: string
+  height?: string
 }
 
 interface ListState {
   showContents: boolean
   currentPage: number
+  children: any[]
+  isAnimationEnabled: boolean
 }
 
 const openKeyFrames = keyframes`
@@ -30,40 +34,91 @@ class List extends React.Component<ListPropTypes, ListState> {
     super(props)
     this.state = {
       showContents: false,
-      currentPage: 1
+      currentPage: 0,
+      children: [],
+      isAnimationEnabled: true
     }
   }
 
   componentDidMount() {
+    // for every page
+    // map all it's childs and change its parent prop
+    // save it in children state that does not change
+    // display children state
+    console.log('list mount')
+    const newPages: any[] = []
+    React.Children.forEach(this.props.children, (page) => {
+      // const newPageChildren: any[] = []
+      // React.Children.forEach(page.props.children, (child) => {
+      //   newPageChildren.push(React.cloneElement(child, { parent: this }))
+      // })
+      newPages.push(React.cloneElement(page, { parent: this }))
+    })
+
+    this.setState({ ...this.state, children: newPages })
+
     document.addEventListener('mousedown', this.handleClickOutside)
   }
+
+  mapChildrenParents = () => {}
 
   componentWillUnmount() {
     document.removeEventListener('mousedown', this.handleClickOutside)
   }
 
   handleClickOutside = (e: MouseEvent) => {
-    if (this.selfRef && !this.selfRef.current.contains(e.target))
+    if (
+      this.selfRef &&
+      !this.selfRef.current.contains(e.target) &&
+      this.state.showContents
+    ) {
       this.setState({ ...this.state, showContents: false })
+    }
   }
 
   onClick = () => {
-    this.setState({ showContents: !this.state.showContents })
+    this.setState({
+      showContents: !this.state.showContents,
+      currentPage: 0,
+      isAnimationEnabled: true
+    })
+  }
+
+  nextPage = () => {
+    if (!this.state.children) return
+
+    this.setState({
+      ...this.state,
+      isAnimationEnabled: false,
+      currentPage: this.state.currentPage + 1
+    })
+  }
+
+  previousPage = () => {
+    if (!this.state.children) return
+
+    this.setState({
+      ...this.state,
+      isAnimationEnabled: false,
+      currentPage: this.state.currentPage - 1
+    })
   }
 
   render() {
-    console.log(this.props.children)
     const Main = styled.div`
       position: absolute;
       left: 0;
+      width: ${this.props.width ? this.props.width : 'auto'};
+      height: ${this.props.height ? this.props.height : 'auto'};
       visibility: ${this.state.showContents ? 'visible' : 'hidden'};
-      padding: 8px 6px;
+      padding: 6px 4px;
       background-color: white;
       -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
       -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
       box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
       z-index: 10;
-      animation: ${openKeyFrames} 0.14s ease-in-out;
+      animation: ${openKeyFrames}
+        ${this.state.isAnimationEnabled ? '0.14s' : '0s'} ease-in-out;
       ${this.props.css};
     `
 
@@ -78,12 +133,21 @@ class List extends React.Component<ListPropTypes, ListState> {
         </button>
         <Main
           onClick={(e: React.MouseEvent) => {
-            if ((e.target as HTMLElement).nodeName === 'BUTTON') {
-              this.setState({ ...this.state, showContents: false })
+            const target = e.target as HTMLElement
+            if (
+              target.nodeName === 'BUTTON' &&
+              !target.className.includes('static')
+            ) {
+              this.setState({
+                ...this.state,
+                showContents: false
+              })
             }
           }}
         >
-          {this.props.children}
+          <React.Fragment key='pala'>
+            {this.props.children[0].props.children}
+          </React.Fragment>
         </Main>
       </span>
     )
