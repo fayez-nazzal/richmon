@@ -39,14 +39,14 @@ class Flex extends React.Component<FlexProps, FlexState> {
   }
 
   updateItems = () => {
-    // let richmon = this.props.parent
-    // console.log(richmon)
-    // while (richmon.constructor.name !== 'Richmon') {
-    //   richmon = richmon.props.parent
-    // }
-    // const items = richmon.constructTools(this.props.items, this)
-    // this.setState({ ...this.state, items })
-    // console.log(this.state.items)
+    let richmon = this.props.parent
+    console.log(richmon)
+    while (richmon.constructor.name !== 'Richmon') {
+      richmon = richmon.props.parent
+    }
+    const items = richmon.constructTools(this.props.items, this)
+    this.setState({ ...this.state, items })
+    console.log(this.state.items)
   }
 
   render() {

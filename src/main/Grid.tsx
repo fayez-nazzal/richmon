@@ -39,14 +39,14 @@ class RichmonGrid extends React.Component<GridProps, GridState> {
   updateItems = () => {
     console.log('grid udate')
 
-    // let richmon = this.props.parent
+    let richmon = this.props.parent
 
-    // while (richmon.constructor.name !== 'Richmon') {
-    //   richmon = richmon.props.parent
-    // }
+    while (richmon.constructor.name !== 'Richmon') {
+      richmon = richmon.props.parent
+    }
 
-    // const items = richmon.constructTools(this.props.items, this)
-    // this.setState({ ...this.state, items })
+    const items = richmon.constructTools(this.props.items, this)
+    this.setState({ ...this.state, items })
   }
 
   render() {

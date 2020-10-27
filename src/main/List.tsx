@@ -127,8 +127,8 @@ class List extends React.Component<ListPropTypes, ListState> {
         <Main
           extraCss={this.props.css ? this.props.css : ''}
           style={{
-            width: `${this.props.width ? this.props.width : 'auto'}`,
-            height: `${this.props.height ? this.props.height : 'auto'}`,
+            width: this.props.width ? this.props.width : 'auto',
+            height: this.props.height ? this.props.height : 'auto',
             visibility: this.state.showContents ? 'visible' : 'hidden'
           }}
           onClick={(e: React.MouseEvent) => {
@@ -144,9 +144,12 @@ class List extends React.Component<ListPropTypes, ListState> {
             }
           }}
         >
-          {React.Children.map(this.props.children, (child) => {
-            return React.cloneElement(child, { parent: this })
-          })}
+          {React.Children.map(
+            this.props.children[this.state.currentPage],
+            (child) => {
+              return React.cloneElement(child, { parent: this })
+            }
+          )}
         </Main>
       </span>
     )

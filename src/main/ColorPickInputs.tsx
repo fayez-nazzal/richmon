@@ -4,7 +4,8 @@ import RichmonButton from './Button'
 
 const Input = styled.input`
   caret-color: black;
-  width: 100%;
+  flex: 1 1 auto;
+  width: 20%;
 `
 
 const Label = styled.label`
@@ -16,7 +17,7 @@ const Label = styled.label`
 
 const FlexDiv = styled.div`
   display: flex;
-  flex: 1 1 auto;
+  width: 160px;
   justify-content: center;
   height: 23px;
 `
