@@ -13,11 +13,15 @@ export interface PageState {
 }
 
 class Page extends React.Component<PagePropTypes, PageState> {
+  private Div: any
   constructor(props: any) {
     super(props)
     this.state = {
       children: []
     }
+    this.Div = styled.div`
+      ${this.props.css};
+    `
   }
 
   componentDidMount() {
@@ -30,10 +34,7 @@ class Page extends React.Component<PagePropTypes, PageState> {
   }
 
   render() {
-    console.warn('page updaed')
-    const Div = styled.div`
-      ${this.props.css};
-    `
+    const Div = this.Div
     return <Div className='page'>{...this.state.children}</Div>
   }
 }

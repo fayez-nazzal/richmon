@@ -1,6 +1,5 @@
 import React from 'react'
 import styled, { keyframes } from 'styled-components'
-import Grid from './Grid'
 interface ListPropTypes {
   css?: string
   parent: any
@@ -28,20 +27,10 @@ const openKeyFrames = keyframes`
       }
     `
 
-const Main = styled.div`
-  position: absolute;
-  left: 0;
-  padding: 6px 4px;
-  background-color: white;
-  -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-  -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-  box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-  z-index: 10;
-  animation: ${openKeyFrames} 0.14s ease-in-out;
-`
-
 class List extends React.Component<ListPropTypes, ListState> {
   private selfRef: any = React.createRef()
+  private Main: any
+
   constructor(props: any) {
     super(props)
     this.state = {
@@ -50,6 +39,18 @@ class List extends React.Component<ListPropTypes, ListState> {
       children: [],
       isAnimationEnabled: true
     }
+    this.Main = styled.div`
+      position: absolute;
+      left: 0;
+      padding: 6px 4px;
+      background-color: white;
+      -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+      -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+      box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+      z-index: 10;
+      animation: ${openKeyFrames} 0.14s ease-in-out;
+      ${this.props.css}
+    `
   }
 
   componentDidMount() {
@@ -60,10 +61,6 @@ class List extends React.Component<ListPropTypes, ListState> {
     console.log('list mount')
     const newPages: any[] = []
     React.Children.forEach(this.props.children, (page) => {
-      // const newPageChildren: any[] = []
-      // React.Children.forEach(page.props.children, (child) => {
-      //   newPageChildren.push(React.cloneElement(child, { parent: this }))
-      // })
       newPages.push(React.cloneElement(page, { parent: this }))
     })
 
@@ -117,6 +114,7 @@ class List extends React.Component<ListPropTypes, ListState> {
   }
 
   render() {
+    const Main = this.Main
     return (
       <span style={{ position: 'relative' }} ref={this.selfRef}>
         <button
@@ -127,6 +125,7 @@ class List extends React.Component<ListPropTypes, ListState> {
           {this.props.buttonChildren}
         </button>
         <Main
+          extraCss={this.props.css ? this.props.css : ''}
           style={{
             width: `${this.props.width ? this.props.width : 'auto'}`,
             height: `${this.props.height ? this.props.height : 'auto'}`,
@@ -145,26 +144,9 @@ class List extends React.Component<ListPropTypes, ListState> {
             }
           }}
         >
-          <Grid
-            key='grid3'
-            rows={2}
-            cols={6}
-            items={[
-              'textColor(#00bcd4)',
-              'textColor(#b2ebf2)',
-              'textColor(#dddddd)',
-              'textColor(#d9adad)',
-              'textColor(#faf3dd)',
-              'textColor(#d789d7)',
-              'textColor(#bbd196)',
-              'textColor(#fcf876)',
-              'textColor(#ee6f57)',
-              'textColor(#f0daa4)',
-              'textColor(#eaac9d)',
-              'textColor(#a09d9c)'
-            ]}
-            parent={parent}
-          />
+          {React.Children.map(this.props.children, (child) => {
+            return React.cloneElement(child, { parent: this })
+          })}
         </Main>
       </span>
     )
