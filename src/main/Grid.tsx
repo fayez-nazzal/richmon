@@ -58,7 +58,13 @@ class RichmonGrid extends React.Component<GridProps, GridState> {
       grid-gap: 6px;
     `
 
-    return <Div>{this.state.items}</Div>
+    return (
+      <Div>
+        {React.Children.map(this.state.items, (child: any, index) =>
+          React.cloneElement(child, { parent: this.props.parent, key: index })
+        )}
+      </Div>
+    )
   }
 }
 

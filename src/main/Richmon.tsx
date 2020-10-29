@@ -1,13 +1,12 @@
 import React from 'react'
-import { RichmonPropTypes, Text, position } from './types'
+import { RichmonPropTypes } from './types'
 import { RichmonState } from './RichmonState'
 import RichmonButton from './Button'
 import Toolbar from './Toolbar'
-import Editor from './Editor'
-import Caret from './Caret'
-import styled from 'styled-components'
+import EditorWrapper from './EditorWrapper'
 import isEqual from 'lodash.isequal'
-import ColorPicker from './ColorPickList'
+import ColorPicker from './ColorList'
+import { ReactComponent as Pen } from '../svgs/pen.svg'
 
 const defaultProps = {
   config: {
@@ -22,35 +21,14 @@ const defaultProps = {
 class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   public static defaultProps = defaultProps
 
-  public editor: any = React.createRef()
-
   public colorsGridFirstRow: any[] | any
+  public editor = React.createRef()
 
   constructor(props: any) {
     super(props)
 
     this.state = {
-      tools: [],
-      colorsGridExtraCss: 'border: 1px solid blue;',
-      textColor: 'black',
-      highlightColor: 'transparent',
-      isCaretHidden: true,
-      caretPosition: { left: 0, top: 0 },
-      html: '<div></div>',
-      textToAdd: [],
-      italic: false,
-      bold: false,
-      fontSize: '14px',
-      StyledCaret: styled((props) => <Caret {...props} />)`
-        white-space: pre;
-        position: absolute;
-        left: ${(props) => props.left + 'px'};
-        top: ${(props) => props.top + 'px'};
-        pointer-events: none;
-        border-right: 1.2px solid black;
-        transition: left 65ms ease-in;
-      `,
-      choosedColor: 'white'
+      tools: []
     }
   }
 
@@ -79,45 +57,6 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     )
   }
 
-  // Example actions=["textColor(red)"]
-  public setTextColor = (textColor: string) => {
-    this.setState({ ...this.state, textColor })
-  }
-
-  // Example actions=["bold"]
-  public setBold = () => {
-    this.setState({ ...this.state, bold: !this.state.bold })
-  }
-
-  // Example actions=["italic"]
-  public setItalic = () => {
-    this.setState({ ...this.state, italic: !this.state.italic })
-  }
-
-  // Example actions=["addText{text: hello, color: blue, hgColor: yellow, size: 18px}"]
-  public addText = ({ text, color, hgColor, size }: Text) => {
-    color = color === 'default' ? this.props.config?.defaultTextColor : color
-    hgColor =
-      hgColor === 'default' ? this.props.config?.defaultHighlightColor : hgColor
-    size = size === 'default' ? this.props.config?.defaultFontSize : size
-
-    const style = {}
-
-    if (color) style['color'] = color
-
-    if (hgColor) style['backgroundColor'] = hgColor
-
-    if (size) style['fontSize'] = size
-
-    const textToAdd = [...this.state.textToAdd]
-    textToAdd.push(
-      <span className='text' style={style}>
-        {text}
-      </span>
-    )
-    this.setState({ ...this.state, textToAdd })
-  }
-
   private constructTools = (fromArray: any[], parent: any) => {
     const toolsProp = fromArray
     const tools = []
@@ -143,24 +82,56 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         switch (toolProp) {
           case 'BIU':
             tool_s = [
-              <RichmonButton actions={['bold']} parent={parent}>
+              <RichmonButton
+                actions={['bold']}
+                css='width:28px;height:28px;'
+                parent={parent}
+              >
                 B
               </RichmonButton>,
-              <RichmonButton actions={['italic']} parent={parent}>
+              <RichmonButton
+                actions={['italic']}
+                css='width:28px;height:28px;'
+                parent={parent}
+              >
                 I
               </RichmonButton>,
-              <RichmonButton actions={['underline']} parent={parent}>
+              <RichmonButton
+                actions={['underline']}
+                css='width:28px;height:28px;'
+                parent={parent}
+              >
                 U
               </RichmonButton>
             ]
             break
-          case 'highlightColors':
           case 'textColors':
-            tool_s = <ColorPicker parent={parent} />
+            tool_s = (
+              <ColorPicker
+                action='textColor'
+                initialColor='black'
+                parent={parent}
+                leftButton='A'
+              />
+            )
+            break
+          case 'highlightColors':
+            tool_s = (
+              <ColorPicker
+                action='highlight'
+                parent={parent}
+                initialColor={'yellow'}
+                leftButton={<Pen />}
+              />
+            )
             break
           case 'sup':
             tool_s = (
-              <RichmonButton actions={['sup']} parent={parent}>
+              <RichmonButton
+                actions={['sup']}
+                css='width:28px;height:28px;'
+                parent={parent}
+              >
                 sup
               </RichmonButton>
             )
@@ -169,6 +140,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             tool_s = (
               <RichmonButton
                 actions={['delete']}
+                css='width:28px;height:28px;'
                 parent={parent}
               ></RichmonButton>
             )
@@ -176,7 +148,11 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           case 'B':
           case 'bold':
             tool_s = (
-              <RichmonButton actions={['bold']} parent={parent}>
+              <RichmonButton
+                actions={['bold']}
+                css='width:28px;height:28px;'
+                parent={parent}
+              >
                 B
               </RichmonButton>
             )
@@ -184,7 +160,11 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           case 'I':
           case 'italic':
             tool_s = (
-              <RichmonButton actions={['italic']} parent={parent}>
+              <RichmonButton
+                actions={['italic']}
+                css='width:28px;height:28px;'
+                parent={parent}
+              >
                 I
               </RichmonButton>
             )
@@ -192,11 +172,13 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           default:
             let toolName = toolProp.match(/[a-zA-Z]*(?=\()/)![0]
             let toolArgs = toolProp.match(/\(\s*([^)]+?)\s*\)/)![1].split(', ')
+            const extraArgs = toolProp.match(/(?<=\)).*/)![0]
             switch (toolName) {
+              case 'highlight':
               case 'textColor':
                 tool_s = (
                   <RichmonButton
-                    actions={[`textColor(${toolArgs[0]})`]}
+                    actions={[`${toolName}(${toolArgs[0]})${extraArgs}`]}
                     parent={parent}
                   />
                 )
@@ -210,44 +192,15 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     return tools
   }
 
-  setEditorHTML = (html: string) => {
-    this.setState({ ...this.state, html })
-  }
-
-  setCaretPos = (caretPosition: position) => {
-    this.setState({
-      ...this.state,
-      caretPosition
-    })
-  }
-
-  setIsCaretHidden = (isCaretHidden: boolean) => {
-    this.setState({ ...this.state, isCaretHidden })
-  }
-
-  getHtml = () => {
-    return this.state.html
-  }
-
   render() {
-    const StyledCaret = this.state.StyledCaret
     return (
       <div className='richmon-container'>
         <Toolbar tools={this.state.tools} />
-        <Editor
-          html={this.getHtml()}
-          ref={this.editor}
-          setEditorHTML={this.setEditorHTML}
-          setCaretPos={this.setCaretPos}
-          setIsCaretHidden={this.setIsCaretHidden}
-          defaultTextColor={this.props.config.defaultTextColor}
-          defaultHgColor={this.props.config.defaultHighlightColor}
+        <EditorWrapper
           defaultFontSize={this.props.config.defaultFontSize}
-        />
-        <StyledCaret
-          hidden={this.state.isCaretHidden}
-          left={this.state.caretPosition.left}
-          top={this.state.caretPosition.top}
+          defaultHighlightColor={this.props.config.defaultHighlightColor}
+          defaultTextColor={this.props.config.defaultTextColor}
+          editorRef={this.editor}
         />
       </div>
     )

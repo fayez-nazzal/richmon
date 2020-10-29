@@ -138,21 +138,15 @@ export default (props: { parent?: any; addCustomColor: any }) => {
         <RichmonButton
           parent={props.parent}
           actions={[
-            `textColor(${hex === '' ? '#ffffff' : '#' + hex})`,
+            `textColor(${hex === '' ? '#ffffff' : '#' + hex})c`,
             () => {
-              props.addCustomColor(
-                `textColor(${hex === '' ? '#ffffff' : '#' + hex})`
-              )
+              props.addCustomColor(hex === '' ? '#ffffff' : '#' + hex)
             }
           ]}
           css={`
             color: ${chooseColorByBrighteness()};
             border: 1px solid ${chooseColorByBrighteness()};
             margin: 4px auto;
-            &:hover {
-              -webkit-box-shadow: 0px 0px 4px -1px #000000;
-              box-shadow: 0px 0px 4px -1px #000000;
-            }
           `}
         >
           Select

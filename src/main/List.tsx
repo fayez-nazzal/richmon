@@ -1,5 +1,7 @@
 import React from 'react'
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
+import styles from '../styles.module.css'
+
 interface ListPropTypes {
   css?: string
   parent: any
@@ -7,6 +9,10 @@ interface ListPropTypes {
   buttonChildren: any
   width?: string
   height?: string
+  leftButton?: JSX.Element
+  rightButton?: JSX.Element
+  buttonCss?: string
+  buttonWrapperCss?: string
 }
 
 interface ListState {
@@ -15,17 +21,6 @@ interface ListState {
   children: any[]
   isAnimationEnabled: boolean
 }
-
-const openKeyFrames = keyframes`
-      0% {
-        opacity: 0;
-        transform: translateY(-0.3rem);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    `
 
 class List extends React.Component<ListPropTypes, ListState> {
   private selfRef: any = React.createRef()
@@ -42,26 +37,18 @@ class List extends React.Component<ListPropTypes, ListState> {
     this.Main = styled.div`
       position: absolute;
       left: 0;
-      padding: 6px 4px;
       background-color: white;
       -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
       -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
       box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
       z-index: 10;
-      animation: ${openKeyFrames} 0.14s ease-in-out;
       ${this.props.css}
     `
   }
 
   componentDidMount() {
-    // for every page
-    // map all it's childs and change its parent prop
-    // save it in children state that does not change
-    // display children state
-    console.log('list mount')
-    const newPages: any[] = []
-    React.Children.forEach(this.props.children, (page) => {
-      newPages.push(React.cloneElement(page, { parent: this }))
+    const newPages = React.Children.map(this.props.children, (child) => {
+      return React.cloneElement(child, { parent: this })
     })
 
     this.setState({ ...this.state, children: newPages })
@@ -113,18 +100,38 @@ class List extends React.Component<ListPropTypes, ListState> {
     })
   }
 
+  private Button = styled.button`
+    ${this.props.buttonCss};
+  `
+
+  private ButtonWrapper = styled.span`
+    ${this.props.buttonWrapperCss}
+  `
+
   render() {
-    const Main = this.Main
+    const Button = this.Button
+    const ButtonWrapper = this.ButtonWrapper
+
     return (
-      <span style={{ position: 'relative' }} ref={this.selfRef}>
-        <button
-          onClick={this.onClick}
-          onMouseDown={(e) => e.preventDefault()}
-          onMouseUp={(e) => e.preventDefault()}
-        >
-          {this.props.buttonChildren}
-        </button>
-        <Main
+      <span id='sppp' style={{ position: 'relative' }} ref={this.selfRef}>
+        <ButtonWrapper className={styles['list-button-wrapper']}>
+          {this.props.leftButton
+            ? React.cloneElement(this.props.leftButton, { parent: this })
+            : ''}
+          <Button
+            className={styles.button}
+            onClick={this.onClick}
+            onMouseDown={(e) => {
+              e.preventDefault()
+            }}
+          >
+            {this.props.buttonChildren}
+          </Button>
+          {this.props.rightButton
+            ? React.cloneElement(this.props.rightButton, { parent: this })
+            : ''}
+        </ButtonWrapper>
+        <this.Main
           extraCss={this.props.css ? this.props.css : ''}
           style={{
             width: this.props.width ? this.props.width : 'auto',
@@ -144,13 +151,8 @@ class List extends React.Component<ListPropTypes, ListState> {
             }
           }}
         >
-          {React.Children.map(
-            this.props.children[this.state.currentPage],
-            (child) => {
-              return React.cloneElement(child, { parent: this })
-            }
-          )}
-        </Main>
+          {this.state.children[this.state.currentPage]}
+        </this.Main>
       </span>
     )
   }

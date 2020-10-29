@@ -4,7 +4,7 @@ import { Richmon } from 'richmon'
 import 'richmon/dist/index.css'
 
 const App = () => {
-  return <Richmon top={['BIU', 'textColors']} />
+  return <Richmon top={['BIU', 'textColors', 'highlightColors']} />
 }
 
 export default App

@@ -1,8 +1,13 @@
 import React from 'react'
+import styled from 'styled-components'
 import './caretStyle.css'
 
 class Caret extends React.Component<
-  { className: string; hidden: boolean },
+  {
+    hidden: boolean
+    top: number
+    left: number
+  },
   { hidden: boolean }
 > {
   private blinkInterval: any
@@ -55,14 +60,21 @@ class Caret extends React.Component<
     clearInterval(this.blinkInterval)
   }
 
+  private CaretSpan = styled.span`
+    white-space: pre;
+    position: absolute;
+    pointer-events: none;
+    border-right: 1.2px solid black;
+    transition: left 65ms ease-in;
+  `
   render() {
     return (
-      <span
-        className={this.props.className}
+      <this.CaretSpan
+        style={{ left: this.props.left + 'px', top: this.props.top + 'px' }}
         hidden={this.props.hidden ? true : this.state.hidden}
       >
         {'\u200b'}
-      </span>
+      </this.CaretSpan>
     )
   }
 }

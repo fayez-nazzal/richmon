@@ -20,6 +20,7 @@ class Page extends React.Component<PagePropTypes, PageState> {
       children: []
     }
     this.Div = styled.div`
+      padding: 0;
       ${this.props.css};
     `
   }
@@ -30,7 +31,6 @@ class Page extends React.Component<PagePropTypes, PageState> {
     })
 
     this.setState({ ...this.state, children })
-    alert('page mount')
   }
 
   render() {

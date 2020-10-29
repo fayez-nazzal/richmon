@@ -8,13 +8,6 @@ export interface RichmonPropTypes {
   top: (JSX.Element | string)[]
 }
 
-export interface Text {
-  text: string
-  color?: string
-  hgColor?: string
-  size?: string
-}
-
 export interface RichmonComponentProps {
   parent?: any
   css?: string

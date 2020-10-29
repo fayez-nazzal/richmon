@@ -1,1 +1,18 @@
-/* add css module styles here (optional) */
+.button {
+  padding: 5px 10px;
+  font-weight: bold;
+  background-color: #fafafa;
+  border: none;
+  margin-bottom: 1px;
+}
+
+.button:hover {
+  background-color: #eceef5;
+  outline: 2px solid #e3e3e3;
+  z-index: 1000;
+  position: relative;
+}
+
+.toolbar {
+  margin: 0;
+}

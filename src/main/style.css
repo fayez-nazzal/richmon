@@ -8,3 +8,7 @@ body {
   color: unset;
   background-color: #68aeb050;
 }
+
+.btn {
+  color: white;
+}

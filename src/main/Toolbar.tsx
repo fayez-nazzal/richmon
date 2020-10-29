@@ -1,4 +1,5 @@
 import React from 'react'
+import styles from '../styles.module.css'
 
 // TODO: make props types for this component
 class Toolbar extends React.Component<any> {
@@ -16,7 +17,7 @@ class Toolbar extends React.Component<any> {
 
   render() {
     return (
-      <div className='toolbar'>
+      <div className={styles.toolbar}>
         {this.props.tools.map((tool: JSX.Element, index: number) =>
           React.cloneElement(tool, { key: `tool-${index}` })
         )}

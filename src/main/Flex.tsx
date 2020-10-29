@@ -59,8 +59,8 @@ class Flex extends React.Component<FlexProps, FlexState> {
 
     return (
       <Div>
-        {React.Children.map(this.state.items, (child: any) =>
-          React.cloneElement(child, { parent: this.props.parent })
+        {React.Children.map(this.state.items, (child: any, index) =>
+          React.cloneElement(child, { parent: this.props.parent, key: index })
         )}
       </Div>
     )

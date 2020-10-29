@@ -1110,7 +1110,10 @@ class Editor extends React.Component<EditorProps> {
         onDragStart={(e: React.DragEvent) => {
           e.preventDefault()
         }}
-        style={{ padding: 10, whiteSpace: 'pre-wrap' }}
+        style={{
+          padding: 10,
+          whiteSpace: 'normal'
+        }}
         dir='auto'
         contentEditable
         dangerouslySetInnerHTML={{ __html: this.props.html }}

@@ -4,6 +4,7 @@ import './richmonUtils'
 import { stringToCssObj } from './richmonUtils'
 import styled from 'styled-components'
 import isEqual from 'lodash.isequal'
+import styles from '../styles.module.css'
 
 class RichmonButton extends React.Component<
   RichmonButtonProps,
@@ -60,28 +61,39 @@ class RichmonButton extends React.Component<
         let actionName = action.match(/[a-zA-Z]*(?=\()/)![0]
         let args = action.match(/\(\s*([^)]+?)\s*\)/)![1].split(', ')
         const extraArgs = action.match(/(?<=\)).*/)![0]
-        let canToggle = extraArgs && !extraArgs.includes('!') ? true : false
+        let canToggle = !extraArgs || !extraArgs.includes('!') ? true : false
+        if (actionName === 'textColor' || actionName === 'highlight') {
+          const extraStyles = extraArgs.includes('c')
+            ? `
+                padding: 6.4px;
+                border:none;
+                background-color:${args[0]};
+                width: auto;
+                height: auto;
+                &:hover {
+                  -webkit-box-shadow: 0px 0px 4px 0px #333333;
+                  box-shadow: 0px 0px 4px 0px #333333;
+                  background-color:${args[0]};
+                  outline: none;
+                }
+                `
+            : ''
+          this.setState({
+            ...this.state,
+            extraStyles
+          })
+        }
+
         if (args && args.length) {
           switch (actionName) {
             case 'textColor':
-              this.setState({
-                ...this.state,
-                extraStyles: `
-                padding: 6.4px;
-                border:none;background-color:${args[0]};
-                &:hover {
-                  -webkit-box-shadow: 0px 0px 4px -1px grey;
-                  box-shadow: 0px 0px 4px -1px grey;
-                }
-                `
-              })
               cb = () =>
                 richmon.editor.current.setCss(
                   stringToCssObj(`color:${args[0]};`),
                   canToggle
                 )
               break
-            case 'highlightText':
+            case 'highlight':
               cb = () =>
                 richmon.editor.current.setCss(
                   stringToCssObj(`background-color:${args[0]};`),
@@ -229,7 +241,7 @@ class RichmonButton extends React.Component<
         onClick={this.onCLick}
         onMouseDown={(e) => e.preventDefault()}
         onMouseUp={(e) => e.preventDefault()}
-        className={this.state.className}
+        className={styles.button + ` ${this.state.className}`}
         style={this.props.style}
       >
         {this.props.children}
