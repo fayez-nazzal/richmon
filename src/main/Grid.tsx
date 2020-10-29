@@ -1,67 +1,64 @@
 import React from 'react'
 import './richmonUtils'
 import styled from 'styled-components'
+import isEqual from 'lodash.isequal'
 
 interface GridProps {
   rows: number
   cols: number
-  items: (string | JSX.Element)[]
   css?: string
   parent?: any
+  children?: any
+  shouldUpdate?: boolean
 }
 
-interface GridState {
-  items: (string | JSX.Element)[]
-  itemKeys: string[]
-}
+interface GridState {}
 
 class RichmonGrid extends React.Component<GridProps, GridState> {
   constructor(props: any) {
     super(props)
 
-    this.state = {
-      items: [],
-      itemKeys: []
-    }
+    this.state = {}
   }
+
+  private Div = styled.div`
+    grid-template-rows: repeat(${this.props.rows}, 1fr);
+    grid-template-columns: repeat(${this.props.cols}, 1fr);
+    display: grid;
+    grid-auto-flow: column;
+    grid-gap: 6px;
+  `
 
   componentDidMount() {
     console.log('grid mount')
-    this.updateItems()
   }
 
-  componentDidUpdate(prevProps: any) {
-    if ('items' in this.props.items && prevProps.items !== this.props.items) {
-      this.updateItems()
-    }
+  componentDidUpdate() {
+    console.log('grid update')
   }
 
-  updateItems = () => {
-    console.log('grid udate')
-
-    let richmon = this.props.parent
-
-    while (richmon.constructor.name !== 'Richmon') {
-      richmon = richmon.props.parent
-    }
-
-    const items = richmon.constructTools(this.props.items, this)
-    this.setState({ ...this.state, items })
+  shouldComponentUpdate(prevProps: any) {
+    return (
+      !isEqual(prevProps, this.props) && this.props.shouldUpdate !== undefined
+    )
   }
 
   render() {
-    const Div = styled.div`
-      grid-template-rows: repeat(${this.props.rows}, 1fr);
-      grid-template-columns: repeat(${this.props.cols}, 1fr);
-      display: grid;
-      grid-auto-flow: column;
-      grid-gap: 6px;
-    `
-
+    const Div = this.Div
     return (
       <Div>
-        {React.Children.map(this.state.items, (child: any, index) =>
-          React.cloneElement(child, { parent: this.props.parent, key: index })
+        {React.Children.map(
+          this.props.children,
+          (child: JSX.Element, index) => {
+            if (!('type' in child))
+              throw new Error(
+                'found a child of Grid which is not a JSX Element'
+              )
+            return React.cloneElement(child, {
+              parent: this,
+              key: `grid_item${index}`
+            })
+          }
         )}
       </Div>
     )

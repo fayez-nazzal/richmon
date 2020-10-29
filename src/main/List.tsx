@@ -47,12 +47,6 @@ class List extends React.Component<ListPropTypes, ListState> {
   }
 
   componentDidMount() {
-    const newPages = React.Children.map(this.props.children, (child) => {
-      return React.cloneElement(child, { parent: this })
-    })
-
-    this.setState({ ...this.state, children: newPages })
-
     document.addEventListener('mousedown', this.handleClickOutside)
   }
 
@@ -151,7 +145,13 @@ class List extends React.Component<ListPropTypes, ListState> {
             }
           }}
         >
-          {this.state.children[this.state.currentPage]}
+          {React.Children.map(this.props.children, (child, index) => {
+            return React.cloneElement(child, {
+              parent: this,
+              key: `page${index}`,
+              display: index === this.state.currentPage
+            })
+          })}
         </this.Main>
       </span>
     )

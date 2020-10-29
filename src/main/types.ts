@@ -18,6 +18,7 @@ export interface RichmonButtonProps extends RichmonComponentProps {
   className?: string
   style?: React.CSSProperties
   css?: string
+  disableAutoStyling?: boolean
 }
 
 export interface RichmonListProps {

@@ -5,6 +5,7 @@ export interface PagePropTypes {
   parent?: any
   children?: any
   css?: string
+  display?: boolean
   className?: string
 }
 
@@ -25,17 +26,23 @@ class Page extends React.Component<PagePropTypes, PageState> {
     `
   }
 
-  componentDidMount() {
-    const children = React.Children.map(this.props.children, (child) => {
-      return React.cloneElement(child, { parent: this.props.parent })
-    })
-
-    this.setState({ ...this.state, children })
-  }
-
   render() {
     const Div = this.Div
-    return <Div className='page'>{...this.state.children}</Div>
+    return (
+      <Div
+        className='page'
+        style={{
+          display: this.props.display ? 'block' : 'none'
+        }}
+      >
+        {React.Children.map(this.props.children, (child, index) => {
+          return React.cloneElement(child, {
+            parent: this.props.parent,
+            key: `page_item_${index}`
+          })
+        })}
+      </Div>
+    )
   }
 }
 

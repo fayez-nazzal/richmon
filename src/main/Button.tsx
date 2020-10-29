@@ -63,7 +63,7 @@ class RichmonButton extends React.Component<
         const extraArgs = action.match(/(?<=\)).*/)![0]
         let canToggle = !extraArgs || !extraArgs.includes('!') ? true : false
         if (actionName === 'textColor' || actionName === 'highlight') {
-          const extraStyles = extraArgs.includes('c')
+          const extraStyles = !this.props.disableAutoStyling
             ? `
                 padding: 6.4px;
                 border:none;

@@ -33,8 +33,6 @@ class Flex extends React.Component<FlexProps, FlexState> {
   }
 
   shouldComponentUpdate(prevProps: any, prevState: any) {
-    console.log(prevProps, this.props)
-    console.log(prevState, this.state)
     return !isEqual(prevProps, this.props) || !isEqual(prevState, this.state)
   }
 
@@ -58,7 +56,11 @@ class Flex extends React.Component<FlexProps, FlexState> {
     `
 
     return (
-      <Div>
+      <Div
+        onClick={() => {
+          console.log(this.props.items)
+        }}
+      >
         {React.Children.map(this.state.items, (child: any, index) =>
           React.cloneElement(child, { parent: this.props.parent, key: index })
         )}

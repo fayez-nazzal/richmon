@@ -21,7 +21,6 @@ class Caret extends React.Component<
   }
 
   blink() {
-    console.log('blink')
     this.setState({ ...this.state, hidden: this.state.hidden ? false : true })
   }
 
