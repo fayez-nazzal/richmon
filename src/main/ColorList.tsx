@@ -1,17 +1,16 @@
 import React from 'react'
-import List from './List'
 import Page from './Page'
 import Flex from './Flex'
 import Grid from './Grid'
 import ColorPickTools from './ColorInputs'
 import RichmonButton from './Button'
-import { ReactComponent as Down } from '../svgs/down.svg'
+import DropDownList from './DropDownList'
 
-interface DropDownListProps {
+interface ColorListProps {
   parent: any
   action: string
   initialArgs: string
-  leftButton: (JSX.Element | string)[] | JSX.Element | string
+  leftIcon: JSX.Element | string
   basicArgs: string[]
   basicRows: number
   basicCols: number
@@ -22,15 +21,12 @@ interface DropDownListProps {
   featuredCols?: number
 }
 
-interface DropDownListState {
+interface ColorListState {
   currentArgs: string
   customActions: JSX.Element[]
 }
 
-class DropDownList extends React.PureComponent<
-  DropDownListProps,
-  DropDownListState
-> {
+class ColorList extends React.PureComponent<ColorListProps, ColorListState> {
   constructor(props: any) {
     super(props)
     this.state = {
@@ -55,16 +51,11 @@ class DropDownList extends React.PureComponent<
   render() {
     return (
       <React.Fragment>
-        <List
-          css='padding: 10px;'
-          buttonChildren={<Down style={{ marginBottom: '-2px' }} />}
-          leftButton={
-            <RichmonButton
-              css='font-weight: normal;padding-left: 4px;padding-right:2px;border-right:none;width: 24px;height:28px;&:hover{outline:none;}'
-              actions={[`${this.props.action}(${this.state.currentArgs})`]}
-              disableAutoStyling
-            >
-              {this.props.leftButton}
+        <DropDownList
+          leftActions={[`${this.props.action}(${this.state.currentArgs})`]}
+          leftChildren={
+            <div>
+              {this.props.leftIcon}
               <div
                 style={{
                   width: '86%',
@@ -74,26 +65,9 @@ class DropDownList extends React.PureComponent<
                   marginTop: '-3px'
                 }}
               ></div>
-            </RichmonButton>
+            </div>
           }
-          buttonCss={`
-        padding: 0 3px;
-        border-left: none;
-        width: auto;
-        height: 28px;
-        &:hover {
-          outline: none;
-        }
-        `}
-          buttonWrapperCss={`
-          &:hover {
-            outline: 2px solid #e3e3e3;
-            z-index: 1000;
-            position: relative;
-          }
-        `}
           parent={this.props.parent}
-          width='160px'
         >
           <Page>
             {this.props.featuredArgs &&
@@ -192,10 +166,10 @@ class DropDownList extends React.PureComponent<
           <Page>
             <ColorPickTools addCustomColor={this.addCustomColor} />
           </Page>
-        </List>
+        </DropDownList>
       </React.Fragment>
     )
   }
 }
 
-export default DropDownList
+export default ColorList

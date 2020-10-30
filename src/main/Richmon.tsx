@@ -5,8 +5,8 @@ import RichmonButton from './Button'
 import Toolbar from './Toolbar'
 import EditorWrapper from './EditorWrapper'
 import isEqual from 'lodash.isequal'
-import ColorPicker from './ColorList'
 import { ReactComponent as Pen } from '../svgs/pen.svg'
+import ColorList from './ColorList'
 
 const defaultProps = {
   config: {
@@ -158,11 +158,11 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             break
           case 'textColors':
             tool_s = (
-              <ColorPicker
+              <ColorList
                 action='textColor'
                 initialArgs='#000000'
                 parent={parent}
-                leftButton='A'
+                leftIcon='A'
                 basicArgs={this.defaultBasicColorArgs}
                 basicRows={5}
                 basicCols={6}
@@ -175,11 +175,11 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             break
           case 'highlightColors':
             tool_s = (
-              <ColorPicker
+              <ColorList
                 action='highlight'
                 initialArgs='#ffff00'
                 parent={parent}
-                leftButton={<Pen />}
+                leftIcon={<Pen />}
                 basicArgs={this.defaultBasicColorArgs}
                 basicRows={5}
                 basicCols={6}

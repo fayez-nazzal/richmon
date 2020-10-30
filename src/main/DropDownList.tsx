@@ -5,8 +5,8 @@ import { ReactComponent as Down } from '../svgs/down.svg'
 
 interface DropDownListProps {
   parent: any
-  left: (JSX.Element | string)[] | JSX.Element | string
-  leftActions: any[]
+  leftActions: ({ (): void } | string)[]
+  leftChildren: (JSX.Element | string)[] | JSX.Element | string
 }
 
 class DropDownList extends React.PureComponent<DropDownListProps> {
@@ -26,7 +26,7 @@ class DropDownList extends React.PureComponent<DropDownListProps> {
               actions={this.props.leftActions}
               disableAutoStyling
             >
-              {this.props.left}
+              {this.props.leftChildren}
             </RichmonButton>
           }
           buttonCss={`
