@@ -4,7 +4,6 @@ import styles from '../styles.module.css'
 
 interface ListPropTypes {
   css?: string
-  parent: any
   children?: any
   buttonChildren: any
   width?: string
@@ -25,8 +24,9 @@ interface ListState {
 class List extends React.Component<ListPropTypes, ListState> {
   private selfRef: any = React.createRef()
   private Main: any
+  private static _opened: List
 
-  constructor(props: any) {
+  private constructor(props: any) {
     super(props)
     this.state = {
       showContents: false,
@@ -67,11 +67,16 @@ class List extends React.Component<ListPropTypes, ListState> {
   }
 
   onClick = () => {
+    List._opened = this
     this.setState({
       showContents: !this.state.showContents,
       currentPage: 0,
       isAnimationEnabled: true
     })
+  }
+
+  public static getOpened() {
+    return this._opened
   }
 
   nextPage = () => {
@@ -109,9 +114,7 @@ class List extends React.Component<ListPropTypes, ListState> {
     return (
       <span id='sppp' style={{ position: 'relative' }} ref={this.selfRef}>
         <ButtonWrapper className={styles['list-button-wrapper']}>
-          {this.props.leftButton
-            ? React.cloneElement(this.props.leftButton, { parent: this })
-            : ''}
+          {this.props.leftButton}
           <Button
             className={styles.button}
             onClick={this.onClick}
@@ -121,9 +124,7 @@ class List extends React.Component<ListPropTypes, ListState> {
           >
             {this.props.buttonChildren}
           </Button>
-          {this.props.rightButton
-            ? React.cloneElement(this.props.rightButton, { parent: this })
-            : ''}
+          {this.props.rightButton}
         </ButtonWrapper>
         <this.Main
           extraCss={this.props.css ? this.props.css : ''}
@@ -136,7 +137,7 @@ class List extends React.Component<ListPropTypes, ListState> {
             const target = e.target as HTMLElement
             if (
               target.nodeName === 'BUTTON' &&
-              !target.className.includes('static')
+              !target.className.includes('page-button')
             ) {
               this.setState({
                 ...this.state,
@@ -147,7 +148,6 @@ class List extends React.Component<ListPropTypes, ListState> {
         >
           {React.Children.map(this.props.children, (child, index) => {
             return React.cloneElement(child, {
-              parent: this,
               key: `page${index}`,
               display: index === this.state.currentPage
             })

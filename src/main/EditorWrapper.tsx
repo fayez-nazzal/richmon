@@ -7,21 +7,18 @@ export default (props: {
   defaultHighlightColor: string
   defaultFontSize: string
   editorRef: any
+  onChange: { (html: string): void }
+  content: string
 }) => {
   const [isCaretHidden, setIsCaretHidden] = useState(true)
   const [caretPosition, setCaretPosition] = useState({ left: 0, top: 0 })
-  const [html, setHTML] = useState('<div></div>')
-
-  const setEditorHTML = (html: string) => {
-    setHTML(html)
-  }
 
   return (
     <React.Fragment>
       <Editor
-        html={html}
+        html={props.content}
         ref={props.editorRef}
-        setEditorHTML={setEditorHTML}
+        setEditorHTML={props.onChange}
         setCaretPos={setCaretPosition}
         setIsCaretHidden={setIsCaretHidden}
         defaultTextColor={props.defaultTextColor}

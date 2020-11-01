@@ -66,6 +66,7 @@ class Caret extends React.Component<
     border-right: 1.2px solid black;
     transition: left 65ms ease-in;
   `
+
   render() {
     return (
       <this.CaretSpan

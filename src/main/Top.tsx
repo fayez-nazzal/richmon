@@ -1,6 +1,6 @@
 import React from 'react'
-import styles from '../styles.module.css'
-
+import styled from 'styled-components'
+// import styles from '../styles.module.css'
 // TODO: make props types for this component
 class Toolbar extends React.Component<any> {
   constructor(props: any) {
@@ -15,13 +15,18 @@ class Toolbar extends React.Component<any> {
     console.log('toolbar updated')
   }
 
+  private Div = styled.div`
+    width: ${this.props.width};
+    background-color: #f7f7f7;
+  `
   render() {
+    const Div = this.Div
     return (
-      <div className={styles.toolbar}>
+      <Div>
         {this.props.tools.map((tool: JSX.Element, index: number) =>
           React.cloneElement(tool, { key: `tool-${index}` })
         )}
-      </div>
+      </Div>
     )
   }
 }

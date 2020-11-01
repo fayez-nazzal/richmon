@@ -1,175 +1,243 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import Page from './Page'
-import Flex from './Flex'
-import Grid from './Grid'
 import ColorPickTools from './ColorInputs'
 import RichmonButton from './Button'
 import DropDownList from './DropDownList'
+import styled from 'styled-components'
+import { Actions } from './richActions'
+import RichGrid from './RichGrid'
+import styles from '../styles.module.css'
 
 interface ColorListProps {
-  parent: any
-  action: string
-  initialArgs: string
-  leftIcon: JSX.Element | string
-  basicArgs: string[]
+  action: 'textColor' | 'textShadow' | 'textHighlight'
+  initialColor: string
+  leftIcon?: JSX.Element | string
+  basicColors: string[]
   basicRows: number
   basicCols: number
   basicCss?: string[]
-  featuredArgs?: string[]
+  featuredColors?: string[]
   featuredCss?: string[]
   featuredRows?: number
   featuredCols?: number
+  hasCustom?: boolean
+  customCols?: number
+  customRows?: number
 }
 
-interface ColorListState {
-  currentArgs: string
-  customActions: JSX.Element[]
-}
+const Flex = styled.div`
+  display: flex;
+  width: 140px;
+  justify-content: center;
+  height: 23px;
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+`
 
-class ColorList extends React.PureComponent<ColorListProps, ColorListState> {
-  constructor(props: any) {
-    super(props)
-    this.state = {
-      currentArgs: this.props.initialArgs,
-      customActions: []
+export default (props: ColorListProps) => {
+  const [currentColor, setCurrentColor] = useState<string>(props.initialColor)
+  const [customColors, setCustomColors] = useState<JSX.Element[]>([])
+  const [strokeSize, setStrokeSize] = useState(2)
+  const sliderRef = useRef<any>(null)
+
+  const addCustomColor = (color: string) => {
+    const customColorsClone = [...customColors]
+    if (customColors.length / props.customRows! > props.basicCols)
+      customColorsClone.pop()
+    customColorsClone.splice(
+      0,
+      0,
+      <RichmonButton
+        key={`custom-${customColors.length}`}
+        action={(actions) => {
+          doAction(actions, color)
+        }}
+        colorize={color}
+      />
+    )
+    setCustomColors([...customColorsClone])
+    setCurrentColor(color)
+  }
+
+  const doAction = (actions: Actions, color: string) => {
+    switch (props.action) {
+      case 'textShadow':
+        actions.setTextShadow(color, sliderRef.current.value)
+        break
+      case 'textColor':
+        actions.setTextColor(color)
+        break
+      case 'textHighlight':
+        actions.setTextHighlight(color)
+        break
     }
   }
 
-  addCustomColor = (color: string) => {
-    this.setState({
-      ...this.state,
-      customActions: [
-        ...this.state.customActions,
+  const mapColors = (colors: string[], key: string) => {
+    return colors.map((color, index) => {
+      return (
         <RichmonButton
-          key={`custom-${this.state.customActions.length}`}
-          actions={[`${this.props.action}(${color})`]}
+          key={`${key}${index}`}
+          colorize={color}
+          action={(actions: Actions) => {
+            doAction(actions, color)
+            setCurrentColor(color)
+          }}
+          css={
+            key === 'featured'
+              ? props.featuredCss && props.featuredCss[index]
+                ? props.featuredCss[index]
+                : ''
+              : key === 'basic'
+              ? props.basicCss && props.basicCss[index]
+                ? props.basicCss[index]
+                : ''
+              : ''
+          }
         />
-      ]
+      )
     })
   }
 
-  render() {
-    return (
-      <React.Fragment>
-        <DropDownList
-          leftActions={[`${this.props.action}(${this.state.currentArgs})`]}
-          leftChildren={
-            <div>
-              {this.props.leftIcon}
+  return (
+    <React.Fragment>
+      <DropDownList
+        leftAction={(actions) => {
+          doAction(actions, currentColor)
+          setCurrentColor(currentColor)
+        }}
+        leftChildren={
+          <div>
+            {props.leftIcon}
+            {!props.leftIcon && props.action === 'textShadow' ? (
+              <span
+                style={{
+                  textShadow: `${currentColor} 0px 0px ${strokeSize}px`,
+                  fontSize: '15px',
+                  position: 'relative',
+                  top: '2px'
+                }}
+              >
+                S
+              </span>
+            ) : (
               <div
                 style={{
                   width: '86%',
                   height: '3.2px',
-                  backgroundColor: this.state.currentArgs,
+                  backgroundColor: currentColor,
                   margin: '0 auto',
                   marginTop: '-3px'
                 }}
               ></div>
-            </div>
-          }
-          parent={this.props.parent}
-        >
-          <Page>
-            {this.props.featuredArgs &&
-            this.props.featuredRows &&
-            this.props.featuredCols ? (
-              <Grid
-                key='grid 2'
-                rows={this.props.featuredRows}
-                cols={this.props.featuredCols}
-                parent={parent}
-              >
-                {this.props.featuredArgs.map((args, index) => (
-                  <RichmonButton
-                    key={`featured${index}`}
-                    actions={[
-                      `${this.props.action}(${args})`,
-                      () => {
-                        this.setState({
-                          ...this.state,
-                          currentArgs: args
-                        })
-                      }
-                    ]}
-                    css={
-                      this.props.featuredCss && this.props.featuredCss[index]
-                        ? this.props.featuredCss[index]
-                        : ''
-                    }
-                  />
-                ))}
-              </Grid>
-            ) : (
-              ''
             )}
-            <div
-              style={{
-                textAlign: 'center',
-                fontSize: '13px',
-                marginTop: '6px',
-                marginBottom: '-6px'
-              }}
-            >
-              Basic colors
-            </div>
-            <hr />
-            <Grid
-              key='grid 1'
-              rows={this.props.basicRows}
-              cols={this.props.basicCols}
-              parent={parent}
-            >
-              {this.props.basicArgs.map((args, index) => (
-                <RichmonButton
-                  key={`basic${index}`}
-                  actions={[
-                    `${this.props.action}(${args})`,
-                    () => {
-                      this.setState({
-                        ...this.state,
-                        currentArgs: args
-                      })
-                    }
-                  ]}
-                  css={
-                    this.props.basicCss && this.props.basicCss[index]
-                      ? this.props.basicCss[index]
-                      : ''
-                  }
-                />
-              ))}
-            </Grid>
-            <div
-              style={{
-                textAlign: 'center',
-                fontSize: '13px',
-                marginTop: '6px',
-                marginBottom: '-6px'
-              }}
-            >
-              Custom colors
-            </div>
-            <hr />
-            <Grid rows={1} cols={6} shouldUpdate>
-              {this.state.customActions}
-            </Grid>
+          </div>
+        }
+      >
+        <Page>
+          {props.action === 'textShadow' ? (
+            <Flex>
+              <input
+                type='range'
+                min='0'
+                max='5'
+                className={styles.slider}
+                value={strokeSize}
+                step='1'
+                onChange={(e: any) => {
+                  setStrokeSize(e.target.value)
+                }}
+                ref={sliderRef}
+              />
+              <span
+                style={{
+                  width: '45px',
+                  paddingLeft: '4px',
+                  wordSpacing: '-1px'
+                }}
+              >
+                {strokeSize + ' px'}
+              </span>
+            </Flex>
+          ) : (
+            ''
+          )}
 
-            <Flex
-              items={[
-                <RichmonButton actions={['nextPage']} css='margin-top: 8px;'>
-                  custom
-                </RichmonButton>
-              ]}
-              parent={parent}
+          {props.featuredColors && props.featuredRows && props.featuredCols ? (
+            <RichGrid
+              key='grid 2'
+              rows={props.featuredRows}
+              cols={props.featuredCols}
+            >
+              {mapColors(props.featuredColors, 'featured')}
+            </RichGrid>
+          ) : (
+            ''
+          )}
+          <div
+            style={{
+              textAlign: 'center',
+              fontSize: '13px',
+              marginTop: '6px',
+              marginBottom: '-6px'
+            }}
+          >
+            Basic colors
+          </div>
+          <hr />
+          <RichGrid key='grid 1' rows={props.basicRows} cols={props.basicCols}>
+            {mapColors(props.basicColors, 'basic')}
+          </RichGrid>
+          <div
+            style={{
+              textAlign: 'center',
+              fontSize: '13px',
+              marginTop: '6px',
+              marginBottom: '-6px'
+            }}
+          >
+            Custom colors
+          </div>
+          <hr />
+          {props.hasCustom ? (
+            <RichGrid
+              rows={props.customRows!}
+              cols={props.customCols!}
+              shouldUpdate
+            >
+              {customColors}
+            </RichGrid>
+          ) : (
+            ''
+          )}
+          {props.hasCustom ? (
+            <RichmonButton
+              action={(actions) => {
+                actions.nextPage()
+              }}
+              css='margin-top: 8px;position:relative;transform: translateX(50%);'
+              pageButton
+            >
+              custom
+            </RichmonButton>
+          ) : (
+            ''
+          )}
+        </Page>
+        {props.hasCustom ? (
+          <Page>
+            <ColorPickTools
+              addCustomColor={addCustomColor}
+              doAction={doAction}
             />
           </Page>
-          <Page>
-            <ColorPickTools addCustomColor={this.addCustomColor} />
-          </Page>
-        </DropDownList>
-      </React.Fragment>
-    )
-  }
+        ) : (
+          ''
+        )}
+      </DropDownList>
+    </React.Fragment>
+  )
 }
-
-export default ColorList

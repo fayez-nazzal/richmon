@@ -1,11 +1,40 @@
 import React, { MutableRefObject, useRef, useState } from 'react'
 import styled from 'styled-components'
 import RichmonButton from './Button'
+import { ReactComponent as Back } from '../svgs/back.svg'
+import List from './List'
+import { Actions } from './richActions'
+import { SliderPicker } from 'react-color'
 
 const Input = styled.input`
   caret-color: black;
   flex: 1 1 auto;
   width: 20%;
+  color: #222222;
+  border-radius: 0.2rem;
+  border: none;
+  border: 1px solid #aaaaaa;
+  &:hover {
+    outline: none;
+    border-color: #555555;
+  }
+  &:focus {
+    outline: none;
+    border-color: teal;
+  }
+`
+
+const InputsFlex = styled.div`
+  display: flex;
+  width: 135px;
+  justify-content: center;
+  height: 23px;
+  margin-top: 10px;
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
 `
 
 const Label = styled.label`
@@ -13,17 +42,24 @@ const Label = styled.label`
   line-height: 23px;
   padding: 0;
   margin: 0 2px;
+  font-size: 14px;
 `
 
-const FlexDiv = styled.div`
-  display: flex;
-  width: 160px;
-  justify-content: center;
-  height: 23px;
+const StyledBack = styled(Back)`
+  position: absolute;
+  top: 4px;
+  left: 3.5px;
+  &:hover {
+    fill: teal;
+  }
 `
 
-export default (props: { parent?: any; addCustomColor: any }) => {
-  const [hex, setHEx] = useState('000000')
+export default (props: {
+  parent?: any
+  addCustomColor: any
+  doAction: { (actions: Actions, color: string): void }
+}) => {
+  const [hex, setHex] = useState('#000000')
   const [r, setR] = useState(0)
   const [g, setG] = useState(0)
   const [b, setB] = useState(0)
@@ -31,11 +67,22 @@ export default (props: { parent?: any; addCustomColor: any }) => {
   const gRef = useRef() as MutableRefObject<HTMLInputElement>
   const bRef = useRef() as MutableRefObject<HTMLInputElement>
 
+  const handleColorChange = ({ hex }: { hex: string }) => {
+    setColor(hex)
+  }
+
   const handleHexChange = (e: any) => {
     if (!/^(?:[A-Fa-f0-9]*)$/.test(e.target.value)) return
+    setColor('#' + e.target.value)
+  }
 
-    setHEx(e.target.value)
-    const rgb = hexToRGB('#' + e.target.value)
+  const setColor = (hex: string) => {
+    setHex(hex)
+    setRGB(hex)
+  }
+
+  const setRGB = (hex: string) => {
+    const rgb = hexToRGB(hex)
     setR(isNaN(rgb[0]) ? 0 : rgb[0])
     setG(isNaN(rgb[1]) ? 0 : rgb[1])
     setB(isNaN(rgb[2]) ? 0 : rgb[2])
@@ -52,10 +99,10 @@ export default (props: { parent?: any; addCustomColor: any }) => {
     g = isNaN(g) ? 0 : g
     b = isNaN(b) ? 0 : b
 
-    setHEx(rgbToHex(r, g, b))
     setR(r)
     setG(g)
     setB(b)
+    setHex('#' + rgbToHex(r, g, b))
   }
 
   const rgbToHex = (r: number, g: number, b: number) =>
@@ -74,44 +121,46 @@ export default (props: { parent?: any; addCustomColor: any }) => {
     return [r, g, b]
   }
 
-  const pickTextColorBasedOnColor = (
-    bgColor: string,
-    lightColor: string,
-    darkColor: string
-  ) => {
-    var color = bgColor.charAt(0) === '#' ? bgColor.substring(1, 7) : bgColor
-    var r = parseInt(color.substring(0, 2), 16) // hexToR
-    var g = parseInt(color.substring(2, 4), 16) // hexToG
-    var b = parseInt(color.substring(4, 6), 16) // hexToB
-    var uicolors = [r / 255, g / 255, b / 255]
-    var c = uicolors.map((col) => {
-      if (col <= 0.03928) {
-        return col / 12.92
-      }
-      return Math.pow((col + 0.055) / 1.055, 2.4)
-    })
-    var L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
-    return L > 0.179 ? darkColor : lightColor
+  const pickTextColorBasedOnColor = (lightColor: string, darkColor: string) => {
+    const brightness = Math.round((r * 299 + g * 587 + b * 114) / 1000)
+    return brightness > 125 ? darkColor : lightColor
   }
 
   const chooseColorByBrighteness = () => {
-    return pickTextColorBasedOnColor(hex, '#C0C0C0', 'black')
+    return pickTextColorBasedOnColor('#C0C0C0', 'black')
   }
 
   return (
     <React.Fragment>
-      <FlexDiv>
+      <StyledBack
+        onClick={() => {
+          List.getOpened().previousPage()
+        }}
+      />
+      <SliderPicker
+        color={hex}
+        onChange={handleColorChange}
+        styles={{
+          default: {
+            hue: {
+              marginTop: '5px',
+              marginBottom: '-10px'
+            }
+          }
+        }}
+      />
+      <InputsFlex>
         <Label>#</Label>
         <Input
           name='test'
           style={{ display: 'inline-block' }}
           onChange={handleHexChange}
-          value={hex}
+          value={hex.slice(1)}
           autoComplete='off'
           maxLength={6}
         />
-      </FlexDiv>
-      <FlexDiv style={{ marginTop: '10px' }}>
+      </InputsFlex>
+      <InputsFlex>
         <Label>R</Label>
         <Input
           autoComplete='off'
@@ -133,25 +182,23 @@ export default (props: { parent?: any; addCustomColor: any }) => {
           value={b}
           ref={bRef}
         />
-      </FlexDiv>
-      <FlexDiv style={{ height: 'auto' }}>
+      </InputsFlex>
+      <InputsFlex style={{ height: 'auto' }}>
         <RichmonButton
-          parent={props.parent}
-          actions={[
-            `textColor(${hex === '' ? '#ffffff' : '#' + hex})c`,
-            () => {
-              props.addCustomColor(hex === '' ? '#ffffff' : '#' + hex)
-            }
-          ]}
+          action={(actions) => {
+            props.addCustomColor(hex)
+            props.doAction(actions, hex)
+          }}
           css={`
             color: ${chooseColorByBrighteness()};
             border: 1px solid ${chooseColorByBrighteness()};
             margin: 4px auto;
           `}
+          colorize={hex}
         >
           Select
         </RichmonButton>
-      </FlexDiv>
+      </InputsFlex>
     </React.Fragment>
   )
 }

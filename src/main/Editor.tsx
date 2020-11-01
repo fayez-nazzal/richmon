@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import './style.css'
 import assert from 'assert'
-import { EditorProps } from './types'
 import styled from 'styled-components'
 import {
   cssObjToString,
@@ -15,6 +14,28 @@ import {
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
 import { createTable } from './richtable'
+
+export interface EditorProps {
+  html: string
+  setEditorHTML: { (html: string): void }
+  setIsCaretHidden: { (isCaretHidden: boolean): void }
+  setCaretPos: { (caretPosition: { top: number; left: number }): void }
+  defaultTextColor: string
+  defaultHgColor: string
+  defaultFontSize: string
+}
+
+const ContentEditable = styled.div`
+  width: 400px;
+  height: 100%;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow: auto;
+  padding: 5px 12px;
+  &:focus {
+    outline: none;
+  }
+`
 
 class Editor extends React.Component<EditorProps> {
   public selfRef: any = React.createRef()
@@ -39,8 +60,15 @@ class Editor extends React.Component<EditorProps> {
     y2: 0
   }
 
-  constructor(props: EditorProps) {
+  private static _instance: Editor
+
+  private constructor(props: EditorProps) {
     super(props)
+    Editor._instance = this
+  }
+
+  public static getInstance() {
+    return this._instance
   }
 
   componentDidMount() {
@@ -1077,14 +1105,6 @@ class Editor extends React.Component<EditorProps> {
   }
 
   render() {
-    const ContentEditable = styled.div`
-      width: 300px;
-      height: 400px;
-      border: 1px solid black;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-      overflow: auto;
-    `
     return (
       <ContentEditable
         onInput={() => this.onInput()}
@@ -1111,7 +1131,6 @@ class Editor extends React.Component<EditorProps> {
           e.preventDefault()
         }}
         style={{
-          padding: 10,
           whiteSpace: 'normal'
         }}
         dir='auto'
