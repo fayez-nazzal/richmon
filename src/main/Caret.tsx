@@ -7,6 +7,7 @@ class Caret extends React.Component<
     hidden: boolean
     top: number
     left: number
+    height: string
   },
   { hidden: boolean }
 > {
@@ -70,7 +71,11 @@ class Caret extends React.Component<
   render() {
     return (
       <this.CaretSpan
-        style={{ left: this.props.left + 'px', top: this.props.top + 'px' }}
+        style={{
+          left: this.props.left + 'px',
+          top: this.props.top + 'px',
+          height: this.props.height
+        }}
         hidden={this.props.hidden ? true : this.state.hidden}
       >
         {'\u200b'}

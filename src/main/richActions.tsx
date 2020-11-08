@@ -1,8 +1,10 @@
 import Editor from './Editor'
+import FontSizeMenu from './FontSizeMenu'
 import List from './List'
 import { stringToCssObj } from './richmonUtils'
 
 export interface Actions {
+  setFontSize: { (fontSize: string): void }
   setCss: { (css: string, canToggle?: boolean): void }
   setTextShadow: { (color: string, length: string, canToggle?: boolean): void }
   setTextColor: { (color: string, canToggle?: boolean): void }
@@ -14,8 +16,22 @@ export interface Actions {
   setUndeerline: { (canToggle?: boolean): void }
 }
 
-const setCss = (args: string, canToggle = true) => {
-  Editor.getInstance().setCss(stringToCssObj(`color:${args[0]};`), canToggle)
+const setCss = (css: string, canToggle = true) => {
+  if (css.includes('font-size'))
+    throw new Error(
+      'setting font-size using actions.setCss is not supporting, use actions.setFontSize instead.'
+    )
+  Editor.getInstance().setCss(stringToCssObj(`${css};`), canToggle)
+}
+
+const setFontSize = (fontSize: string) => {
+  Editor.getInstance().setCss(stringToCssObj(`font-size:${fontSize};`), false)
+  Editor.getInstance().setCaretHeight(fontSize)
+  const fontSizeMenu = FontSizeMenu.getInstance()
+  if (fontSizeMenu)
+    fontSizeMenu.setState({
+      fontSize: parseInt(fontSize)
+    })
 }
 
 const setTextShadow = (color: string, length: string, canToggle = true) => {
@@ -68,5 +84,6 @@ export const EditorActions: Actions = {
   previousPage: previousPage,
   setItalic: setItalic,
   setUndeerline: setUnderline,
-  setBold: setBold
+  setBold: setBold,
+  setFontSize: setFontSize
 }

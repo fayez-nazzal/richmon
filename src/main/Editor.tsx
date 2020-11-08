@@ -14,6 +14,7 @@ import {
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
 import { createTable } from './richtable'
+import FontSizeMenu from './FontSizeMenu'
 
 export interface EditorProps {
   html: string
@@ -23,6 +24,7 @@ export interface EditorProps {
   defaultTextColor: string
   defaultHgColor: string
   defaultFontSize: string
+  setCaretHeight: { (height: string): void }
 }
 
 const ContentEditable = styled.div`
@@ -78,6 +80,7 @@ class Editor extends React.Component<EditorProps> {
     this.currentChild.innerText = '\u200b'
     this.currentDiv.append(this.currentChild)
     this.currentChild.setAttribute('style', this.defaultCss)
+    this.setCaretHeight(this.currentChild.style.fontSize)
     this.commitChanges()
     this.RectanleSelector = createNewElement('div')
     this.RectanleSelector.hidden = true
@@ -147,6 +150,14 @@ class Editor extends React.Component<EditorProps> {
     this.props.setEditorHTML(html)
   }
 
+  isRanged = () => {
+    const sel = window.getSelection()!
+    return !(
+      sel.anchorNode!.isSameNode(sel.focusNode!) &&
+      sel.anchorOffset === sel.focusOffset
+    )
+  }
+
   // How to make it work with tables?, too... this.currentChild should be...
   styleText = (styles: any, canToggle: boolean) => {
     let sel = window.getSelection()
@@ -159,10 +170,7 @@ class Editor extends React.Component<EditorProps> {
       sel = window.getSelection()!
     }
 
-    const isRanged = !(
-      sel.anchorNode!.isSameNode(sel.focusNode!) &&
-      sel.anchorOffset === sel.focusOffset
-    )
+    const isRanged = this.isRanged()
 
     if (!isRanged) {
       const cssIndex = this.cssSet.findIndex((obj: any) =>
@@ -422,6 +430,10 @@ class Editor extends React.Component<EditorProps> {
   update = () => {
     this.setCurrentElements()
     this.props.setCaretPos(this.getCaretPos())
+  }
+
+  setCaretHeight = (height: string) => {
+    this.props.setCaretHeight(height)
   }
 
   select = (elem: Node, at: number) => {
@@ -885,11 +897,42 @@ class Editor extends React.Component<EditorProps> {
       this.currentChild.innerHTML === '\u200b'
     ) {
       this.currentChild.innerHTML = '\u200b'
+    } else if (e.key === 'Enter') {
+      const sel = window.getSelection()!
+      const newDiv = createNewElement('div')
+      const newSpan = createNewElement('span')
+      newSpan.setAttribute('style', this.currentChild.getAttribute('style')!)
+      if (this.isRanged()) {
+        const startOffset = Math.min(sel.anchorOffset, sel.focusOffset)
+        const lastOffset = Math.max(sel.anchorOffset, sel.focusOffset)
+        newSpan.innerText = this.currentChild.innerText.slice(lastOffset)
+        this.currentChild.innerText = this.currentChild.innerText.slice(
+          0,
+          startOffset
+        )
+      } else {
+        newSpan.innerText = this.currentChild.innerText.slice(sel!.anchorOffset)
+          ? this.currentChild.innerText.slice(sel!.anchorOffset)
+          : '\u200b'
+        this.currentChild.innerText = this.currentChild.innerText.slice(
+          0,
+          sel!.anchorOffset
+        )
+      }
+      newDiv.append(newSpan)
+      this.selfRef.current.insertBefore(newDiv, this.currentDiv.nextSibling)
+      this.select(newSpan.childNodes[0], 0)
+      e.preventDefault()
     }
   }
 
   onSelect = () => {
     this.update()
+    const fontSizeMenu = FontSizeMenu.getInstance()
+    if (fontSizeMenu && this.currentChild.style.fontSize)
+      fontSizeMenu.setState({
+        fontSize: parseInt(this.currentChild.style.fontSize)
+      })
   }
 
   makeSelectRect = () => {

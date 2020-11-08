@@ -38,9 +38,9 @@ background-color: ${props.colorize} !important;
 `
 
 export default React.memo((props: RichmonButtonProps) => {
-  const onCLick = (e: React.MouseEvent) => {
+  const onCLick = (_e: React.MouseEvent) => {
     props.action(EditorActions)
-    e.preventDefault()
+    _e.preventDefault()
   }
 
   return (

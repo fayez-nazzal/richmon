@@ -26,7 +26,16 @@
   opacity: 0.7;
 }
 
-.slider::-webkit-slider-thumb,
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: teal;
+  cursor: pointer;
+  border-radius: 0;
+}
+
 .slider::-moz-range-thumb {
   -webkit-appearance: none;
   appearance: none;

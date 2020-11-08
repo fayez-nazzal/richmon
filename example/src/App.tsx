@@ -11,8 +11,8 @@ const App = () => {
   })
   return (
     <Richmon
-      config={{ height: '400px' }}
-      top={['BIU', 'textColor', 'textHighlight', 'textShadow']}
+      height='400px'
+      top={['BIU', 'textColor', 'textHighlight', 'textShadow', 'fontSize']}
       content={content}
       onChange={setContent}
     />

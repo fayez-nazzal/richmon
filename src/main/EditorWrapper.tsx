@@ -12,6 +12,7 @@ export default (props: {
 }) => {
   const [isCaretHidden, setIsCaretHidden] = useState(true)
   const [caretPosition, setCaretPosition] = useState({ left: 0, top: 0 })
+  const [caretHeight, setCaretHeight] = useState('1em')
 
   return (
     <React.Fragment>
@@ -24,8 +25,10 @@ export default (props: {
         defaultTextColor={props.defaultTextColor}
         defaultHgColor={props.defaultHighlightColor}
         defaultFontSize={props.defaultFontSize}
+        setCaretHeight={setCaretHeight}
       />
       <Caret
+        height={caretHeight}
         hidden={isCaretHidden}
         left={caretPosition.left}
         top={caretPosition.top}

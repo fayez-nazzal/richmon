@@ -1,29 +1,25 @@
 import React from 'react'
 import List from './List'
-import RichmonButton from './Button'
 import { ReactComponent as Down } from '../svgs/down.svg'
 import { Actions } from './richActions'
 
 interface DropDownListProps {
-  leftAction: { (actions: Actions): void }
+  leftAction?: { (actions: Actions): void }
   leftChildren: (JSX.Element | string)[] | JSX.Element | string
   children?: any
+  css?: string
+  width?: string
 }
 
 export default (props: DropDownListProps) => {
   return (
     <React.Fragment>
       <List
-        css='padding: 10px;'
+        css={props.css ? props.css : 'padding: 10px;'}
         buttonChildren={<Down style={{ marginBottom: '-2px' }} />}
-        leftButton={
-          <RichmonButton
-            css='font-weight: normal;padding-left: 4px;padding-right:2px;border-right:none;width: 24px;height:28px;&:hover{outline:none;}'
-            action={props.leftAction}
-          >
-            {props.leftChildren}
-          </RichmonButton>
-        }
+        leftButtonCss='font-weight: normal;padding-left: 4px;padding-right:2px;border-right:none;width: 24px;height:28px;&:hover{outline:none;}'
+        leftButtonAction={props.leftAction}
+        leftButtonChildren={props.leftChildren}
         buttonCss={`
           padding: 0 3px;
           border-left: none;
@@ -40,7 +36,7 @@ export default (props: DropDownListProps) => {
             position: relative;
           }
         `}
-        width='135px'
+        width={props.width ? props.width : '135px'}
       >
         {props.children}
       </List>

@@ -1,6 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 import styles from '../styles.module.css'
+import { Actions } from './richActions'
+import RichButton from './Button'
 
 interface ListPropTypes {
   css?: string
@@ -8,8 +10,9 @@ interface ListPropTypes {
   buttonChildren: any
   width?: string
   height?: string
-  leftButton?: JSX.Element
-  rightButton?: JSX.Element
+  leftButtonCss?: string
+  leftButtonAction?: { (actions: Actions): void }
+  leftButtonChildren?: (JSX.Element | string)[] | JSX.Element | string
   buttonCss?: string
   buttonWrapperCss?: string
 }
@@ -100,6 +103,7 @@ class List extends React.Component<ListPropTypes, ListState> {
   }
 
   private Button = styled.button`
+    ${(props: { css?: string }) => props.css};
     ${this.props.buttonCss};
   `
 
@@ -114,7 +118,22 @@ class List extends React.Component<ListPropTypes, ListState> {
     return (
       <span id='sppp' style={{ position: 'relative' }} ref={this.selfRef}>
         <ButtonWrapper className={styles['list-button-wrapper']}>
-          {this.props.leftButton}
+          {this.props.leftButtonChildren ? (
+            <RichButton
+              css={this.props.leftButtonCss}
+              action={
+                this.props.leftButtonAction
+                  ? this.props.leftButtonAction
+                  : () => {
+                      this.onClick()
+                    }
+              }
+            >
+              {this.props.leftButtonChildren}
+            </RichButton>
+          ) : (
+            ''
+          )}
           <Button
             className={styles.button}
             onClick={this.onClick}
@@ -124,7 +143,6 @@ class List extends React.Component<ListPropTypes, ListState> {
           >
             {this.props.buttonChildren}
           </Button>
-          {this.props.rightButton}
         </ButtonWrapper>
         <this.Main
           extraCss={this.props.css ? this.props.css : ''}

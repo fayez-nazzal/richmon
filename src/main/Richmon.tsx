@@ -7,20 +7,15 @@ import { ReactComponent as Pen } from '../svgs/pen.svg'
 import ColorList from './ColorList'
 import '../styles.css'
 import styled from 'styled-components'
-const defaultProps = {
-  config: {
-    defaultTheme: 'light',
-    defaultTextColor: 'black',
-    defaultFontSize: '18px',
-    defaultHighlightColor: 'transparent',
-    width: '400px',
-    height: '400px'
-  }
-}
 import { config } from './config'
+import FontSizeMenu from './FontSizeMenu'
 
 interface RichmonPropTypes {
-  config: Config
+  defaultTextColor: string
+  defaultHighlightColor: string
+  defaultFontSize: string
+  height: string
+  width: string
   top: (JSX.Element | string)[]
   onChange: { (html: string): void }
   content: string
@@ -30,16 +25,14 @@ type RichmonState = {
   tools: JSX.Element[]
 }
 
-interface Config {
-  defaultTextColor?: string
-  defaultHighlightColor?: string
-  defaultFontSize?: string
-  height?: string
-  width?: string
-}
-
 class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
-  public static defaultProps = defaultProps
+  public static defaultProps: Partial<RichmonPropTypes> = {
+    defaultTextColor: 'black',
+    defaultFontSize: '14px',
+    defaultHighlightColor: 'transparent',
+    width: '400px',
+    height: '400px'
+  }
 
   public editor = React.createRef()
 
@@ -184,6 +177,11 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
               />
             )
             break
+          case 'fontSize':
+            tool_s = (
+              <FontSizeMenu defaultFontSize={this.props.defaultFontSize} />
+            )
+            break
           case 'B':
           case 'bold':
             tool_s = (
@@ -223,18 +221,18 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   Div = styled.div`
     -webkit-box-shadow: 0px 0px 3px 2px #888888;
     box-shadow: 0px 0px 3px 2px #888888;
-    width: ${this.props.config.width};
-    height: ${this.props.config.height};
+    width: ${this.props.width};
+    height: ${this.props.height};
   `
   render() {
     const Div = this.Div
     return (
       <Div className='richmon-container'>
-        <Toolbar tools={this.state.tools} width={this.props.config.width} />
+        <Toolbar tools={this.state.tools} width={this.props.width} />
         <EditorWrapper
-          defaultFontSize={this.props.config.defaultFontSize!}
-          defaultHighlightColor={this.props.config.defaultHighlightColor!}
-          defaultTextColor={this.props.config.defaultTextColor!}
+          defaultFontSize={this.props.defaultFontSize}
+          defaultHighlightColor={this.props.defaultHighlightColor}
+          defaultTextColor={this.props.defaultTextColor}
           editorRef={this.editor}
           onChange={this.props.onChange}
           content={this.props.content}

@@ -1,0 +1,26 @@
+import React, { CSSProperties } from 'react'
+import RichButton from './Button'
+import { Actions } from './richActions'
+
+interface RichOptionProps {
+  action: { (actions: Actions): void }
+  css?: string
+  children?: any
+  style?: CSSProperties
+}
+
+export default (props: RichOptionProps) => {
+  return (
+    <RichButton
+      action={props.action}
+      css={`
+        flex: 1 1 auto;
+        outline: none !important;
+        ${props.css}
+      `}
+      style={props.style}
+    >
+      {props.children}
+    </RichButton>
+  )
+}
