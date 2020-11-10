@@ -6,7 +6,7 @@ import isEqual from 'lodash.isequal'
 import { ReactComponent as Pen } from '../svgs/pen.svg'
 import ColorList from './ColorList'
 import '../styles.css'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { config } from './config'
 import FontSizeMenu from './FontSizeMenu'
 
@@ -19,11 +19,23 @@ interface RichmonPropTypes {
   top: (JSX.Element | string)[]
   onChange: { (html: string): void }
   content: string
+  editorPadding: string
+  caretDelay: string
 }
 
 type RichmonState = {
   tools: JSX.Element[]
 }
+
+const Div = styled.div`
+  -webkit-box-shadow: 0px 0px 3px 2px #888888;
+  box-shadow: 0px 0px 3px 2px #888888;
+  ${(props: { width: string; height: string }) =>
+    css`
+      width: ${props.width};
+      height: ${props.height};
+    `}
+`
 
 class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   public static defaultProps: Partial<RichmonPropTypes> = {
@@ -31,7 +43,9 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     defaultFontSize: '14px',
     defaultHighlightColor: 'transparent',
     width: '400px',
-    height: '400px'
+    height: '400px',
+    editorPadding: '5px 12px',
+    caretDelay: '55ms'
   }
 
   public editor = React.createRef()
@@ -110,7 +124,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
               </RichmonButton>,
               <RichmonButton
                 action={(actions) => {
-                  actions.setUndeerline()
+                  actions.setUnderline()
                 }}
                 css='width:28px;height:28px;'
               >
@@ -208,6 +222,8 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
               </RichmonButton>
             )
             break
+          case 'image':
+            break
           default:
             alert('un implement')
         }
@@ -218,18 +234,19 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     return tools
   }
 
-  Div = styled.div`
-    -webkit-box-shadow: 0px 0px 3px 2px #888888;
-    box-shadow: 0px 0px 3px 2px #888888;
-    width: ${this.props.width};
-    height: ${this.props.height};
-  `
   render() {
-    const Div = this.Div
     return (
-      <Div className='richmon-container'>
+      <Div
+        className='richmon-container'
+        width={this.props.width}
+        height={this.props.height}
+      >
         <Toolbar tools={this.state.tools} width={this.props.width} />
         <EditorWrapper
+          caretDelay={this.props.caretDelay}
+          width={this.props.width}
+          height={this.props.height}
+          padding={this.props.editorPadding}
           defaultFontSize={this.props.defaultFontSize}
           defaultHighlightColor={this.props.defaultHighlightColor}
           defaultTextColor={this.props.defaultTextColor}

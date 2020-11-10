@@ -13,7 +13,10 @@ export interface Actions {
   previousPage: { (): void }
   setBold: { (canToggle?: boolean): void }
   setItalic: { (canToggle?: boolean): void }
-  setUndeerline: { (canToggle?: boolean): void }
+  setUnderline: { (canToggle?: boolean): void }
+  insertImage: {
+    (src: string, css: string, selectCss: string, autoResize: boolean): void
+  }
 }
 
 const setCss = (css: string, canToggle = true) => {
@@ -75,15 +78,20 @@ const setUnderline = (canToggle = true) => {
   )
 }
 
+const insertImage = (src: string) => {
+  Editor.getInstance().insertImage(src)
+}
+
 export const EditorActions: Actions = {
-  setCss: setCss,
-  setTextShadow: setTextShadow,
-  setTextColor: setTextColor,
-  setTextHighlight: setTextHighlight,
-  nextPage: nextPage,
-  previousPage: previousPage,
-  setItalic: setItalic,
-  setUndeerline: setUnderline,
-  setBold: setBold,
-  setFontSize: setFontSize
+  setCss,
+  setTextShadow,
+  setTextColor,
+  setTextHighlight,
+  nextPage,
+  previousPage,
+  setItalic,
+  setUnderline,
+  setBold,
+  setFontSize,
+  insertImage
 }

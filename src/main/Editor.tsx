@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import './style.css'
 import assert from 'assert'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import {
   cssObjToString,
   stringToCssObj,
@@ -21,19 +21,35 @@ export interface EditorProps {
   setEditorHTML: { (html: string): void }
   setIsCaretHidden: { (isCaretHidden: boolean): void }
   setCaretPos: { (caretPosition: { top: number; left: number }): void }
+  isCaretHidden: boolean
   defaultTextColor: string
   defaultHgColor: string
   defaultFontSize: string
   setCaretHeight: { (height: string): void }
+  setCaretDelay: { (delay: string): void }
+  resetCaretDelay: { (): void }
+  caretPos: { left: number; top: number }
+  width: string
+  height: string
+  padding: string
+}
+
+interface StyledContentEditableProps {
+  width: string
+  height: string
+  padding: string
 }
 
 const ContentEditable = styled.div`
-  width: 400px;
-  height: 100%;
+  ${(props: StyledContentEditableProps) => css`
+    width: ${props.width};
+    height: ${props.height};
+    padding: ${props.padding};
+  `}
+  box-sizing: border-box;
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow: auto;
-  padding: 5px 12px;
   &:focus {
     outline: none;
   }
@@ -50,6 +66,7 @@ class Editor extends React.Component<EditorProps> {
   private selTable: HTMLElement | null
   private selImage: HTMLImageElement | null
   private RectanleSelector: HTMLElement
+  private selAll: boolean = false
   private selRectangleCoords: {
     x1: number
     y1: number
@@ -61,6 +78,8 @@ class Editor extends React.Component<EditorProps> {
     y1: 0,
     y2: 0
   }
+  private lastKeyPressed: string
+  private lastKeyPressedDate: Date
 
   private static _instance: Editor
 
@@ -74,6 +93,10 @@ class Editor extends React.Component<EditorProps> {
   }
 
   componentDidMount() {
+    this.init()
+  }
+
+  init = () => {
     const selfElem = this.selfRef.current as Element
     this.currentDiv = selfElem.children[0] as HTMLElement
     this.currentChild = createNewElement('span')
@@ -89,52 +112,21 @@ class Editor extends React.Component<EditorProps> {
     this.RectanleSelector.style.backgroundColor = '#68b0ab50'
     this.RectanleSelector.style.pointerEvents = 'none'
     this.selfRef.current.prepend(this.RectanleSelector)
+    this.select(this.currentChild.childNodes[0], 1)
   }
 
   shouldComponentUpdate() {
     return false
   }
 
-  // This may produce some propblems, especially with tables
-  setCurrentElements() {
+  setCurrentElements(elems: HTMLElement[]) {
     const sel = window.getSelection()
     if (!sel) return
     const node = sel.anchorNode as HTMLElement
     if (!node) return
 
-    const nodeName = node.nodeName
-    const parentNode = node.parentNode!
-    const parentName = parentNode.nodeName
-    if (nodeName === 'SPAN') {
-      this.currentDiv = parentNode as HTMLElement
-      this.currentChild = node as HTMLElement
-    } else if (nodeName === '#text') {
-      this.currentDiv = parentNode.parentNode as HTMLElement
-      this.currentChild = parentNode as HTMLElement
-    } else if (nodeName === 'TD') {
-      this.currentDiv = (node as HTMLElement).firstElementChild! as HTMLElement
-      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
-    } else if (parentName === 'TD') {
-      this.currentDiv = node as HTMLElement
-      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
-    } else if (nodeName === 'TABLE') {
-      this.currentDiv = (node as HTMLElement).firstElementChild!
-        .firstElementChild!.firstElementChild! as HTMLElement
-      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
-    } else if (
-      nodeName === 'DIV' &&
-      (node as HTMLElement).firstElementChild?.nodeName === 'DIV'
-    ) {
-      this.currentDiv = (node as HTMLElement).firstElementChild! as HTMLElement
-      this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
-    } else if (
-      nodeName === 'DIV' &&
-      (node as HTMLElement).firstElementChild?.nodeName === 'TABLE'
-    ) {
-      this.currentDiv = (node as HTMLElement).firstElementChild!
-        .firstElementChild!.firstElementChild!.firstElementChild! as HTMLElement
-      this.currentChild = this.currentDiv.firstElementChild as HTMLElement
-    } else return
+    this.currentDiv = elems[0]
+    this.currentChild = elems[1]
 
     this.nextMainCurrentDiv = this.selTable
       ? (this.selTable.nextElementSibling as HTMLElement)
@@ -142,6 +134,46 @@ class Editor extends React.Component<EditorProps> {
 
     assert(this.currentDiv.nodeName === 'DIV')
     assert(this.currentChild.nodeName === 'SPAN')
+  }
+
+  getUnderlyingElements = (node: HTMLElement) => {
+    const nodeName = node.nodeName
+    const parentNode = node.parentNode!
+    const parentName = parentNode.nodeName
+    let child: HTMLElement
+    let div: HTMLElement
+
+    if (nodeName === 'SPAN') {
+      div = parentNode as HTMLElement
+      child = node as HTMLElement
+    } else if (nodeName === '#text') {
+      div = parentNode.parentNode as HTMLElement
+      child = parentNode as HTMLElement
+    } else if (nodeName === 'TD') {
+      div = (node as HTMLElement).firstElementChild! as HTMLElement
+      child = div.firstElementChild! as HTMLElement
+    } else if (parentName === 'TD') {
+      div = node as HTMLElement
+      child = div.firstElementChild! as HTMLElement
+    } else if (nodeName === 'TABLE') {
+      div = (node as HTMLElement).firstElementChild!.firstElementChild!
+        .firstElementChild! as HTMLElement
+      child = div.firstElementChild! as HTMLElement
+    } else if (
+      nodeName === 'DIV' &&
+      (node as HTMLElement).firstElementChild?.nodeName === 'DIV'
+    ) {
+      div = (node as HTMLElement).firstElementChild! as HTMLElement
+      child = div.firstElementChild! as HTMLElement
+    } else if (
+      nodeName === 'DIV' &&
+      (node as HTMLElement).firstElementChild?.nodeName === 'TABLE'
+    ) {
+      div = (node as HTMLElement).firstElementChild!.firstElementChild!
+        .firstElementChild!.firstElementChild! as HTMLElement
+      child = div.firstElementChild as HTMLElement
+    } else return null
+    return [div, child]
   }
 
   commitChanges = () => {
@@ -184,7 +216,7 @@ class Editor extends React.Component<EditorProps> {
       if (canToggle && isMatchingKeysEqual(currentStyles, styles)) {
         styles = this.cssSet[cssIndex].before
       } else if (canToggle) {
-        const before = this.getElementBeforeStyle(this.currentChild, styles)
+        const before = this.getElementWithInitStyles(this.currentChild, styles)
         this.cssSet.push({
           styles: styles,
           before: before
@@ -286,7 +318,7 @@ class Editor extends React.Component<EditorProps> {
         styles = this.cssSet[cssIndex].before
       }
     } else if (canToggle) {
-      const before = this.getElementBeforeStyle(startNode, styles)
+      const before = this.getElementWithInitStyles(startNode, styles)
 
       this.cssSet.push({
         styles,
@@ -336,16 +368,16 @@ class Editor extends React.Component<EditorProps> {
     if (!startNode.innerText) startNode.remove()
   }
 
-  getElementBeforeStyle(elem: HTMLElement, styles: any) {
+  getElementWithInitStyles(elem: HTMLElement, styles: any) {
     const stylesKeys = Object.keys(styles)
-    const before: any = {}
+    const stylesWithInit: any = {}
     const elemStyles = stringToCssObj(elem.getAttribute('style')!)
     for (let i = 0; i < stylesKeys.length; i++) {
-      before[stylesKeys[i]] = elemStyles[stylesKeys[i]]
+      stylesWithInit[stylesKeys[i]] = elemStyles[stylesKeys[i]]
         ? elemStyles[stylesKeys[i]]
         : 'initial'
     }
-    return before
+    return stylesWithInit
   }
 
   public setCss = (css: any, canToggle = false) => {
@@ -366,6 +398,7 @@ class Editor extends React.Component<EditorProps> {
     }
 
     this.commitChanges()
+
     this.props.setIsCaretHidden(blur)
   }
 
@@ -428,8 +461,47 @@ class Editor extends React.Component<EditorProps> {
   }
 
   update = () => {
-    this.setCurrentElements()
+    const sel = window.getSelection()!
+
+    const elems = this.getNodesFromSelect(sel)
+    const anchorElems = elems[0]
+    const focusElems = elems[1]
+
+    if (anchorElems !== null) this.setCurrentElements(anchorElems)
     this.props.setCaretPos(this.getCaretPos())
+
+    const firstDiv = this.selfRef.current.firstElementChild.nextElementSibling
+    const lastDiv = this.selfRef.current.lastElementChild
+    if (
+      anchorElems &&
+      focusElems &&
+      !anchorElems[0].isSameNode(focusElems[0])
+    ) {
+      this.props.setIsCaretHidden(true)
+      if (
+        (sel.anchorOffset === 0 &&
+          sel.focusOffset === focusElems[1].innerText.length &&
+          anchorElems[0].isSameNode(firstDiv) &&
+          focusElems[0].isSameNode(lastDiv) &&
+          anchorElems[1].isSameNode(firstDiv.firstElementChild) &&
+          focusElems[1].isSameNode(lastDiv.lastElementChild)) ||
+        (sel.focusOffset === 0 &&
+          sel.anchorOffset === anchorElems[1].innerText.length &&
+          anchorElems[0].isSameNode(lastDiv) &&
+          focusElems[0].isSameNode(firstDiv) &&
+          anchorElems[1].isSameNode(lastDiv.lastElementChild) &&
+          focusElems[1].isSameNode(firstDiv.firstElementChild))
+      )
+        this.selAll = true
+    }
+  }
+
+  getNodesFromSelect = (sel: Selection) => {
+    const anchorElems = this.getUnderlyingElements(
+      sel!.anchorNode as HTMLElement
+    )
+    const focusElems = this.getUnderlyingElements(sel!.focusNode as HTMLElement)
+    return [anchorElems, focusElems]
   }
 
   setCaretHeight = (height: string) => {
@@ -798,13 +870,42 @@ class Editor extends React.Component<EditorProps> {
   }
 
   onKeyDown = (e: React.KeyboardEvent) => {
+    const date = new Date()
+
     if (
+      this.lastKeyPressedDate &&
+      e.key === this.lastKeyPressed &&
+      date!.getTime() - this.lastKeyPressedDate.getTime() < 300
+    ) {
+      this.props.setCaretDelay('0ms')
+    } else {
+      this.props.resetCaretDelay()
+    }
+
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+      this.props.setCaretPos({
+        left:
+          this.props.caretPos.left +
+          (RegExp('[A-Za-z0-9]').test(e.key) ? 4 : 1),
+        top: this.props.caretPos.top
+      })
+    }
+
+    this.lastKeyPressed = e.key
+    this.lastKeyPressedDate = date
+
+    const sel = window.getSelection()
+
+    if (this.selAll) {
+      this.selfRef.current.innerHTML = '<div></div>'
+      this.init()
+      this.selAll = false
+    } else if (
       this.currentChild.parentNode &&
       this.currentChild.parentNode.parentNode &&
       (this.currentChild.parentNode.parentNode.nodeName === 'TD' ||
         this.currentChild.parentNode.parentNode.nodeName === 'TH')
     ) {
-      const sel = window.getSelection()
       switch (e.key) {
         case 'Backspace':
           if (this.currentChild.innerHTML.length == 1) {
@@ -898,13 +999,12 @@ class Editor extends React.Component<EditorProps> {
     ) {
       this.currentChild.innerHTML = '\u200b'
     } else if (e.key === 'Enter') {
-      const sel = window.getSelection()!
       const newDiv = createNewElement('div')
       const newSpan = createNewElement('span')
       newSpan.setAttribute('style', this.currentChild.getAttribute('style')!)
       if (this.isRanged()) {
-        const startOffset = Math.min(sel.anchorOffset, sel.focusOffset)
-        const lastOffset = Math.max(sel.anchorOffset, sel.focusOffset)
+        const startOffset = Math.min(sel!.anchorOffset, sel!.focusOffset)
+        const lastOffset = Math.max(sel!.anchorOffset, sel!.focusOffset)
         newSpan.innerText = this.currentChild.innerText.slice(lastOffset)
         this.currentChild.innerText = this.currentChild.innerText.slice(
           0,
@@ -921,8 +1021,11 @@ class Editor extends React.Component<EditorProps> {
       }
       newDiv.append(newSpan)
       this.selfRef.current.insertBefore(newDiv, this.currentDiv.nextSibling)
+      this.props.setCaretDelay('0ms')
       this.select(newSpan.childNodes[0], 0)
       e.preventDefault()
+    } else if ((e.key === 'A' || e.key === 'a') && e.ctrlKey) {
+      this.selAll = true
     }
   }
 
@@ -1127,6 +1230,7 @@ class Editor extends React.Component<EditorProps> {
   }
 
   onMouseDown = (e: React.MouseEvent) => {
+    this.props.setCaretDelay('0ms')
     const elems = document.elementsFromPoint(e.clientX, e.clientY)
 
     const img = elems.find((elem) => elem.nodeName === 'IMG')
@@ -1150,9 +1254,12 @@ class Editor extends React.Component<EditorProps> {
   render() {
     return (
       <ContentEditable
+        padding={this.props.padding}
         onInput={() => this.onInput()}
         onFocus={() => this.onInput()}
         onBlur={() => this.onInput(true)}
+        width={this.props.width}
+        height={this.props.height}
         onMouseMove={this.onMouseMove}
         onMouseLeave={this.onMouseLeave}
         onMouseUp={this.onMouseUp}
@@ -1172,9 +1279,6 @@ class Editor extends React.Component<EditorProps> {
         }}
         onDragStart={(e: React.DragEvent) => {
           e.preventDefault()
-        }}
-        style={{
-          whiteSpace: 'normal'
         }}
         dir='auto'
         contentEditable

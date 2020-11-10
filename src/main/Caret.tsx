@@ -8,6 +8,7 @@ class Caret extends React.Component<
     top: number
     left: number
     height: string
+    transitionDelay: string
   },
   { hidden: boolean }
 > {
@@ -65,7 +66,8 @@ class Caret extends React.Component<
     position: absolute;
     pointer-events: none;
     border-right: 1.2px solid black;
-    transition: left 65ms ease-in;
+    transition: left
+      ${(props: { transitionDelay: string }) => props.transitionDelay} ease-in;
   `
 
   render() {
@@ -76,6 +78,7 @@ class Caret extends React.Component<
           top: this.props.top + 'px',
           height: this.props.height
         }}
+        transitionDelay={this.props.transitionDelay}
         hidden={this.props.hidden ? true : this.state.hidden}
       >
         {'\u200b'}
