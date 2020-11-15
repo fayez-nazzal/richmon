@@ -535,6 +535,14 @@ class Editor extends React.Component<EditorProps> {
     sel.addRange(range)
   }
 
+  selectNode = (node: Node, preSel?: Selection) => {
+    const sel = preSel ? preSel : window.getSelection()!
+    sel.removeAllRanges()
+    const range = document.createRange()
+    range.selectNode(node)
+    sel.addRange(range)
+  }
+
   findSelectedSpan = (node: Node) => {
     const n =
       node.nodeName === '#text'
@@ -1253,7 +1261,20 @@ class Editor extends React.Component<EditorProps> {
     const list = createNewElement(type)
     list.setAttribute('style', css)
     this.selfRef.current.insertBefore(list, this.currentDiv.nextElementSibling)
-    this.addListItem(list)
+    if (this.isRanged()) {
+      const sel = window.getSelection()!
+      const selElems = this.getChildsWithinSelect(sel, true)!
+      const selDivs = selElems[0] as HTMLElement[]
+      for (let div of selDivs) {
+        const li = createNewElement('li')
+        li.innerHTML = div.innerHTML
+        list.append(li)
+        div.remove()
+      }
+      this.selectNode(list)
+    } else {
+      this.addListItem(list)
+    }
   }
 
   addListItem = (list: HTMLElement) => {

@@ -16,6 +16,7 @@ const App = () => {
         'textHighlight',
         'textShadow',
         'table',
+        'orderedList',
         'unorderedList'
       ]}
       width='100wh'

@@ -10,7 +10,8 @@ import styled, { css } from 'styled-components'
 import { config } from './config'
 import FontSizeMenu from './FontSizeMenu'
 import TableList from './TableList'
-import BulletList from './UnOrderedLists'
+import UnOrderedLists from './UnOrderedLists'
+import OrderedLists from './OrderedLists'
 
 interface RichmonPropTypes {
   defaultTextColor: string
@@ -436,7 +437,15 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             break
           case 'unorderedList':
             tool_s = (
-              <BulletList
+              <UnOrderedLists
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
+              />
+            )
+            break
+          case 'orderedList':
+            tool_s = (
+              <OrderedLists
                 buttonWidth={this.props.buttonsDefaultWidth}
                 buttonHeight={this.props.buttonsDefaultHeight}
               />

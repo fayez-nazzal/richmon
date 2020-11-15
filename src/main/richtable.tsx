@@ -66,9 +66,10 @@ export function createTable(
   insertRuleIfNotFound(tableIndex, 'margin', '5px')
   insertRuleIfNotFound(tableIndex, 'border-collapse', 'collapse')
 
-  const colWidth = tableWidth / (cols + 1)
+  const colWidth = rows > 1 || cols > 1 ? tableWidth / (cols + 1) : 200
 
   insertRuleIfNotFound(tdIndex, 'width', `${colWidth}px`, 'td')
+  insertRuleIfNotFound(thIndex, 'width', `${colWidth}px`, 'th')
   insertRuleIfNotFound(tdIndex, 'font-size', `${cellHeight}`, 'td')
   insertRuleIfNotFound(thIndex, 'font-size', `${cellHeight}`, 'th')
   insertRuleIfNotFound(tdIndex, 'max-width', `${colWidth}px`, 'td')

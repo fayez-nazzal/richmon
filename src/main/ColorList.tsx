@@ -125,7 +125,7 @@ export default (props: ColorListProps) => {
                   height: '3.2px',
                   backgroundColor: currentColor,
                   margin: '0 auto',
-                  marginTop: '-3px'
+                  marginTop: '-2.6px'
                 }}
               ></div>
             )}
