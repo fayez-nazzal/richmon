@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import styles from '../styles.module.css'
 import { Actions } from './richActions'
 import RichButton from './Button'
@@ -15,6 +15,8 @@ interface ListPropTypes {
   leftButtonChildren?: (JSX.Element | string)[] | JSX.Element | string
   buttonCss?: string
   buttonWrapperCss?: string
+  buttonHeight: string
+  buttonWidth: string
 }
 
 interface ListState {
@@ -23,6 +25,21 @@ interface ListState {
   children: any[]
   isAnimationEnabled: boolean
 }
+
+const Button = styled.button`
+  ${(props: { css?: string; width: string; height: string }) => css`
+    width: ${props.width};
+    height: ${props.height};
+
+    ${props.css};
+  `}
+`
+
+const ButtonWrapper = styled.span`
+  ${(props: { css?: string }) => css`
+    ${props.css};
+  `}
+`
 
 class List extends React.Component<ListPropTypes, ListState> {
   private selfRef: any = React.createRef()
@@ -102,22 +119,13 @@ class List extends React.Component<ListPropTypes, ListState> {
     })
   }
 
-  private Button = styled.button`
-    ${(props: { css?: string }) => props.css};
-    ${this.props.buttonCss};
-  `
-
-  private ButtonWrapper = styled.span`
-    ${this.props.buttonWrapperCss}
-  `
-
   render() {
-    const Button = this.Button
-    const ButtonWrapper = this.ButtonWrapper
-
     return (
       <span id='sppp' style={{ position: 'relative' }} ref={this.selfRef}>
-        <ButtonWrapper className={styles['list-button-wrapper']}>
+        <ButtonWrapper
+          className={styles['list-button-wrapper']}
+          css={this.props.buttonWrapperCss}
+        >
           {this.props.leftButtonChildren ? (
             <RichButton
               css={this.props.leftButtonCss}
@@ -128,6 +136,8 @@ class List extends React.Component<ListPropTypes, ListState> {
                       this.onClick()
                     }
               }
+              width={this.props.buttonWidth}
+              height={this.props.buttonHeight}
             >
               {this.props.leftButtonChildren}
             </RichButton>
@@ -135,6 +145,9 @@ class List extends React.Component<ListPropTypes, ListState> {
             ''
           )}
           <Button
+            width='auto'
+            height={this.props.buttonHeight}
+            css={this.props.buttonCss}
             className={styles.button}
             onClick={this.onClick}
             onMouseDown={(e) => {
@@ -154,7 +167,9 @@ class List extends React.Component<ListPropTypes, ListState> {
           onClick={(e: React.MouseEvent) => {
             const target = e.target as HTMLElement
             if (
-              target.nodeName === 'BUTTON' &&
+              ['li', 'ul', 'ol', 'button'].includes(
+                target.nodeName.toLowerCase()
+              ) &&
               !target.className.includes('page-button')
             ) {
               this.setState({

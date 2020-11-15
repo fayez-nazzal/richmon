@@ -195,6 +195,8 @@ export default (props: {
             margin: 4px auto;
           `}
           colorize={hex}
+          width='auto'
+          height='auto'
         >
           Select
         </RichmonButton>

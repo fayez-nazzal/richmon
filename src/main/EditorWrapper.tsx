@@ -13,6 +13,7 @@ export default (props: {
   height: string
   padding: string
   caretDelay: string
+  css: string
 }) => {
   const [isCaretHidden, setIsCaretHidden] = useState(true)
   const [caretPosition, setCaretPosition] = useState({ left: 0, top: 0 })
@@ -26,6 +27,7 @@ export default (props: {
   return (
     <React.Fragment>
       <Editor
+        css={props.css}
         width={props.width}
         height={props.height}
         padding={props.padding}
@@ -33,12 +35,14 @@ export default (props: {
         ref={props.editorRef}
         setEditorHTML={props.onChange}
         caretPos={caretPosition}
+        caretDelay={caretDelay}
         setCaretPos={setCaretPosition}
         isCaretHidden={isCaretHidden}
         setIsCaretHidden={setIsCaretHidden}
         defaultTextColor={props.defaultTextColor}
         defaultHgColor={props.defaultHighlightColor}
         defaultFontSize={props.defaultFontSize}
+        caretHeight={caretHeight}
         setCaretHeight={setCaretHeight}
         setCaretDelay={setCaretDelay}
         resetCaretDelay={resetCaretDelay}

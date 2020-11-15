@@ -79,7 +79,13 @@ class Caret extends React.Component<
           height: this.props.height
         }}
         transitionDelay={this.props.transitionDelay}
-        hidden={this.props.hidden ? true : this.state.hidden}
+        hidden={
+          this.props.hidden
+            ? true
+            : this.props.left === 0 && this.props.top === 0
+            ? true
+            : this.state.hidden
+        }
       >
         {'\u200b'}
       </this.CaretSpan>

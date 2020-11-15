@@ -4,13 +4,13 @@ import RichOption from './RichOption'
 
 const fontSizes: JSX.Element[] = []
 
-for (let i = 6; i <= 142; i++) {
+for (let i = 8; i <= 142; i++) {
   fontSizes.push(
     <RichOption
       action={(actions) => {
         actions.setFontSize(`${i}px`)
       }}
-      css='padding: 1px 15px;'
+      css='padding: auto;'
     >
       {i}
     </RichOption>
@@ -19,6 +19,8 @@ for (let i = 6; i <= 142; i++) {
 
 interface FontSizeMenuProps {
   defaultFontSize: string
+  buttonWidth: string
+  buttonHeight: string
 }
 
 interface FontSizeMenuState {
@@ -48,6 +50,8 @@ class FontSizeMenu extends React.PureComponent<
       <RichMenu
         buttonChildren={this.state.fontSize}
         buttonCss='background-color:white;'
+        buttonWidth={this.props.buttonWidth}
+        buttonHeight={this.props.buttonHeight}
       >
         {fontSizes}
       </RichMenu>

@@ -3,6 +3,26 @@ import FontSizeMenu from './FontSizeMenu'
 import List from './List'
 import { stringToCssObj } from './richmonUtils'
 
+export type orderedListTypes =
+  | 'decimal'
+  | 'decimal-leading-zero'
+  | 'lower-alpha'
+  | 'upper-alpha'
+  | 'lower-latin'
+  | 'upper-latin'
+  | 'lower-roman'
+  | 'upper-roman'
+  | 'georgian'
+  | 'none'
+  | 'armenian'
+  | 'cjk-ideographic'
+  | 'hiragana'
+  | 'hiragana-iroha'
+  | 'katakana'
+  | 'katakana-iroha'
+
+export type unOrderedListTypes = 'disc' | 'circle' | 'square'
+
 export interface Actions {
   setFontSize: { (fontSize: string): void }
   setCss: { (css: string, canToggle?: boolean): void }
@@ -14,9 +34,33 @@ export interface Actions {
   setBold: { (canToggle?: boolean): void }
   setItalic: { (canToggle?: boolean): void }
   setUnderline: { (canToggle?: boolean): void }
+  setStrikeThrough: { (canToggle?: boolean): void }
   insertImage: {
     (src: string, css: string, selectCss: string, autoResize: boolean): void
   }
+  insertTable: {
+    (rows: number, cols: number, cssString?: string, selectable?: boolean): void
+  }
+  setSub: { (): void }
+  setSup: { (): void }
+  insertUList: {
+    (styleType?: unOrderedListTypes): void
+  }
+  insertUListWithStyleImages: {
+    (url: string): void
+  }
+  insertOList: {
+    (styleType?: orderedListTypes): void
+  }
+}
+
+const insertTable = (
+  rows: number,
+  cols: number,
+  cssString: string = '',
+  selectable: boolean = true
+) => {
+  Editor.getInstance().insertTable(rows, cols, cssString, selectable)
 }
 
 const setCss = (css: string, canToggle = true) => {
@@ -78,8 +122,50 @@ const setUnderline = (canToggle = true) => {
   )
 }
 
+const setStrikeThrough = (canToggle = true) => {
+  Editor.getInstance().setCss(
+    stringToCssObj(`text-decoration:line-through;`),
+    canToggle
+  )
+}
+
 const insertImage = (src: string) => {
   Editor.getInstance().insertImage(src)
+}
+
+const setSub = () => {
+  Editor.getInstance().setSub()
+}
+
+const setSup = () => {
+  Editor.getInstance().setSup()
+}
+
+const insertOList = (
+  styleType: orderedListTypes = 'decimal',
+  padding = '0 10px'
+) => {
+  Editor.getInstance().addList(
+    'ol',
+    `list-style-type:${styleType};padding:${padding};`
+  )
+}
+
+const insertUList = (
+  styleType: unOrderedListTypes = 'disc',
+  padding = '0 10px'
+) => {
+  Editor.getInstance().addList(
+    'ul',
+    `list-style-type:${styleType};padding:${padding};`
+  )
+}
+
+const insertUListWithStyleImages = (url: string, padding = '0 10px') => {
+  Editor.getInstance().addList(
+    'ul',
+    `list-style-image:url('${url}');padding:${padding};`
+  )
 }
 
 export const EditorActions: Actions = {
@@ -91,7 +177,14 @@ export const EditorActions: Actions = {
   previousPage,
   setItalic,
   setUnderline,
+  setStrikeThrough,
   setBold,
   setFontSize,
-  insertImage
+  insertImage,
+  insertTable,
+  setSub,
+  setSup,
+  insertOList,
+  insertUList,
+  insertUListWithStyleImages
 }

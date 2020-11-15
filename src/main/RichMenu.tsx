@@ -8,6 +8,8 @@ interface MenuPropTypes {
   width?: string
   height?: string
   buttonCss?: string
+  buttonWidth: string
+  buttonHeight: string
 }
 
 export default (props: MenuPropTypes) => {
@@ -20,10 +22,12 @@ export default (props: MenuPropTypes) => {
         max-height: 200px;
         overflow-y: auto;
         align-content: center;
-        align-items: center;
-        ${props.buttonCss}
+        align-items: stretch;
+        ${props.css};
       `}
       width='auto'
+      buttonWidth={props.buttonWidth}
+      buttonHeight={props.buttonHeight}
     >
       {props.children}
     </DropDownList>

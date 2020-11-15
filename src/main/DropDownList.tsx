@@ -9,6 +9,8 @@ interface DropDownListProps {
   children?: any
   css?: string
   width?: string
+  buttonHeight: string
+  buttonWidth: string
 }
 
 export default (props: DropDownListProps) => {
@@ -17,18 +19,18 @@ export default (props: DropDownListProps) => {
       <List
         css={props.css ? props.css : 'padding: 10px;'}
         buttonChildren={<Down style={{ marginBottom: '-2px' }} />}
-        leftButtonCss='font-weight: normal;padding-left: 4px;padding-right:2px;border-right:none;width: 24px;height:28px;&:hover{outline:none;}'
+        leftButtonCss={`font-weight: normal;padding-left: 4px;padding-right:2px;border-right:none;&:hover{outline:none;}`}
         leftButtonAction={props.leftAction}
         leftButtonChildren={props.leftChildren}
         buttonCss={`
           padding: 0 3px;
           border-left: none;
-          width: auto;
-          height: 28px;
           &:hover {
             outline: none;
           }
         `}
+        buttonWidth={props.buttonWidth}
+        buttonHeight={props.buttonHeight}
         buttonWrapperCss={`
           &:hover {
             outline: 2px solid #e3e3e3;
@@ -36,7 +38,7 @@ export default (props: DropDownListProps) => {
             position: relative;
           }
         `}
-        width={props.width ? props.width : '135px'}
+        width={props.width ? props.width : 'auto'}
       >
         {props.children}
       </List>

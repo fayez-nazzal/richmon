@@ -9,6 +9,7 @@ export function createTable(
   cols: number,
   cssString: string,
   tableWidth: number,
+  cellHeight: string,
   nextDiv: HTMLElement,
   selectable: boolean
 ) {
@@ -68,6 +69,8 @@ export function createTable(
   const colWidth = tableWidth / (cols + 1)
 
   insertRuleIfNotFound(tdIndex, 'width', `${colWidth}px`, 'td')
+  insertRuleIfNotFound(tdIndex, 'font-size', `${cellHeight}`, 'td')
+  insertRuleIfNotFound(thIndex, 'font-size', `${cellHeight}`, 'th')
   insertRuleIfNotFound(tdIndex, 'max-width', `${colWidth}px`, 'td')
   insertRuleIfNotFound(tdIndex, 'word-break', 'break-all', 'td')
   insertRuleIfNotFound(tdIndex, 'white-space', 'pre-wrap', 'td')

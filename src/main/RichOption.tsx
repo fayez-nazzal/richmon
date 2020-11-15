@@ -19,6 +19,8 @@ export default (props: RichOptionProps) => {
         ${props.css}
       `}
       style={props.style}
+      width='auto'
+      height='auto'
     >
       {props.children}
     </RichButton>

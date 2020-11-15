@@ -3,7 +3,7 @@ import Page from './Page'
 import ColorPickTools from './ColorInputs'
 import RichmonButton from './Button'
 import DropDownList from './DropDownList'
-import styled from 'styled-components'
+import Flex from './Flex'
 import { Actions } from './richActions'
 import RichGrid from './RichGrid'
 import styles from '../styles.module.css'
@@ -23,19 +23,9 @@ interface ColorListProps {
   hasCustom?: boolean
   customCols?: number
   customRows?: number
+  buttonWidth: string
+  buttonHeight: string
 }
-
-const Flex = styled.div`
-  display: flex;
-  width: 140px;
-  justify-content: center;
-  height: 23px;
-  user-select: none;
-  -moz-user-select: none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
-  -o-user-select: none;
-`
 
 export default (props: ColorListProps) => {
   const [currentColor, setCurrentColor] = useState<string>(props.initialColor)
@@ -56,6 +46,8 @@ export default (props: ColorListProps) => {
           doAction(actions, color)
         }}
         colorize={color}
+        width='auto'
+        height='auto'
       />
     )
     setCustomColors([...customColorsClone])
@@ -97,6 +89,8 @@ export default (props: ColorListProps) => {
                 : ''
               : ''
           }
+          width='auto'
+          height='auto'
         />
       )
     })
@@ -109,6 +103,8 @@ export default (props: ColorListProps) => {
           doAction(actions, currentColor)
           setCurrentColor(currentColor)
         }}
+        buttonWidth={props.buttonWidth}
+        buttonHeight={props.buttonHeight}
         leftChildren={
           <div>
             {props.leftIcon}
@@ -116,9 +112,8 @@ export default (props: ColorListProps) => {
               <span
                 style={{
                   textShadow: `${currentColor} 0px 0px ${strokeSize}px`,
-                  fontSize: '15px',
-                  position: 'relative',
-                  top: '2px'
+                  fontSize: '13px',
+                  position: 'relative'
                 }}
               >
                 S
@@ -126,7 +121,7 @@ export default (props: ColorListProps) => {
             ) : (
               <div
                 style={{
-                  width: '86%',
+                  width: '60%',
                   height: '3.2px',
                   backgroundColor: currentColor,
                   margin: '0 auto',
@@ -139,7 +134,7 @@ export default (props: ColorListProps) => {
       >
         <Page>
           {props.action === 'textShadow' ? (
-            <Flex>
+            <Flex height='23px'>
               <input
                 type='range'
                 min='0'
@@ -188,7 +183,12 @@ export default (props: ColorListProps) => {
             Basic colors
           </div>
           <hr />
-          <RichGrid key='grid 1' rows={props.basicRows} cols={props.basicCols}>
+          <RichGrid
+            key='grid 1'
+            rows={props.basicRows}
+            cols={props.basicCols}
+            css='margin-top:5px;'
+          >
             {mapColors(props.basicColors, 'basic')}
           </RichGrid>
           <div
@@ -218,8 +218,10 @@ export default (props: ColorListProps) => {
               action={(actions) => {
                 actions.nextPage()
               }}
-              css='margin-top: 8px;position:relative;transform: translateX(50%);'
+              css='display:block;margin: 0 auto;text-align: center;margin-top: 8px;position:relative;'
               pageButton
+              width='auto'
+              height='auto'
             >
               custom
             </RichmonButton>

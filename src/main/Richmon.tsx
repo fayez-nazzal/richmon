@@ -1,6 +1,6 @@
 import React from 'react'
 import RichmonButton from './Button'
-import Toolbar from './Top'
+import Toolbar from './Toolbar'
 import EditorWrapper from './EditorWrapper'
 import isEqual from 'lodash.isequal'
 import { ReactComponent as Pen } from '../svgs/pen.svg'
@@ -9,6 +9,8 @@ import '../styles.css'
 import styled, { css } from 'styled-components'
 import { config } from './config'
 import FontSizeMenu from './FontSizeMenu'
+import TableList from './TableList'
+import BulletList from './UnOrderedLists'
 
 interface RichmonPropTypes {
   defaultTextColor: string
@@ -16,11 +18,16 @@ interface RichmonPropTypes {
   defaultFontSize: string
   height: string
   width: string
-  top: (JSX.Element | string)[]
+  tools: (JSX.Element | string)[]
   onChange: { (html: string): void }
   content: string
   editorPadding: string
   caretDelay: string
+  css: string
+  editorCss: string
+  buttonsDefaultWidth: string
+  buttonsDefaultHeight: string
+  toolbarCss: string
 }
 
 type RichmonState = {
@@ -30,22 +37,29 @@ type RichmonState = {
 const Div = styled.div`
   -webkit-box-shadow: 0px 0px 3px 2px #888888;
   box-shadow: 0px 0px 3px 2px #888888;
-  ${(props: { width: string; height: string }) =>
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  align-items: stretch;
+  ${(props: { width: string; height: string; css: string }) =>
     css`
       width: ${props.width};
       height: ${props.height};
+      ${props.css}
     `}
 `
 
 class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   public static defaultProps: Partial<RichmonPropTypes> = {
     defaultTextColor: 'black',
-    defaultFontSize: '14px',
+    defaultFontSize: '16px',
     defaultHighlightColor: 'transparent',
     width: '400px',
     height: '400px',
     editorPadding: '5px 12px',
-    caretDelay: '55ms'
+    caretDelay: '55ms',
+    buttonsDefaultWidth: '34px',
+    buttonsDefaultHeight: '44px'
   }
 
   public editor = React.createRef()
@@ -59,7 +73,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   }
 
   updateTools = () => {
-    const tools = this.constructTools(this.props.top as any[])
+    const tools = this.constructTools(this.props.tools as any[])
     this.setState({ ...this.state, tools })
   }
 
@@ -104,13 +118,14 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         }
       } else {
         switch (toolProp) {
-          case 'BIU':
+          case 'BIUS':
             tool_s = [
               <RichmonButton
                 action={(actions) => {
                   actions.setBold()
                 }}
-                css='width:28px;height:28px;'
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
               >
                 B
               </RichmonButton>,
@@ -118,7 +133,8 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 action={(actions) => {
                   actions.setItalic()
                 }}
-                css='width:28px;height:28px;'
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
               >
                 I
               </RichmonButton>,
@@ -126,11 +142,215 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 action={(actions) => {
                   actions.setUnderline()
                 }}
-                css='width:28px;height:28px;'
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                U
+              </RichmonButton>,
+              <RichmonButton
+                action={(actions) => {
+                  actions.setStrikeThrough()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+                css='text-decoration: line-through;'
+              >
+                St
+              </RichmonButton>
+            ]
+            break
+          case 'B':
+          case 'bold':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.setBold()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'I':
+          case 'italic':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.setItalic()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                I
+              </RichmonButton>
+            )
+            break
+          case 'U':
+          case 'underline':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.setUnderline()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
               >
                 U
               </RichmonButton>
-            ]
+            )
+            break
+          case 'S':
+          case 'strikethrough':
+          case 'linethrough':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.setStrikeThrough()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+                css='text-decoration: line-through;'
+              >
+                St
+              </RichmonButton>
+            )
+            break
+          case 'sub':
+          case 'subscript':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.setSub()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                x<sub style={{ color: '#90e0ef', fontSize: '9px' }}>2</sub>
+              </RichmonButton>
+            )
+            break
+          case 'sup':
+          case 'superscript':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.setSup()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                x<sup style={{ color: '#90e0ef', fontSize: '9px' }}>2</sup>
+              </RichmonButton>
+            )
+            break
+          case 'bullet':
+          case 'bulletList':
+          case 'discList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertUList()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'numberedList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertOList()
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'lowerRomanList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertOList('lower-roman')
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'upperRomanList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertOList('upper-roman')
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'alphaList':
+          case 'lowerAlphaList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertOList('lower-alpha')
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'upperAlphaList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertOList('upper-alpha')
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'squareList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertUList('square')
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
+            break
+          case 'circleList':
+            tool_s = (
+              <RichmonButton
+                action={(actions) => {
+                  actions.insertUList('circle')
+                }}
+                width={this.props.buttonsDefaultWidth}
+                height={this.props.buttonsDefaultHeight}
+              >
+                B
+              </RichmonButton>
+            )
             break
           case 'textColor':
             tool_s = (
@@ -149,6 +369,8 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 hasCustom={config.textColorsHasCustom}
                 customCols={config.defaultCustomTextColorsCols}
                 customRows={config.defaultCustomTextColorsRows}
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
               />
             )
             break
@@ -156,7 +378,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             tool_s = (
               <ColorList
                 action='textHighlight'
-                initialColor='#f8ff00'
+                initialColor='#ffff00'
                 leftIcon={<Pen />}
                 basicColors={config.defaultBasicTextHighlightColors}
                 basicRows={config.defaultBasicTextHighlightColorsRows}
@@ -169,6 +391,8 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 hasCustom={config.textHighlightColorsHasCustom}
                 customCols={config.defaultCustomTextHighlightColorsCols}
                 customRows={config.defaultCustomTextHighlightColorsRows}
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
               />
             )
             break
@@ -188,41 +412,35 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 hasCustom={config.textShadowColorsHasCustom}
                 customCols={config.defaultCustomTextShadowColorsCols}
                 customRows={config.defaultCustomTextShadowColorsRows}
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
               />
             )
             break
           case 'fontSize':
             tool_s = (
-              <FontSizeMenu defaultFontSize={this.props.defaultFontSize} />
+              <FontSizeMenu
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
+                defaultFontSize={this.props.defaultFontSize}
+              />
             )
             break
-          case 'B':
-          case 'bold':
+          case 'table':
             tool_s = (
-              <RichmonButton
-                action={(actions) => {
-                  actions.setBold()
-                }}
-                css='width:28px;height:28px;'
-              >
-                B
-              </RichmonButton>
+              <TableList
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
+              />
             )
             break
-          case 'I':
-          case 'italic':
+          case 'unorderedList':
             tool_s = (
-              <RichmonButton
-                action={(actions) => {
-                  actions.setItalic()
-                }}
-                css='width:28px;height:28px;'
-              >
-                I
-              </RichmonButton>
+              <BulletList
+                buttonWidth={this.props.buttonsDefaultWidth}
+                buttonHeight={this.props.buttonsDefaultHeight}
+              />
             )
-            break
-          case 'image':
             break
           default:
             alert('un implement')
@@ -240,8 +458,13 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         className='richmon-container'
         width={this.props.width}
         height={this.props.height}
+        css={this.props.css}
       >
-        <Toolbar tools={this.state.tools} width={this.props.width} />
+        <Toolbar
+          css={this.props.toolbarCss}
+          tools={this.state.tools}
+          width={this.props.width}
+        />
         <EditorWrapper
           caretDelay={this.props.caretDelay}
           width={this.props.width}
@@ -253,6 +476,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           editorRef={this.editor}
           onChange={this.props.onChange}
           content={this.props.content}
+          css={this.props.editorCss}
         />
       </Div>
     )
