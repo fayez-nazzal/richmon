@@ -5,6 +5,9 @@ import styled, { css } from 'styled-components'
 
 const Div = styled.div`
   background-color: #f7f7f7;
+  display: flex;
+  align-items: center;
+  padding: 1.5px 0;
   ${(props: { css: string; width: string }) => css`
     ${props.width};
     ${props.css}
@@ -14,14 +17,6 @@ const Div = styled.div`
 class Toolbar extends React.Component<any> {
   constructor(props: any) {
     super(props)
-  }
-
-  componentDidMount() {
-    console.log('toolbar mounted')
-  }
-
-  componentDidUpdate() {
-    console.log('toolbar updated')
   }
 
   render() {

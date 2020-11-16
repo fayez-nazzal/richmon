@@ -7,14 +7,6 @@
 }
 
 .button:hover {
-  background-color: #eceef5;
-  outline: 2px solid #e3e3e3;
-  z-index: 1000;
-  position: relative;
-}
-
-.toolbar {
-  background-color: #fafafa;
 }
 
 .slider {

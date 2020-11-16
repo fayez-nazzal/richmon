@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
-import './style.css'
 import styled, { css } from 'styled-components'
 import {
   cssObjToString,
@@ -8,7 +7,8 @@ import {
   isBefore,
   isMatchingKeysEqual,
   createElementFromHTML,
-  createNewElement
+  createNewElement,
+  isRTL
 } from './richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
@@ -45,7 +45,7 @@ const ContentEditable = styled.div`
   box-sizing: border-box;
   word-wrap: break-word;
   white-space: pre-wrap;
-  overflow: auto;
+  overflow-y: auto;
   caret-color: transparent;
   &:focus {
     outline: none;
@@ -66,6 +66,7 @@ class Editor extends React.Component<EditorProps> {
   private cssSet: any = []
   private selectedCells: any = {}
   private selTable: HTMLElement | null
+  private onList = false
   private selImage: HTMLImageElement | null
   private RectangleSelector: HTMLElement
   private selAll: boolean = false
@@ -133,6 +134,11 @@ class Editor extends React.Component<EditorProps> {
     this.nextMainCurrentDiv = this.selTable
       ? (this.selTable.nextElementSibling as HTMLElement)
       : (this.currentDiv.nextElementSibling as HTMLElement)
+
+    this.onList =
+      this.currentDiv.nodeName === 'LI' ||
+      this.currentDiv.parentElement!.nodeName === 'UL' ||
+      this.currentDiv.parentElement!.nodeName === 'OL'
   }
 
   getUnderlyingElements = (node: HTMLElement) => {
@@ -189,10 +195,10 @@ class Editor extends React.Component<EditorProps> {
     )
   }
 
-  // How to make it work with tables?, too... this.currentChild should be...
   styleText = (styles: any, canToggle: boolean) => {
     let sel = window.getSelection()
 
+    // if nothing is selected, select current child
     if (!sel || !sel.anchorNode) {
       this.select(
         this.currentChild.childNodes[0],
@@ -201,9 +207,7 @@ class Editor extends React.Component<EditorProps> {
       sel = window.getSelection()!
     }
 
-    const isRanged = this.isRanged()
-
-    if (!isRanged) {
+    if (!this.isRanged()) {
       const cssIndex = this.cssSet.findIndex((obj: any) =>
         isEqual(obj.styles, styles)
       )
@@ -222,13 +226,31 @@ class Editor extends React.Component<EditorProps> {
         })
       }
 
-      const elem = createNewElement('span')
+      const elem = createNewElement(
+        this.currentChild.nodeName === 'SUB'
+          ? 'sub'
+          : this.currentChild.nodeName === 'SUP'
+          ? 'sup'
+          : 'span'
+      )
       elem.setAttribute(
         'style',
         cssObjToString({ ...currentStyles, ...styles })
       )
       elem.innerText = '\u200b'
       this.currentDiv.insertBefore(elem, this.currentChild.nextElementSibling)
+
+      if (sel.anchorOffset < this.currentChild.innerText.length) {
+        const text = this.currentChild.innerText.slice(sel.anchorOffset)
+        this.currentChild.innerText = this.currentChild.innerText.substring(
+          0,
+          sel.anchorOffset
+        )
+        const childAfter = this.currentChild.cloneNode() as HTMLElement
+        childAfter.innerText = text
+        this.currentDiv.insertBefore(childAfter, elem.nextElementSibling)
+      }
+
       this.currentChild = elem
       this.select(elem.childNodes[0], 1)
     } else this.styleTextInRange(styles, canToggle)
@@ -447,14 +469,14 @@ class Editor extends React.Component<EditorProps> {
       if (left === 0) {
         left =
           parent.getBoundingClientRect().left +
-          parent.getBoundingClientRect().width
+          (isRTL(this.currentDiv.innerText)
+            ? 0
+            : parent.getBoundingClientRect().width)
       }
       const obj = {
         top: top + scrollY,
         left: left + scrollX
       }
-      console.log(this.currentChild)
-      console.log(this.currentDiv)
       return obj
     } catch {
       return { top: 414, left: 211 }
@@ -907,7 +929,13 @@ class Editor extends React.Component<EditorProps> {
 
     const sel = window.getSelection()
 
-    if (this.selAll) {
+    if (
+      this.selAll &&
+      (this.selAll = false) &&
+      !e.altKey &&
+      !e.ctrlKey &&
+      !e.shiftKey
+    ) {
       this.selfRef.current.innerHTML = '<div></div>'
       this.init()
       this.selAll = false
@@ -943,6 +971,7 @@ class Editor extends React.Component<EditorProps> {
           }
           break
         }
+        case 'Tab':
         case 'ArrowRight': {
           if (
             sel?.anchorOffset === this.currentChild.innerHTML.length ||
@@ -1006,6 +1035,7 @@ class Editor extends React.Component<EditorProps> {
         e.preventDefault()
       }
     } else if (
+      !this.onList &&
       e.key === 'Backspace' &&
       this.currentChild.innerHTML === '\u200b'
     ) {
@@ -1020,9 +1050,39 @@ class Editor extends React.Component<EditorProps> {
         this.currentChild.isSameNode(this.currentDiv.firstElementChild)
       )
         this.currentChild.innerHTML = '\u200b'
+    } else if (
+      e.key === 'Backspace' &&
+      ((sel!.anchorOffset == 0 && sel!.focusOffset == 0) ||
+        this.currentChild.innerText === '\u200b')
+    ) {
+      alert('!')
+      if (this.onList && this.currentDiv.nodeName === 'LI') {
+        const newDiv = createNewElement('div')
+        newDiv.innerHTML = this.currentDiv.innerHTML
+        this.currentDiv.parentElement!.insertBefore(newDiv, this.currentDiv)
+        this.currentDiv.remove()
+        this.currentDiv = newDiv
+        this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
+        this.select(this.currentChild.childNodes[0], 0)
+      } else if (this.onList) {
+        const oldList = this.currentDiv.parentElement!
+        const newList = oldList.cloneNode() as HTMLElement
+        let div = this.currentDiv.nextElementSibling! as HTMLElement
+        while (div !== null) {
+          newList.append(div)
+          div = div.nextElementSibling! as HTMLElement
+        }
+        this.selfRef.current.insertBefore(newList, oldList!.nextElementSibling)
+        this.selfRef.current.insertBefore(this.currentDiv, newList)
+        if (!newList.hasChildNodes()) newList.remove()
+        if (!oldList.hasChildNodes()) oldList.remove()
+        this.select(this.currentDiv.children[0].childNodes[0], 0)
+        this.update()
+      }
+      e.preventDefault()
     } else if (e.key === 'Enter') {
       const newDiv =
-        this.currentDiv.nodeName === 'DIV'
+        (this.currentDiv.nodeName === 'DIV' && !this.onList) || e.shiftKey
           ? createNewElement('div')
           : createNewElement('li')
       const newSpan = createNewElement('span')
@@ -1080,14 +1140,19 @@ class Editor extends React.Component<EditorProps> {
       )
       this.props.setCaretDelay('0ms')
       this.props.setIsCaretHidden(false)
-      this.select(
-        newSpan.childNodes[0],
-        +newSpan.innerText.startsWith('/u200b')
-      )
+      this.select(newSpan.childNodes[0], +(newSpan.innerText.length === 1))
       e.preventDefault()
     } else if ((e.key === 'A' || e.key === 'a') && e.ctrlKey) {
       this.selAll = true
     }
+  }
+
+  onPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+
+    var text = e.clipboardData.getData('text/plain')
+
+    document.execCommand('insertHTML', false, text)
   }
 
   onSelect = () => {
@@ -1135,7 +1200,6 @@ class Editor extends React.Component<EditorProps> {
     while (cDiv !== null) {
       divs.push(cDiv)
       while (cChild !== null) {
-        if (cChild) console.log(cChild.cloneNode(true))
         childs.push(cChild)
         if (cChild.isSameNode(nodesWithinEnds[1][1])) {
           cDiv = null
@@ -1299,7 +1363,7 @@ class Editor extends React.Component<EditorProps> {
   insertTable = (
     rows: number,
     cols: number,
-    cssString: string = '',
+    css: string = '',
     selectable: boolean = true
   ) => {
     if (!this.nextMainCurrentDiv) {
@@ -1314,7 +1378,7 @@ class Editor extends React.Component<EditorProps> {
     const table = createTable(
       rows,
       cols,
-      cssString,
+      css,
       this.currentDiv.getBoundingClientRect().width,
       this.props.caretHeight,
       this.nextMainCurrentDiv,
@@ -1504,6 +1568,7 @@ class Editor extends React.Component<EditorProps> {
     return (
       <ContentEditable
         css={this.props.css}
+        onPaste={this.onPaste}
         padding={this.props.padding}
         onInput={() => this.onInput()}
         onFocus={() => {

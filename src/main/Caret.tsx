@@ -1,7 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import './caretStyle.css'
 
+const CaretSpan = styled.span`
+  white-space: pre;
+  position: absolute;
+  pointer-events: none;
+  border-right: 1.2px solid black;
+  transition: left
+    ${(props: { transitionDelay: string }) => props.transitionDelay} ease-in;
+`
 class Caret extends React.Component<
   {
     hidden: boolean
@@ -61,18 +68,9 @@ class Caret extends React.Component<
     clearInterval(this.blinkInterval)
   }
 
-  private CaretSpan = styled.span`
-    white-space: pre;
-    position: absolute;
-    pointer-events: none;
-    border-right: 1.2px solid black;
-    transition: left
-      ${(props: { transitionDelay: string }) => props.transitionDelay} ease-in;
-  `
-
   render() {
     return (
-      <this.CaretSpan
+      <CaretSpan
         style={{
           left: this.props.left + 'px',
           top: this.props.top + 'px',
@@ -88,7 +86,7 @@ class Caret extends React.Component<
         }
       >
         {'\u200b'}
-      </this.CaretSpan>
+      </CaretSpan>
     )
   }
 }

@@ -1,13 +1,14 @@
 import React from 'react'
 import List from './List'
 import { ReactComponent as Down } from '../svgs/down.svg'
-import { Actions } from './richActions'
+import { Actions } from './EditorActions'
 
 interface DropDownListProps {
   leftAction?: { (actions: Actions): void }
   leftChildren: (JSX.Element | string)[] | JSX.Element | string
   children?: any
   css?: string
+  height?: string
   width?: string
   buttonHeight: string
   buttonWidth: string
@@ -38,7 +39,8 @@ export default (props: DropDownListProps) => {
             position: relative;
           }
         `}
-        width={props.width ? props.width : 'auto'}
+        width={props.width}
+        height={props.height}
       >
         {props.children}
       </List>

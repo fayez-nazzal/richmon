@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import RichmonButton from './Button'
+import RichmonButton from './RichButton'
 
 interface TableListButtonProps {
   row: number

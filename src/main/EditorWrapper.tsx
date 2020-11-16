@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Caret from './Caret'
-import Editor from './Editor'
+import Editor from './RichEditor'
 
 export default (props: {
   defaultTextColor: string

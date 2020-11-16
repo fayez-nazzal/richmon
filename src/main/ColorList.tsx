@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react'
 import Page from './Page'
 import ColorPickTools from './ColorInputs'
-import RichmonButton from './Button'
+import RichmonButton from './RichButton'
 import DropDownList from './DropDownList'
 import Flex from './Flex'
-import { Actions } from './richActions'
+import { Actions } from './EditorActions'
 import RichGrid from './RichGrid'
 import styles from '../styles.module.css'
 
@@ -177,7 +177,8 @@ export default (props: ColorListProps) => {
               textAlign: 'center',
               fontSize: '13px',
               marginTop: '6px',
-              marginBottom: '-6px'
+              marginBottom: '-6px',
+              userSelect: 'none'
             }}
           >
             Basic colors
@@ -187,7 +188,7 @@ export default (props: ColorListProps) => {
             key='grid 1'
             rows={props.basicRows}
             cols={props.basicCols}
-            css='margin-top:5px;'
+            css='margin-top:6px;'
           >
             {mapColors(props.basicColors, 'basic')}
           </RichGrid>
@@ -196,7 +197,8 @@ export default (props: ColorListProps) => {
               textAlign: 'center',
               fontSize: '13px',
               marginTop: '6px',
-              marginBottom: '-6px'
+              marginBottom: '-6px',
+              userSelect: 'none'
             }}
           >
             Custom colors

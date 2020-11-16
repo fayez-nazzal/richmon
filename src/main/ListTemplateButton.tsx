@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import RichButton from './Button'
-import { orderedListTypes, unOrderedListTypes } from './richActions'
+import RichButton from './RichButton'
+import { orderedListTypes, unOrderedListTypes } from './EditorActions'
 
 type ListType = 'ol' | 'ul'
 

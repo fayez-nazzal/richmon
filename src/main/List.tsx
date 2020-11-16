@@ -1,8 +1,9 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import styles from '../styles.module.css'
-import { Actions } from './richActions'
-import RichButton from './Button'
+import { Actions } from './EditorActions'
+import RichButton from './RichButton'
+import StyledButtonCss from './StyledButtonCss'
 
 interface ListPropTypes {
   css?: string
@@ -30,7 +31,7 @@ const Button = styled.button`
   ${(props: { css?: string; width: string; height: string }) => css`
     width: ${props.width};
     height: ${props.height};
-
+    ${StyledButtonCss};
     ${props.css};
   `}
 `
@@ -41,9 +42,29 @@ const ButtonWrapper = styled.span`
   `}
 `
 
+interface StyledListProps {
+  width: string
+  height: string
+  visibility: string
+  css?: string
+}
+
+const StyledList = styled.div`
+  position: absolute;
+  left: 0;
+  width: ${(props: StyledListProps) => props.width};
+  height: ${(props: StyledListProps) => props.height};
+  visibility: ${(props: StyledListProps) => props.visibility};
+  background-color: white;
+  -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+  -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+  box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
+  z-index: 10;
+  ${(props: StyledListProps) => props.css}
+`
+
 class List extends React.Component<ListPropTypes, ListState> {
   private selfRef: any = React.createRef()
-  private Main: any
   private static _opened: List
 
   private constructor(props: any) {
@@ -54,16 +75,6 @@ class List extends React.Component<ListPropTypes, ListState> {
       children: [],
       isAnimationEnabled: true
     }
-    this.Main = styled.div`
-      position: absolute;
-      left: 0;
-      background-color: white;
-      -webkit-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-      -moz-box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-      box-shadow: 0px 1px 14px -3px rgba(206, 206, 206, 1);
-      z-index: 10;
-      ${this.props.css}
-    `
   }
 
   componentDidMount() {
@@ -157,13 +168,7 @@ class List extends React.Component<ListPropTypes, ListState> {
             {this.props.buttonChildren}
           </Button>
         </ButtonWrapper>
-        <this.Main
-          extraCss={this.props.css ? this.props.css : ''}
-          style={{
-            width: this.props.width ? this.props.width : 'auto',
-            height: this.props.height ? this.props.height : 'auto',
-            visibility: this.state.showContents ? 'visible' : 'hidden'
-          }}
+        <StyledList
           onClick={(e: React.MouseEvent) => {
             const target = e.target as HTMLElement
             if (
@@ -178,6 +183,10 @@ class List extends React.Component<ListPropTypes, ListState> {
               })
             }
           }}
+          width={this.props.width ? this.props.width : 'auto'}
+          height={this.props.height ? this.props.height : 'auto'}
+          visibility={this.state.showContents ? 'visible' : 'hidden'}
+          css={this.props.css}
         >
           {React.Children.map(this.props.children, (child, index) => {
             return React.cloneElement(child, {
@@ -185,7 +194,7 @@ class List extends React.Component<ListPropTypes, ListState> {
               display: index === this.state.currentPage
             })
           })}
-        </this.Main>
+        </StyledList>
       </span>
     )
   }

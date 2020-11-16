@@ -1,9 +1,9 @@
 import React from 'react'
 import './richmonUtils'
 import styled, { css } from 'styled-components'
-import styles from '../styles.module.css'
-import { Actions } from './richActions'
-import { EditorActions } from './richActions'
+import { Actions } from './EditorActions'
+import { EditorActions } from './EditorActions'
+import StyledButtonCss from './StyledButtonCss'
 
 interface RichmonButtonProps {
   action: { (actions: Actions): void }
@@ -26,18 +26,24 @@ const StyledButton = styled.button`
   ${(props: StyledButtonProps) =>
     props.colorize
       ? `
-padding: 6.4px;
-border:none;
-width: auto;
-height: auto;
-background-color: ${props.colorize} !important;
-margin: 0;
-&:hover {
-  -webkit-box-shadow: 0px 0px 4px 0px #333333;
-  box-shadow: 0px 0px 4px 0px #333333;
-  outline: none;
-}`
+        padding: 6.4px;
+        border:none;
+        width: auto;
+        height: auto;
+        background-color: ${
+          props.colorize ? props.colorize : 'transparent'
+        } !important;
+        margin: 0;
+        &:hover {
+          -webkit-box-shadow: 0px 0px 4px 0px #333333;
+          box-shadow: 0px 0px 4px 0px #333333;
+          outline: none;
+        }
+        font-weight: bold;
+        margin-bottom: 1px;
+      `
       : `
+        ${StyledButtonCss}
       `}
 
   ${(props: StyledButtonProps) => css`
@@ -60,7 +66,7 @@ export default React.memo((props: RichmonButtonProps) => {
       onClick={onCLick}
       onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
       onMouseUp={(e: React.MouseEvent) => e.preventDefault()}
-      className={`${styles.button} ${props.pageButton ? 'page-button' : ''}`}
+      className={`${props.pageButton ? 'page-button' : ''}`}
       style={props.style}
       css={props.css ? props.css : ''}
       colorize={props.colorize}

@@ -1,17 +1,18 @@
 import React from 'react'
-import RichmonButton from './Button'
+import RichmonButton from './RichButton'
 import Toolbar from './Toolbar'
 import EditorWrapper from './EditorWrapper'
 import isEqual from 'lodash.isequal'
 import { ReactComponent as Pen } from '../svgs/pen.svg'
 import ColorList from './ColorList'
-import '../styles.css'
 import styled, { css } from 'styled-components'
 import { config } from './config'
 import FontSizeMenu from './FontSizeMenu'
 import TableList from './TableList'
 import UnOrderedLists from './UnOrderedLists'
 import OrderedLists from './OrderedLists'
+import Spacer from './Spacer'
+import Seperator from './Seperator'
 
 interface RichmonPropTypes {
   defaultTextColor: string
@@ -111,7 +112,6 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         switch (toolProp.type.name) {
           case 'RichButton':
             alert('rich button')
-            console.log(toolProp)
             tool_s = <RichmonButton {...props}>{props.children}</RichmonButton>
             break
           default:
@@ -448,6 +448,48 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
               <OrderedLists
                 buttonWidth={this.props.buttonsDefaultWidth}
                 buttonHeight={this.props.buttonsDefaultHeight}
+              />
+            )
+            break
+          case 'narrow-spacer':
+            tool_s = (
+              <Spacer width='2px' height={this.props.buttonsDefaultHeight} />
+            )
+            break
+          case 'spacer':
+            tool_s = (
+              <Spacer width='3px' height={this.props.buttonsDefaultHeight} />
+            )
+            break
+          case 'wide-spacer':
+            tool_s = (
+              <Spacer width='6px' height={this.props.buttonsDefaultHeight} />
+            )
+            break
+          case 'thin-seperator':
+            tool_s = (
+              <Seperator
+                color='#00000050'
+                thickness='1px'
+                height={`${parseInt(this.props.buttonsDefaultHeight) - 10}px`}
+              />
+            )
+            break
+          case 'seperator':
+            tool_s = (
+              <Seperator
+                color='#00000050'
+                thickness='2px'
+                height={`${parseInt(this.props.buttonsDefaultHeight) - 10}px`}
+              />
+            )
+            break
+          case 'thick-seperator':
+            tool_s = (
+              <Seperator
+                color='#00000050'
+                thickness='3px'
+                height={`${parseInt(this.props.buttonsDefaultHeight) - 10}px`}
               />
             )
             break

@@ -4,6 +4,7 @@ interface FlexProps {
   height?: string
   justifyContent?: string
 }
+
 export default styled.div`
   display: flex;
   width: 140px;

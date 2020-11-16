@@ -1,4 +1,4 @@
-import Editor from './Editor'
+import Editor from './RichEditor'
 import FontSizeMenu from './FontSizeMenu'
 import List from './List'
 import { stringToCssObj } from './richmonUtils'
@@ -143,28 +143,28 @@ const setSup = () => {
 
 const insertOList = (
   styleType: orderedListTypes = 'decimal',
-  padding = '0 10px'
+  padding = '0 18px'
 ) => {
   Editor.getInstance().addList(
     'ol',
-    `list-style-type:${styleType};padding:${padding};`
+    `list-style-type:${styleType};padding:${padding};margin-top:0;margin-bottom:0;`
   )
 }
 
 const insertUList = (
   styleType: unOrderedListTypes = 'disc',
-  padding = '0 10px'
+  padding = '0 18px'
 ) => {
   Editor.getInstance().addList(
     'ul',
-    `list-style-type:${styleType};padding:${padding};`
+    `list-style-type:${styleType};padding:${padding};margin-top:0;margin-bottom:0;`
   )
 }
 
-const insertUListWithStyleImages = (url: string, padding = '0 10px') => {
+const insertUListWithStyleImages = (url: string, padding = '0 18px') => {
   Editor.getInstance().addList(
     'ul',
-    `list-style-image:url('${url}');padding:${padding};`
+    `list-style-image:url('${url}');padding:${padding};margin-top:0;margin-bottom:0;`
   )
 }
 

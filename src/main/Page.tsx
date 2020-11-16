@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 
 export interface PageProps {
@@ -9,15 +9,16 @@ export interface PageProps {
   className?: string
 }
 
-export default (props: PageProps) => {
-  const [Div] = useState<any>(styled.div`
-    padding: 0;
-    ${props.css};
-  `)
+const Div = styled.div`
+  padding: 0;
+  ${(props: { css: string }) => props.css};
+`
 
+export default (props: PageProps) => {
   return (
     <Div
       className='page'
+      css={props.css ? props.css : ''}
       style={{
         display: props.display ? 'block' : 'none'
       }}

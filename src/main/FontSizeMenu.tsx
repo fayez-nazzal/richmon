@@ -7,6 +7,7 @@ const fontSizes: JSX.Element[] = []
 for (let i = 8; i <= 142; i++) {
   fontSizes.push(
     <RichOption
+      key={i}
       action={(actions) => {
         actions.setFontSize(`${i}px`)
       }}

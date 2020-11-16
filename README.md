@@ -1,6 +1,6 @@
 # richmon
 
-> The very rich-text editor
+> Richmon is a new rich text editor that is very easy to use, it's currently on the dev release and it's going to be documented soon.
 
 [![NPM](https://img.shields.io/npm/v/richmon.svg)](https://www.npmjs.com/package/richmon) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
