@@ -1,7 +1,7 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import styles from '../styles.module.css'
-import { Actions } from './EditorActions'
+import styles from '../../styles.module.css'
+import { Actions } from '../../EditorActions'
 import RichButton from './RichButton'
 import StyledButtonCss from './StyledButtonCss'
 

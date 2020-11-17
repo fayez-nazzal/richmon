@@ -9,7 +9,7 @@ import {
   createElementFromHTML,
   createNewElement,
   isRTL
-} from './richmonUtils'
+} from '../../richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
 import { createTable } from './richtable'
@@ -83,7 +83,15 @@ class Editor extends React.Component<EditorProps> {
   }
   private lastKeyPressed: string
   private lastKeyPressedDate: Date
-
+  private backHistory: {
+    html: string
+    child: HTMLElement
+    div: HTMLElement
+    anchorOffset: number
+    focusOffset: number
+  }[] = []
+  private forwardHistory: string[] = []
+  private lastSaveDate = new Date()
   private static _instance: Editor
 
   private constructor(props: EditorProps) {
@@ -116,6 +124,13 @@ class Editor extends React.Component<EditorProps> {
     this.RectangleSelector.style.pointerEvents = 'none'
     this.selfRef.current.prepend(this.RectangleSelector)
     this.select(this.currentChild.childNodes[0], 1)
+    this.backHistory.push({
+      html: this.selfRef.current.innerHTML,
+      child: this.currentChild,
+      div: this.currentDiv,
+      anchorOffset: 0,
+      focusOffset: 0
+    })
   }
 
   shouldComponentUpdate() {
@@ -181,9 +196,60 @@ class Editor extends React.Component<EditorProps> {
     return [div, child]
   }
 
-  commitChanges = () => {
+  commitChanges = (action?: string) => {
     const selfElem = this.selfRef.current as Element
-    const html = selfElem.innerHTML
+    let html = selfElem.innerHTML
+    const now = new Date()
+
+    if (action === 'back' && this.backHistory.length) {
+      this.forwardHistory.push(html)
+
+      const backward = this.backHistory.pop()!
+      html = backward.html ? backward.html : html
+
+      const lastSelAnchor = backward.anchorOffset
+      const lastSelFocus = backward.focusOffset
+
+      let div = 0
+      let child = 0
+
+      Array.prototype.slice
+        .call(this.selfRef.current.children)
+        .forEach((element: Node, index: number) => {
+          if (element.isSameNode(this.currentDiv)) {
+            div = index
+          }
+        })
+
+      Array.prototype.slice
+        .call(this.currentDiv.children)
+        .forEach((element: Node, index: number) => {
+          if (element.isSameNode(this.currentChild)) {
+            child = index
+          }
+        })
+
+      this.selfRef.current.innerHTML = html
+      this.currentDiv = this.selfRef.current.children[div] as HTMLElement
+      this.currentChild = this.currentDiv.children[child] as HTMLElement
+      if (lastSelAnchor === lastSelFocus) {
+        this.select(this.currentChild.childNodes[0], lastSelAnchor)
+      } else {
+      }
+    } else {
+      if (now.getTime() - this.lastSaveDate.getTime() > 1500) {
+        const sel = window.getSelection()!
+        this.backHistory.push({
+          html: this.selfRef.current.innerHTML,
+          child: this.currentChild,
+          div: this.currentDiv,
+          anchorOffset: sel.anchorOffset,
+          focusOffset: sel.focusOffset
+        })
+        this.lastSaveDate = now
+      }
+    }
+
     this.props.setEditorHTML(html)
   }
 
@@ -901,6 +967,13 @@ class Editor extends React.Component<EditorProps> {
   onKeyDown = (e: React.KeyboardEvent) => {
     const date = new Date()
 
+    if (e.key.toLowerCase() === 'z' && e.ctrlKey) {
+      this.commitChanges('back')
+      e.preventDefault()
+    } else if (e.key.toLocaleLowerCase() === 'y' && e.ctrlKey) {
+      this.commitChanges('forward')
+      e.preventDefault()
+    }
     if (
       this.lastKeyPressedDate &&
       this.lastKeyPressed &&
@@ -1047,15 +1120,22 @@ class Editor extends React.Component<EditorProps> {
         this.select(this.currentChild.childNodes[0], 1)
         e.preventDefault()
       } else if (
+        !this.onList &&
         this.currentChild.isSameNode(this.currentDiv.firstElementChild)
       )
         this.currentChild.innerHTML = '\u200b'
+    } else if (
+      !this.onList &&
+      e.key === 'Backspace' &&
+      this.currentChild.innerText.length === 1
+    ) {
+      this.currentChild.innerHTML = '\u200b'
+      e.preventDefault()
     } else if (
       e.key === 'Backspace' &&
       ((sel!.anchorOffset == 0 && sel!.focusOffset == 0) ||
         this.currentChild.innerText === '\u200b')
     ) {
-      alert('!')
       if (this.onList && this.currentDiv.nodeName === 'LI') {
         const newDiv = createNewElement('div')
         newDiv.innerHTML = this.currentDiv.innerHTML

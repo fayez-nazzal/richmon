@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Page from './Page'
 import RichGrid from './RichGrid'
 import List from './List'
 import TableListButton from './TableListButton'
-import { ReactComponent as TableIcon } from '../svgs/table.svg'
+import { ReactComponent as TableIcon } from '../../svgs/table.svg'
 import styled from 'styled-components'
 
 interface TableListProps {
@@ -16,6 +16,18 @@ const StyledTableIcon = styled(TableIcon)`
 `
 
 export default (props: TableListProps) => {
+  const [buttons, setButtons] = useState<JSX.Element[]>([])
+
+  useEffect(() => {
+    const btns: JSX.Element[] = []
+    for (let i = 1; i < 6; i++) {
+      for (let j = 1; j < 6; j++) {
+        btns.push(<TableListButton key={`r${i}c${j}`} row={i} col={j} />)
+      }
+    }
+    setButtons(btns)
+  }, [])
+
   return (
     <React.Fragment>
       <List
@@ -27,6 +39,7 @@ export default (props: TableListProps) => {
       >
         <Page>
           <RichGrid
+            shouldUpdate
             rows={5}
             cols={5}
             gridGap='4px'
@@ -34,11 +47,7 @@ export default (props: TableListProps) => {
             cellWidth='16px'
             gridAutoFlow='row'
           >
-            {[...Array(5)].map((_rvalue: undefined, row: number) =>
-              [...Array(5)].map((_cvalue: undefined, col: number) => (
-                <TableListButton row={row + 1} col={col + 1} />
-              ))
-            )}
+            {[...buttons]}
           </RichGrid>
         </Page>
       </List>

@@ -1,8 +1,8 @@
 import React from 'react'
-import './richmonUtils'
+import '../../richmonUtils'
 import styled, { css } from 'styled-components'
-import { Actions } from './EditorActions'
-import { EditorActions } from './EditorActions'
+import { Actions } from '../../EditorActions'
+import { EditorActions } from '../../EditorActions'
 import StyledButtonCss from './StyledButtonCss'
 
 interface RichmonButtonProps {

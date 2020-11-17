@@ -4,9 +4,9 @@ import ColorPickTools from './ColorInputs'
 import RichmonButton from './RichButton'
 import DropDownList from './DropDownList'
 import Flex from './Flex'
-import { Actions } from './EditorActions'
+import { Actions } from '../../EditorActions'
 import RichGrid from './RichGrid'
-import styles from '../styles.module.css'
+import styles from '../../styles.module.css'
 
 interface ColorListProps {
   action: 'textColor' | 'textShadow' | 'textHighlight'

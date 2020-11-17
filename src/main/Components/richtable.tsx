@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import { parseCSS } from 'css-parser'
-import { createElementFromHTML, createNewElement } from './richmonUtils'
+import { createElementFromHTML, createNewElement } from '../../richmonUtils'
 import styled from 'styled-components'
 
 export function createTable(

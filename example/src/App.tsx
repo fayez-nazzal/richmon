@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Richmon } from 'richmon'
+import { Richmon } from 'react-richmon'
 
 const App = () => {
   const [content, setContent] = useState('<div></div>')

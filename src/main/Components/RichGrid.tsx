@@ -1,5 +1,5 @@
 import React from 'react'
-import './richmonUtils'
+import '../../richmonUtils'
 import styled, { css } from 'styled-components'
 import isEqual from 'lodash.isequal'
 

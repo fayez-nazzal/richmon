@@ -1,10 +1,10 @@
 import React from 'react'
 import Page from './Page'
-import { ReactComponent as BulletListIcon } from '../svgs/bulletList.svg'
+import Flex from './Flex'
+import { ReactComponent as BulletListIcon } from '../../svgs/bulletList.svg'
 import styled from 'styled-components'
 import DropDownList from './DropDownList'
 import ListTemplateButton from './ListTemplateButton'
-import RichGrid from './RichGrid'
 
 interface OrderedListsProps {
   buttonWidth: string
@@ -28,15 +28,13 @@ export default (props: OrderedListsProps) => {
         }}
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}
-        width='125px'
+        width='113px'
       >
         <Page>
-          <RichGrid rows={2} cols={2}>
-            <ListTemplateButton listType='ol' listStyleType='lower-alpha' />
-            <ListTemplateButton listType='ol' listStyleType='upper-alpha' />
-            <ListTemplateButton listType='ol' listStyleType='lower-roman' />
-            <ListTemplateButton listType='ol' listStyleType='upper-roman' />
-          </RichGrid>
+          <Flex>
+            <ListTemplateButton listType='ul' listStyleType='square' />
+            <ListTemplateButton listType='ul' listStyleType='circle' />
+          </Flex>
         </Page>
       </DropDownList>
     </React.Fragment>

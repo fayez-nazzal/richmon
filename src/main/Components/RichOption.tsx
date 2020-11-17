@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react'
 import RichButton from './RichButton'
-import { Actions } from './EditorActions'
+import { Actions } from '../../EditorActions'
 
 interface RichOptionProps {
   action: { (actions: Actions): void }

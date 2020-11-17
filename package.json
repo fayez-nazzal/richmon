@@ -1,10 +1,9 @@
 {
-  "name": "richmon",
-  "version": "1.0.0",
-  "description": "The modern rich text editor for react",
+  "name": "@fayez-nazzal/react-richmon",
+  "version": "0.2.2-alpha",
+  "description": "The pretty rich text editor for react",
   "author": "fayez-nazzal",
   "license": "MIT",
-  "repository": "fayez-nazzal/richmon",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
   "source": "src/index.tsx",
@@ -67,9 +66,18 @@
     "@types/react-color": "2.17.3",
     "@types/styled-components": "^5.1.3",
     "css-parser": "github:sibvrv/css-parser",
+    "jquery": "^3.5.1",
     "lodash.isempty": "^4.4.0",
     "lodash.isequal": "^4.5.0",
     "react-color": "2.18.1",
     "styled-components": "^5.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:fayez-nazzal/react-richmon.git",
+    "directory": "@fayez-nazzal/react-richmon"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/fayez-nazzal"
   }
 }

@@ -1,6 +1,6 @@
-import Editor from './RichEditor'
-import FontSizeMenu from './FontSizeMenu'
-import List from './List'
+import Editor from './main/Components/RichEditor'
+import FontSizeMenu from './main/Components/FontSizeMenu'
+import List from './main/Components/List'
 import { stringToCssObj } from './richmonUtils'
 
 export type orderedListTypes =

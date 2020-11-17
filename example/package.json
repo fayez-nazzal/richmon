@@ -1,5 +1,5 @@
 {
-  "name": "richmon-example",
+  "name": "react-richmon-example",
   "homepage": ".",
   "version": "0.0.0",
   "private": true,
@@ -24,7 +24,7 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "file:../node_modules/react-scripts",
-    "richmon": "file:..",
+    "react-richmon": "file:..",
     "typescript": "file:../node_modules/typescript"
   },
   "devDependencies": {

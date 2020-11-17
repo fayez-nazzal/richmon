@@ -1,7 +1,7 @@
 import React from 'react'
 import List from './List'
-import { ReactComponent as Down } from '../svgs/down.svg'
-import { Actions } from './EditorActions'
+import { ReactComponent as Down } from '../../svgs/down.svg'
+import { Actions } from '../../EditorActions'
 
 interface DropDownListProps {
   leftAction?: { (actions: Actions): void }

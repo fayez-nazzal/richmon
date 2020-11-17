@@ -1,9 +1,9 @@
 import React, { MutableRefObject, useRef, useState } from 'react'
 import styled from 'styled-components'
 import RichmonButton from './RichButton'
-import { ReactComponent as Back } from '../svgs/back.svg'
+import { ReactComponent as Back } from '../../svgs/back.svg'
 import List from './List'
-import { Actions } from './EditorActions'
+import { Actions } from '../../EditorActions'
 import { SliderPicker } from 'react-color'
 
 const Input = styled.input`
