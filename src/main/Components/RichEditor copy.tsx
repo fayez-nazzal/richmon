@@ -525,11 +525,14 @@ class Editor extends React.Component<EditorProps> {
     try {
       let top = boundingRect.top
       let left = boundingRect.left
+
       let parent = this.currentChild as Element
       if (top === 0) {
         top = parent.getBoundingClientRect().top
-          ? parent.getBoundingClientRect().top
-          : this.currentDiv.getBoundingClientRect().top
+        if (top === 0) {
+          alert('top is 0 for second time')
+          top = this.currentDiv.getBoundingClientRect().top
+        }
       }
 
       if (left === 0) {
@@ -557,7 +560,6 @@ class Editor extends React.Component<EditorProps> {
     const focusElems = elems[1]
 
     if (anchorElems !== null) this.setCurrentElements(anchorElems)
-    this.props.setCaretPos(this.getCaretPos())
 
     const firstDiv = this.selfRef.current.firstElementChild.nextElementSibling
     const lastDiv = this.selfRef.current.lastElementChild
@@ -1158,6 +1160,7 @@ class Editor extends React.Component<EditorProps> {
         if (!oldList.hasChildNodes()) oldList.remove()
         this.select(this.currentDiv.children[0].childNodes[0], 0)
         this.update()
+        this.props.setCaretPos(this.getCaretPos())
       }
       e.preventDefault()
     } else if (e.key === 'Enter') {
@@ -1230,9 +1233,27 @@ class Editor extends React.Component<EditorProps> {
   onPaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
 
-    var text = e.clipboardData.getData('text/plain')
+    let text = e.clipboardData.getData('text/plain')
 
-    document.execCommand('insertHTML', false, text)
+    let textArr = text.split(/\r?\n/)
+
+    this.currentChild.innerHTML += textArr[0] ? textArr[0] : '\u200b'
+    textArr.splice(0, 1)
+    for (let str of textArr) {
+      const div = createNewElement('div')
+      const child = createNewElement('span')
+      child.innerHTML = str ? str : '\u200b'
+      div.append(child)
+      this.selfRef.current.insertBefore(div, this.currentDiv.nextElementSibling)
+      this.currentDiv = div
+      this.currentChild = child
+    }
+
+    this.select(
+      this.currentChild.childNodes[0],
+      this.currentChild.innerText.length
+    )
+    this.commitChanges()
   }
 
   onSelect = () => {
@@ -1242,6 +1263,14 @@ class Editor extends React.Component<EditorProps> {
       fontSizeMenu.setState({
         fontSize: parseInt(this.currentChild.style.fontSize)
       })
+    this.setCaretHeight(this.currentChild.style.fontSize)
+    this.currentDiv.style.lineHeight =
+      !this.currentDiv.style.lineHeight ||
+      parseInt(this.currentChild.style.fontSize) >
+        parseInt(this.currentDiv.style.lineHeight)
+        ? this.currentChild.style.fontSize
+        : this.currentDiv.style.lineHeight
+    this.props.setCaretPos(this.getCaretPos())
   }
 
   makeSelectRect = () => {
@@ -1506,6 +1535,8 @@ class Editor extends React.Component<EditorProps> {
       this.props.setIsCaretHidden(true)
       // img.style.float = 'left'
       this.update()
+      this.props.setCaretPos(this.getCaretPos())
+
       ev.preventDefault()
     })
 
@@ -1565,6 +1596,8 @@ class Editor extends React.Component<EditorProps> {
   deleteSelectedImage = () => {
     this.selImage?.remove()
     this.update()
+    this.props.setCaretPos(this.getCaretPos())
+
     this.props.setIsCaretHidden(false)
   }
 

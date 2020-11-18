@@ -7,8 +7,7 @@ import {
   isBefore,
   isMatchingKeysEqual,
   createElementFromHTML,
-  createNewElement,
-  isRTL
+  createNewElement
 } from '../../richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
@@ -46,7 +45,6 @@ const ContentEditable = styled.div`
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow-y: auto;
-  caret-color: transparent;
   &:focus {
     outline: none;
   }
@@ -489,65 +487,68 @@ class Editor extends React.Component<EditorProps> {
     this.props.setIsCaretHidden(blur)
   }
 
-  getCaretPos = () => {
-    const supportPageOffset = window.pageXOffset !== undefined
-    const isCSS1Compat = (document.compatMode || '') === 'CSS1Compat'
+  // getCaretPos = () => {
+  //   const supportPageOffset = window.pageXOffset !== undefined
+  //   const isCSS1Compat = (document.compatMode || '') === 'CSS1Compat'
 
-    const scrollX = supportPageOffset
-      ? window.pageXOffset
-      : isCSS1Compat
-      ? document.documentElement.scrollLeft
-      : document.body.scrollLeft
-    const scrollY = supportPageOffset
-      ? window.pageYOffset
-      : isCSS1Compat
-      ? document.documentElement.scrollTop
-      : document.body.scrollTop
+  //   const scrollX = supportPageOffset
+  //     ? window.pageXOffset
+  //     : isCSS1Compat
+  //     ? document.documentElement.scrollLeft
+  //     : document.body.scrollLeft
+  //   const scrollY = supportPageOffset
+  //     ? window.pageYOffset
+  //     : isCSS1Compat
+  //     ? document.documentElement.scrollTop
+  //     : document.body.scrollTop
 
-    if (this.currentDiv.innerHTML.includes('<br>')) {
-      this.currentDiv.innerHTML = this.currentDiv.innerHTML.replace('<br>', '')
-      if (this.currentDiv.children[0]) {
-        this.currentDiv.children[0]!.innerHTML = '\u200b'
-        this.select(this.currentDiv.children[0].childNodes[0], 1)
-        return { top: 0, left: 0 }
-      } else {
-        const span = createNewElement('span')
-        span.innerText = '\u200b'
-        this.currentDiv.append(span)
-        this.currentChild = span
-      }
-    }
+  //   if (this.currentDiv.innerHTML.includes('<br>')) {
+  //     this.currentDiv.innerHTML = this.currentDiv.innerHTML.replace('<br>', '')
+  //     if (this.currentDiv.children[0]) {
+  //       this.currentDiv.children[0]!.innerHTML = '\u200b'
+  //       this.select(this.currentDiv.children[0].childNodes[0], 1)
+  //       return { top: 0, left: 0 }
+  //     } else {
+  //       const span = createNewElement('span')
+  //       span.innerText = '\u200b'
+  //       this.currentDiv.append(span)
+  //       this.currentChild = span
+  //     }
+  //   }
 
-    const boundingRect = window
-      .getSelection()!
-      .getRangeAt(0)
-      .getBoundingClientRect()
-    try {
-      let top = boundingRect.top
-      let left = boundingRect.left
-      let parent = this.currentChild as Element
-      if (top === 0) {
-        top = parent.getBoundingClientRect().top
-          ? parent.getBoundingClientRect().top
-          : this.currentDiv.getBoundingClientRect().top
-      }
+  //   const boundingRect = window
+  //     .getSelection()!
+  //     .getRangeAt(0)
+  //     .getBoundingClientRect()
+  //   try {
+  //     let top = boundingRect.top
+  //     let left = boundingRect.left
 
-      if (left === 0) {
-        left =
-          parent.getBoundingClientRect().left +
-          (isRTL(this.currentDiv.innerText)
-            ? 0
-            : parent.getBoundingClientRect().width)
-      }
-      const obj = {
-        top: top + scrollY,
-        left: left + scrollX
-      }
-      return obj
-    } catch {
-      return { top: 414, left: 211 }
-    }
-  }
+  //     let parent = this.currentChild as Element
+  //     if (top === 0) {
+  //       top = parent.getBoundingClientRect().top
+  //       if (top === 0) {
+  //         alert('top is 0 for second time')
+  //         top = this.currentDiv.getBoundingClientRect().top
+  //       }
+  //     }
+
+  //     if (left === 0) {
+  //       left =
+  //         parent.getBoundingClientRect().left +
+  //         (isRTL(this.currentDiv.innerText)
+  //           ? 0
+  //           : parent.getBoundingClientRect().width)
+  //     }
+  //     const obj = {
+  //       top: top + scrollY,
+  //       left: left + scrollX
+  //     }
+  //     return obj
+  //   } catch {
+  //     return { top: 414, left: 211 }
+  //   }
+  // }
 
   update = () => {
     const sel = window.getSelection()!
@@ -557,7 +558,6 @@ class Editor extends React.Component<EditorProps> {
     const focusElems = elems[1]
 
     if (anchorElems !== null) this.setCurrentElements(anchorElems)
-    this.props.setCaretPos(this.getCaretPos())
 
     const firstDiv = this.selfRef.current.firstElementChild.nextElementSibling
     const lastDiv = this.selfRef.current.lastElementChild
@@ -1230,9 +1230,27 @@ class Editor extends React.Component<EditorProps> {
   onPaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
 
-    var text = e.clipboardData.getData('text/plain')
+    let text = e.clipboardData.getData('text/plain')
 
-    document.execCommand('insertHTML', false, text)
+    let textArr = text.split(/\r?\n/)
+
+    this.currentChild.innerHTML += textArr[0] ? textArr[0] : '\u200b'
+    textArr.splice(0, 1)
+    for (let str of textArr) {
+      const div = createNewElement('div')
+      const child = createNewElement('span')
+      child.innerHTML = str ? str : '\u200b'
+      div.append(child)
+      this.selfRef.current.insertBefore(div, this.currentDiv.nextElementSibling)
+      this.currentDiv = div
+      this.currentChild = child
+    }
+
+    this.select(
+      this.currentChild.childNodes[0],
+      this.currentChild.innerText.length
+    )
+    this.commitChanges()
   }
 
   onSelect = () => {
@@ -1242,6 +1260,13 @@ class Editor extends React.Component<EditorProps> {
       fontSizeMenu.setState({
         fontSize: parseInt(this.currentChild.style.fontSize)
       })
+    this.setCaretHeight(this.currentChild.style.fontSize)
+    this.currentDiv.style.lineHeight =
+      !this.currentDiv.style.lineHeight ||
+      parseInt(this.currentChild.style.fontSize) >
+        parseInt(this.currentDiv.style.lineHeight)
+        ? this.currentChild.style.fontSize
+        : this.currentDiv.style.lineHeight
   }
 
   makeSelectRect = () => {
@@ -1506,6 +1531,7 @@ class Editor extends React.Component<EditorProps> {
       this.props.setIsCaretHidden(true)
       // img.style.float = 'left'
       this.update()
+
       ev.preventDefault()
     })
 
@@ -1565,6 +1591,7 @@ class Editor extends React.Component<EditorProps> {
   deleteSelectedImage = () => {
     this.selImage?.remove()
     this.update()
+
     this.props.setIsCaretHidden(false)
   }
 
