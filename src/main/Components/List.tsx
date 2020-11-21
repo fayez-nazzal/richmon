@@ -1,6 +1,5 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import styles from '../../styles.module.css'
 import { Actions } from '../../EditorActions'
 import RichButton from './RichButton'
 import StyledButtonCss from './StyledButtonCss'
@@ -133,10 +132,7 @@ class List extends React.Component<ListPropTypes, ListState> {
   render() {
     return (
       <span id='sppp' style={{ position: 'relative' }} ref={this.selfRef}>
-        <ButtonWrapper
-          className={styles['list-button-wrapper']}
-          css={this.props.buttonWrapperCss}
-        >
+        <ButtonWrapper css={this.props.buttonWrapperCss}>
           {this.props.leftButtonChildren ? (
             <RichButton
               css={this.props.leftButtonCss}
@@ -159,7 +155,6 @@ class List extends React.Component<ListPropTypes, ListState> {
             width='auto'
             height={this.props.buttonHeight}
             css={this.props.buttonCss}
-            className={styles.button}
             onClick={this.onClick}
             onMouseDown={(e) => {
               e.preventDefault()

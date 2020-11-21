@@ -7,12 +7,12 @@ import {
   isBefore,
   isMatchingKeysEqual,
   createElementFromHTML,
-  createNewElement
+  createNewElement,
+  isRTL
 } from '../../richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
 import { createTable } from './richtable'
-import FontSizeMenu from './FontSizeMenu'
 
 export interface EditorProps {
   html: string
@@ -24,6 +24,7 @@ export interface EditorProps {
   defaultHgColor: string
   defaultFontSize: string
   caretHeight: string
+  disableSmoothCaret: boolean
   setCaretHeight: { (height: string): void }
   setCaretDelay: { (delay: string): void }
   caretDelay: string
@@ -32,12 +33,26 @@ export interface EditorProps {
   width: string
   height: string
   padding: string
+  caretColor: string
   css: string
+  fontSizeMenu: any
 }
 
 interface StyledContentEditableProps {
   padding: string
+  disableSmoothCaret: boolean
+  caretColor: string
   css: string
+}
+
+interface HistoryObject {
+  html: string
+  anchorDivIndex: number
+  anchorChildIndex: number
+  focusDivIndex: number
+  focusChildIndex: number
+  anchorOffset: number
+  focusOffset: number
 }
 
 const ContentEditable = styled.div`
@@ -50,6 +65,9 @@ const ContentEditable = styled.div`
   }
   flex: 1 1 auto;
   ${(props: StyledContentEditableProps) => css`
+    caret-color: ${props.disableSmoothCaret
+      ? 'props.caretColor'
+      : 'transparent'};
     padding: ${props.padding};
     ${props.css}
   `}
@@ -81,15 +99,8 @@ class Editor extends React.Component<EditorProps> {
   }
   private lastKeyPressed: string
   private lastKeyPressedDate: Date
-  private backHistory: {
-    html: string
-    child: HTMLElement
-    div: HTMLElement
-    anchorOffset: number
-    focusOffset: number
-  }[] = []
-  private forwardHistory: string[] = []
-  private lastSaveDate = new Date()
+  private backHistory: HistoryObject[] = []
+  private forwardHistory: HistoryObject[] = []
   private static _instance: Editor
 
   private constructor(props: EditorProps) {
@@ -122,13 +133,50 @@ class Editor extends React.Component<EditorProps> {
     this.RectangleSelector.style.pointerEvents = 'none'
     this.selfRef.current.prepend(this.RectangleSelector)
     this.select(this.currentChild.childNodes[0], 1)
-    this.backHistory.push({
+    this.addToHistory()
+  }
+
+  addToHistory = (history: 'back' | 'forward' = 'back') => {
+    const sel = window.getSelection()!
+
+    const anchorElems = this.getUnderlyingElements(
+      sel.anchorNode! as HTMLElement
+    )!
+    const focusElems = this.getUnderlyingElements(
+      sel.focusNode! as HTMLElement
+    )!
+
+    const obj = {
       html: this.selfRef.current.innerHTML,
-      child: this.currentChild,
-      div: this.currentDiv,
-      anchorOffset: 0,
-      focusOffset: 0
-    })
+      anchorDivIndex: [].slice
+        .call(this.selfRef.current.children)
+        .indexOf(
+          anchorElems[0].nodeName === 'LI'
+            ? anchorElems[0].parentElement!
+            : anchorElems[0]
+        ),
+      anchorChildIndex: [].slice
+        .call(focusElems[0].children)
+        .indexOf(focusElems[1]),
+      focusDivIndex: [].slice
+        .call(this.selfRef.current.children)
+        .indexOf(
+          anchorElems[0].nodeName === 'LI'
+            ? focusElems[0].parentElement!
+            : focusElems[0]
+        ),
+      focusChildIndex: [].slice
+        .call(focusElems[0].children)
+        .indexOf(focusElems[1]),
+      anchorOffset: sel.anchorOffset,
+      focusOffset: sel.focusOffset
+    }
+
+    history === 'back'
+      ? this.backHistory.push(obj)
+      : this.forwardHistory.push(obj)
+
+    console.log(this.backHistory)
   }
 
   shouldComponentUpdate() {
@@ -152,103 +200,96 @@ class Editor extends React.Component<EditorProps> {
       this.currentDiv.nodeName === 'LI' ||
       this.currentDiv.parentElement!.nodeName === 'UL' ||
       this.currentDiv.parentElement!.nodeName === 'OL'
+
+    this.selTable = ['TD', 'TH'].includes(
+      this.currentDiv.parentElement!.nodeName
+    )
+      ? (this.currentDiv.parentElement!.parentElement!
+          .parentElement! as HTMLElement)
+      : null
   }
 
   getUnderlyingElements = (node: HTMLElement) => {
     const nodeName = node.nodeName
     const parentNode = node.parentNode!
     const parentName = parentNode.nodeName
+
     let child: HTMLElement
     let div: HTMLElement
 
-    if (nodeName === 'SPAN' || nodeName === 'SUB' || nodeName === 'SUP') {
-      div = parentNode as HTMLElement
-      child = node as HTMLElement
-    } else if (nodeName === '#text') {
-      div = parentNode.parentNode as HTMLElement
-      child = parentNode as HTMLElement
-    } else if (nodeName === 'TD') {
-      div = (node as HTMLElement).firstElementChild! as HTMLElement
-      child = div.firstElementChild! as HTMLElement
-    } else if (parentName === 'TD') {
-      div = node as HTMLElement
-      child = div.firstElementChild! as HTMLElement
-    } else if (nodeName === 'TABLE') {
-      div = (node as HTMLElement).firstElementChild!.firstElementChild!
-        .firstElementChild! as HTMLElement
-      child = div.firstElementChild! as HTMLElement
-    } else if (
-      nodeName === 'DIV' &&
-      (node as HTMLElement).firstElementChild?.nodeName === 'DIV'
-    ) {
-      div = (node as HTMLElement).firstElementChild! as HTMLElement
-      child = div.firstElementChild! as HTMLElement
-    } else if (
-      nodeName === 'DIV' &&
-      (node as HTMLElement).firstElementChild?.nodeName === 'TABLE'
-    ) {
-      div = (node as HTMLElement).firstElementChild!.firstElementChild!
-        .firstElementChild!.firstElementChild! as HTMLElement
-      child = div.firstElementChild as HTMLElement
-    } else return null
-    return [div, child]
-  }
+    switch (nodeName) {
+      case 'SPAN':
+      case 'SUB':
+      case 'SUP':
+        div = parentNode as HTMLElement
+        child = node as HTMLElement
+        break
+      case '#text':
+        div = parentNode.parentNode as HTMLElement
+        child = parentNode as HTMLElement
+        break
+      case 'TD':
+        div = (node as HTMLElement).firstElementChild! as HTMLElement
+        child = div.firstElementChild! as HTMLElement
+        break
+      case 'TABLE':
+        div = (node as HTMLElement).firstElementChild!.firstElementChild!
+          .firstElementChild! as HTMLElement
+        child = div.firstElementChild! as HTMLElement
 
-  commitChanges = (action?: string) => {
-    const selfElem = this.selfRef.current as Element
-    let html = selfElem.innerHTML
-    const now = new Date()
-
-    if (action === 'back' && this.backHistory.length) {
-      this.forwardHistory.push(html)
-
-      const backward = this.backHistory.pop()!
-      html = backward.html ? backward.html : html
-
-      const lastSelAnchor = backward.anchorOffset
-      const lastSelFocus = backward.focusOffset
-
-      let div = 0
-      let child = 0
-
-      Array.prototype.slice
-        .call(this.selfRef.current.children)
-        .forEach((element: Node, index: number) => {
-          if (element.isSameNode(this.currentDiv)) {
-            div = index
-          }
-        })
-
-      Array.prototype.slice
-        .call(this.currentDiv.children)
-        .forEach((element: Node, index: number) => {
-          if (element.isSameNode(this.currentChild)) {
-            child = index
-          }
-        })
-
-      this.selfRef.current.innerHTML = html
-      this.currentDiv = this.selfRef.current.children[div] as HTMLElement
-      this.currentChild = this.currentDiv.children[child] as HTMLElement
-      if (lastSelAnchor === lastSelFocus) {
-        this.select(this.currentChild.childNodes[0], lastSelAnchor)
-      } else {
-      }
-    } else {
-      if (now.getTime() - this.lastSaveDate.getTime() > 1500) {
-        const sel = window.getSelection()!
-        this.backHistory.push({
-          html: this.selfRef.current.innerHTML,
-          child: this.currentChild,
-          div: this.currentDiv,
-          anchorOffset: sel.anchorOffset,
-          focusOffset: sel.focusOffset
-        })
-        this.lastSaveDate = now
-      }
+        break
+      case (node as HTMLElement).firstElementChild?.nodeName === 'DIV' && 'DIV':
+        div = (node as HTMLElement).firstElementChild! as HTMLElement
+        child = div.firstElementChild! as HTMLElement
+        break
+      case (node as HTMLElement).firstElementChild?.nodeName === 'TABLE' &&
+        'DIV':
+        div = (node as HTMLElement).firstElementChild!.firstElementChild!
+          .firstElementChild!.firstElementChild! as HTMLElement
+        child = div.firstElementChild as HTMLElement
+        break
     }
 
+    if (parentName === 'TD') {
+      div = node as HTMLElement
+      child = div.firstElementChild! as HTMLElement
+    }
+
+    return [div!, child!]
+  }
+
+  commitChanges = (action?: 'back' | 'forward') => {
+    let html = this.selfRef.current.innerHTML
+
+    html = action ? this.historyAction(action) : html
+
     this.props.setEditorHTML(html)
+  }
+
+  historyAction = (action?: 'back' | 'forward') => {
+    this.addToHistory(action === 'back' ? 'forward' : 'back')
+
+    const historyObj =
+      action === 'back' ? this.backHistory.pop()! : this.forwardHistory.pop()!
+    const html = historyObj.html
+
+    const lastSelAnchor = historyObj.anchorOffset
+    const lastSelFocus = historyObj.focusOffset
+
+    this.selfRef.current.innerHTML = html
+
+    const anchorNode = this.selfRef.current.children[historyObj.anchorDivIndex]
+      .children[historyObj.anchorChildIndex]
+    const focusNode = this.selfRef.current.children[historyObj.focusDivIndex]
+      .children[historyObj.focusChildIndex]
+
+    this.selectRange(
+      anchorNode.childNodes[0],
+      lastSelAnchor,
+      focusNode.childNodes[0],
+      lastSelFocus
+    )
+    return html
   }
 
   isRanged = () => {
@@ -260,6 +301,8 @@ class Editor extends React.Component<EditorProps> {
   }
 
   styleText = (styles: any, canToggle: boolean) => {
+    this.addToHistory()
+
     let sel = window.getSelection()
 
     // if nothing is selected, select current child
@@ -449,8 +492,8 @@ class Editor extends React.Component<EditorProps> {
       selectionEnd
     )
 
-    if (!endNode.innerText) endNode.remove()
-    if (!startNode.innerText) startNode.remove()
+    !endNode.innerText && endNode.remove()
+    !startNode.innerText && startNode.remove()
   }
 
   getElementWithInitStyles(elem: HTMLElement, styles: any) {
@@ -487,68 +530,71 @@ class Editor extends React.Component<EditorProps> {
     this.props.setIsCaretHidden(blur)
   }
 
-  // getCaretPos = () => {
-  //   const supportPageOffset = window.pageXOffset !== undefined
-  //   const isCSS1Compat = (document.compatMode || '') === 'CSS1Compat'
+  getCaretPos = () => {
+    const supportPageOffset = window.pageXOffset !== undefined
+    const isCSS1Compat = (document.compatMode || '') === 'CSS1Compat'
 
-  //   const scrollX = supportPageOffset
-  //     ? window.pageXOffset
-  //     : isCSS1Compat
-  //     ? document.documentElement.scrollLeft
-  //     : document.body.scrollLeft
-  //   const scrollY = supportPageOffset
-  //     ? window.pageYOffset
-  //     : isCSS1Compat
-  //     ? document.documentElement.scrollTop
-  //     : document.body.scrollTop
+    const scrollX = supportPageOffset
+      ? window.pageXOffset
+      : isCSS1Compat
+      ? document.documentElement.scrollLeft
+      : document.body.scrollLeft
+    const scrollY = supportPageOffset
+      ? window.pageYOffset
+      : isCSS1Compat
+      ? document.documentElement.scrollTop
+      : document.body.scrollTop
 
-  //   if (this.currentDiv.innerHTML.includes('<br>')) {
-  //     this.currentDiv.innerHTML = this.currentDiv.innerHTML.replace('<br>', '')
-  //     if (this.currentDiv.children[0]) {
-  //       this.currentDiv.children[0]!.innerHTML = '\u200b'
-  //       this.select(this.currentDiv.children[0].childNodes[0], 1)
-  //       return { top: 0, left: 0 }
-  //     } else {
-  //       const span = createNewElement('span')
-  //       span.innerText = '\u200b'
-  //       this.currentDiv.append(span)
-  //       this.currentChild = span
-  //     }
-  //   }
+    if (this.currentDiv.innerHTML.includes('<br>')) {
+      this.currentDiv.innerHTML = this.currentDiv.innerHTML.replace('<br>', '')
+      if (this.currentDiv.children[0]) {
+        this.currentDiv.children[0]!.innerHTML = '\u200b'
+        this.select(this.currentDiv.children[0].childNodes[0], 1)
+        return { top: 0, left: 0 }
+      } else {
+        const span = createNewElement('span')
+        span.innerText = '\u200b'
+        this.currentDiv.append(span)
+        this.currentChild = span
+      }
+    }
 
-  //   const boundingRect = window
-  //     .getSelection()!
-  //     .getRangeAt(0)
-  //     .getBoundingClientRect()
-  //   try {
-  //     let top = boundingRect.top
-  //     let left = boundingRect.left
+    const boundingRect = window
+      .getSelection()!
+      .getRangeAt(0)
+      .getBoundingClientRect()
+    try {
+      let top = boundingRect.top
+      let left = boundingRect.left
 
-  //     let parent = this.currentChild as Element
-  //     if (top === 0) {
-  //       top = parent.getBoundingClientRect().top
-  //       if (top === 0) {
-  //         alert('top is 0 for second time')
-  //         top = this.currentDiv.getBoundingClientRect().top
-  //       }
-  //     }
+      const currentChildRect: DOMRect | null =
+        top === 0 || left === 0
+          ? this.currentChild.getBoundingClientRect()
+          : null
 
-  //     if (left === 0) {
-  //       left =
-  //         parent.getBoundingClientRect().left +
-  //         (isRTL(this.currentDiv.innerText)
-  //           ? 0
-  //           : parent.getBoundingClientRect().width)
-  //     }
-  //     const obj = {
-  //       top: top + scrollY,
-  //       left: left + scrollX
-  //     }
-  //     return obj
-  //   } catch {
-  //     return { top: 414, left: 211 }
-  //   }
-  // }
+      top =
+        top === 0
+          ? currentChildRect!.top === 0
+            ? currentChildRect!.top
+            : this.currentDiv.getBoundingClientRect().top
+          : top
+
+      left =
+        left === 0
+          ? currentChildRect!.left +
+            (isRTL(this.currentDiv.innerText) ? 0 : currentChildRect!.width)
+          : left
+
+      const obj = {
+        top: top + scrollY,
+        left: left + scrollX
+      }
+
+      return obj
+    } catch {
+      throw new Error('Unexpected error getting caret position')
+    }
+  }
 
   update = () => {
     const sel = window.getSelection()!
@@ -557,7 +603,7 @@ class Editor extends React.Component<EditorProps> {
     const anchorElems = elems[0]
     const focusElems = elems[1]
 
-    if (anchorElems !== null) this.setCurrentElements(anchorElems)
+    anchorElems !== null && this.setCurrentElements(anchorElems)
 
     const firstDiv = this.selfRef.current.firstElementChild.nextElementSibling
     const lastDiv = this.selfRef.current.lastElementChild
@@ -580,8 +626,10 @@ class Editor extends React.Component<EditorProps> {
           focusElems[0].isSameNode(firstDiv) &&
           anchorElems[1].isSameNode(lastDiv.lastElementChild) &&
           focusElems[1].isSameNode(firstDiv.firstElementChild))
-      )
+      ) {
+        this.addToHistory()
         this.selAll = true
+      }
     }
   }
 
@@ -601,12 +649,8 @@ class Editor extends React.Component<EditorProps> {
     const sel = window.getSelection()
     const range = document.createRange()
     range.setStart(elem, at)
-    if (sel === null) {
-      alert('sel is null')
-      return
-    }
-    sel.removeAllRanges()
-    sel.addRange(range)
+    sel!.removeAllRanges()
+    sel!.addRange(range)
   }
 
   selectRange = (
@@ -727,9 +771,7 @@ class Editor extends React.Component<EditorProps> {
 
       for (let i = 0; i < sortedRows.length; i++) {
         const row = this.selectedCells[sortedRows[i]] as HTMLElement[]
-        if (!cells.includes(row)) {
-          cells.push(row)
-        }
+        !cells.includes(row) && cells.push(row)
       }
 
       const addEventListeners = (cell: HTMLElement, table: HTMLElement) => {
@@ -767,23 +809,21 @@ class Editor extends React.Component<EditorProps> {
 
       if (node.isSameNode(this.selfRef.current)) {
         if (ev.clientY > tableRect.bottom) {
-          if (
-            ev.clientY >
-            this.selfRef.current.lastElementChild.getBoundingClientRect().bottom
-          )
-            node = this.selfRef.current.lastElementChild as HTMLElement
-          else node = this.selTable
+          ev.clientY >
+          this.selfRef.current.lastElementChild.getBoundingClientRect().bottom
+            ? (node = this.selfRef.current.lastElementChild as HTMLElement)
+            : (node = this.selTable)
         } else if (
           ev.clientY <= tableRect.bottom &&
           ev.clientY >= tableRect.top
         )
           node = this.selTable
         else {
-          if (
+          node =
             ev.clientY <
             this.selfRef.current.firstElementChild.getBoundingClientRect().top
-          )
-            node = this.selfRef.current.firstElementChild as HTMLElement
+              ? (this.selfRef.current.firstElementChild as HTMLElement)
+              : node
         }
       }
 
@@ -967,23 +1007,12 @@ class Editor extends React.Component<EditorProps> {
   onKeyDown = (e: React.KeyboardEvent) => {
     const date = new Date()
 
-    if (e.key.toLowerCase() === 'z' && e.ctrlKey) {
-      this.commitChanges('back')
-      e.preventDefault()
-    } else if (e.key.toLocaleLowerCase() === 'y' && e.ctrlKey) {
-      this.commitChanges('forward')
-      e.preventDefault()
-    }
     if (
       this.lastKeyPressedDate &&
       this.lastKeyPressed &&
-      date!.getTime() - this.lastKeyPressedDate.getTime() < 300
+      date!.getTime() - this.lastKeyPressedDate.getTime() < 100
     ) {
-      this.props.setCaretDelay(
-        e.key !== this.lastKeyPressed && parseInt(this.props.caretDelay) > 30
-          ? '20ms'
-          : '0ms'
-      )
+      this.props.setCaretDelay('0ms')
     } else {
       this.props.resetCaretDelay()
     }
@@ -1012,218 +1041,237 @@ class Editor extends React.Component<EditorProps> {
       this.selfRef.current.innerHTML = '<div></div>'
       this.init()
       this.selAll = false
-    } else if (
-      this.currentChild.parentNode &&
-      this.currentChild.parentNode.parentNode &&
-      (this.currentChild.parentNode.parentNode.nodeName === 'TD' ||
-        this.currentChild.parentNode.parentNode.nodeName === 'TH')
-    ) {
-      switch (e.key) {
-        case 'Backspace':
-          if (this.currentChild.innerHTML.length == 1) {
-            this.currentChild.innerHTML = '\u200b'
-            e.preventDefault()
-          }
-          break
-        case 'ArrowLeft': {
-          if (
-            sel?.anchorOffset === 0 ||
-            (sel?.anchorOffset === 1 &&
-              this.currentChild.innerHTML === '\u200b')
-          ) {
-            const prevCell = this.currentChild.parentElement!.parentElement!
-              .previousElementSibling?.lastElementChild!.lastElementChild!
-              .childNodes[0] as CharacterData
-            const prevUpCell = this.currentChild.parentElement!.parentElement!
-              .parentElement!.previousElementSibling?.lastElementChild!
-              .lastElementChild!.lastElementChild!
-              .childNodes[0] as CharacterData
-            if (prevCell) this.select(prevCell, prevCell.data.length)
-            else if (prevUpCell) this.select(prevUpCell, prevUpCell.data.length)
-            e.preventDefault()
-          }
-          break
-        }
-        case 'Tab':
-        case 'ArrowRight': {
-          if (
-            sel?.anchorOffset === this.currentChild.innerHTML.length ||
-            (sel?.anchorOffset === 1 &&
-              this.currentChild.innerHTML === '\u200b')
-          ) {
-            const nextCell = this.currentChild.parentElement!.parentElement!
-              .nextElementSibling?.lastElementChild!.lastElementChild!
-              .childNodes[0] as CharacterData
-            const nextDownCell = this.currentChild.parentElement!.parentElement!
-              .parentElement!.nextElementSibling?.firstElementChild!
-              .lastElementChild!.lastElementChild!
-              .childNodes[0] as CharacterData
-            if (nextCell) this.select(nextCell, nextCell.data.length)
-            else if (nextDownCell)
-              this.select(nextDownCell, nextDownCell.data.length)
-            e.preventDefault()
-          }
-          break
-        }
-        case 'ArrowUp': {
-          let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
-          const prevUpCellTop = cellRect.top
-          let prevUpCell: any = document.elementFromPoint(
-            cellRect.left + 5,
-            prevUpCellTop - 5
-          )!
-          if (prevUpCell.nodeName === 'SPAN')
-            prevUpCell = prevUpCell.childNodes[0] as CharacterData
-          else prevUpCell = prevUpCell.lastElementChild.childNodes[0]
-          this.select(prevUpCell, prevUpCell.data.length)
+    }
+
+    switch (e.key) {
+      case this.selTable &&
+        (sel?.anchorOffset === 0 ||
+          (sel?.anchorOffset === 1 &&
+            this.currentChild.innerHTML === '\u200b')) &&
+        'ArrowLeft': {
+        const prevCell = this.currentChild.parentElement!.parentElement!
+          .previousElementSibling?.lastElementChild!.lastElementChild!
+          .childNodes[0] as CharacterData
+        const prevUpCell = this.currentChild.parentElement!.parentElement!
+          .parentElement!.previousElementSibling?.lastElementChild!
+          .lastElementChild!.lastElementChild!.childNodes[0] as CharacterData
+        if (prevCell) this.select(prevCell, prevCell.data.length)
+        else if (prevUpCell) this.select(prevUpCell, prevUpCell.data.length)
+        e.preventDefault()
+        break
+      }
+      case this.selTable && 'Tab':
+      case this.selTable && 'ArrowRight': {
+        if (
+          sel?.anchorOffset === this.currentChild.innerHTML.length ||
+          (sel?.anchorOffset === 1 && this.currentChild.innerHTML === '\u200b')
+        ) {
+          const nextCell = this.currentChild.parentElement!.parentElement!
+            .nextElementSibling?.lastElementChild!.lastElementChild!
+            .childNodes[0] as CharacterData
+          const nextDownCell = this.currentChild.parentElement!.parentElement!
+            .parentElement!.nextElementSibling?.firstElementChild!
+            .lastElementChild!.lastElementChild!.childNodes[0] as CharacterData
+          const selCell = nextCell
+            ? nextCell
+            : nextDownCell
+            ? nextDownCell
+            : (this.selTable!.firstElementChild!.firstElementChild!
+                .lastElementChild!.lastElementChild!
+                .childNodes[0] as CharacterData)
+          this.select(selCell, selCell.data.length)
           e.preventDefault()
-          break
         }
-        case 'ArrowDown': {
-          let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
-          const nextDownCellBottom = cellRect.bottom
-          let nextDownCell: any = document.elementFromPoint(
-            cellRect.left + 5,
-            nextDownCellBottom + 5
+        break
+      }
+      case 'ArrowUp': {
+        let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
+        const prevUpCellTop = cellRect.top
+        let prevUpCell: any = document.elementFromPoint(
+          cellRect.left + 5,
+          prevUpCellTop - 5
+        )!
+
+        const selCell =
+          prevUpCell.nodeName === 'SPAN'
+            ? prevUpCell.childNodes[0]
+            : prevUpCell.lastElementChild.childNodes[0]
+
+        this.select(selCell, selCell.data.length)
+
+        e.preventDefault()
+        break
+      }
+      case 'ArrowDown': {
+        let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
+        const nextDownCellBottom = cellRect.bottom
+        let nextDownCell: any = document.elementFromPoint(
+          cellRect.left + 5,
+          nextDownCellBottom + 5
+        )
+        const selCell =
+          nextDownCell.nodeName === 'SPAN'
+            ? (nextDownCell = nextDownCell.childNodes[0])
+            : nextDownCell.lastElementChild.childNodes[0]
+        this.select(selCell, selCell.data.length)
+        e.preventDefault()
+        break
+      }
+
+      // handle backspace in front of normal lines
+      case !this.onList &&
+        this.currentChild.innerText.length === 1 &&
+        this.currentChild.innerText !== '\u200b' &&
+        'Backspace':
+        this.currentChild.innerHTML = '\u200b'
+        this.select(this.currentChild.childNodes[0], 1)
+
+        e.preventDefault()
+        break
+
+      case !this.onList &&
+        this.currentChild.innerText === '\u200b' &&
+        'Backspace':
+        if (
+          this.currentDiv.isSameNode(
+            this.selfRef.current.firstElementChild.nextElementSibling
+          ) ||
+          this.selTable !== null
+        ) {
+          e.preventDefault()
+        } else {
+          this.currentChild.remove()
+          this.currentDiv.previousElementSibling!.append('\u200b')
+        }
+        break
+
+      case this.onList &&
+        sel!.anchorOffset == 0 &&
+        sel!.focusOffset == 0 &&
+        'Backspace':
+      case this.onList &&
+        this.currentChild.innerText === '\u200b' &&
+        'Backspace':
+        if (this.currentDiv.nodeName === 'LI') {
+          const newDiv = createNewElement('div')
+          newDiv.innerHTML = this.currentDiv.innerHTML
+          this.currentDiv.parentElement!.insertBefore(newDiv, this.currentDiv)
+          this.currentDiv.remove()
+          this.currentDiv = newDiv
+          this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
+          this.select(this.currentChild.childNodes[0], 0)
+        } else {
+          const oldList = this.currentDiv.parentElement!
+          const newList = oldList.cloneNode() as HTMLElement
+
+          let oldListElems = []
+
+          let elem = this.currentDiv.nextElementSibling! as HTMLElement
+          while (elem !== null) {
+            oldListElems.push(elem)
+            elem = elem.nextSibling! as HTMLElement
+          }
+
+          oldListElems.forEach((elem) => newList.append(elem))
+
+          this.selfRef.current.insertBefore(
+            newList,
+            oldList!.nextElementSibling
           )
-          if (nextDownCell.nodeName === 'SPAN')
-            nextDownCell = nextDownCell.childNodes[0] as CharacterData
-          else nextDownCell = nextDownCell.lastElementChild.childNodes[0]
-          this.select(nextDownCell, nextDownCell.data.length)
-          e.preventDefault()
-          break
+          this.selfRef.current.insertBefore(this.currentDiv, newList)
+
+          if (!newList.hasChildNodes()) newList.remove()
+          if (!oldList.hasChildNodes()) oldList.remove()
+
+          this.select(this.currentDiv.children[0].childNodes[0], 0)
+          this.update()
+          this.props.setCaretPos(this.getCaretPos())
         }
-      }
-    } else if (
-      e.key === 'Backspace' &&
-      this.currentChild.previousSibling?.nodeName === 'IMG' &&
-      this.currentChild.innerHTML.length === 1
-    ) {
-      alert('img')
-      if (this.currentChild.innerHTML === '\u200b')
-        this.currentChild.previousSibling.remove()
-      else {
-        this.currentChild.innerHTML = '\u200b'
-        this.select(this.currentChild.childNodes[0], 1)
         e.preventDefault()
-      }
-    } else if (
-      !this.onList &&
-      e.key === 'Backspace' &&
-      this.currentChild.innerHTML === '\u200b'
-    ) {
-      if (
-        this.currentDiv.isSameNode(
-          this.selfRef.current.firstElementChild.nextElementSibling
-        )
-      ) {
-        this.select(this.currentChild.childNodes[0], 1)
+        break
+      case e.ctrlKey && 'z':
+      case e.ctrlKey && 'Z':
+        this.commitChanges('back')
         e.preventDefault()
-      } else if (
-        !this.onList &&
-        this.currentChild.isSameNode(this.currentDiv.firstElementChild)
-      )
-        this.currentChild.innerHTML = '\u200b'
-    } else if (
-      !this.onList &&
-      e.key === 'Backspace' &&
-      this.currentChild.innerText.length === 1
-    ) {
-      this.currentChild.innerHTML = '\u200b'
-      e.preventDefault()
-    } else if (
-      e.key === 'Backspace' &&
-      ((sel!.anchorOffset == 0 && sel!.focusOffset == 0) ||
-        this.currentChild.innerText === '\u200b')
-    ) {
-      if (this.onList && this.currentDiv.nodeName === 'LI') {
-        const newDiv = createNewElement('div')
-        newDiv.innerHTML = this.currentDiv.innerHTML
-        this.currentDiv.parentElement!.insertBefore(newDiv, this.currentDiv)
-        this.currentDiv.remove()
-        this.currentDiv = newDiv
-        this.currentChild = this.currentDiv.firstElementChild! as HTMLElement
-        this.select(this.currentChild.childNodes[0], 0)
-      } else if (this.onList) {
-        const oldList = this.currentDiv.parentElement!
-        const newList = oldList.cloneNode() as HTMLElement
-        let div = this.currentDiv.nextElementSibling! as HTMLElement
-        while (div !== null) {
-          newList.append(div)
-          div = div.nextElementSibling! as HTMLElement
-        }
-        this.selfRef.current.insertBefore(newList, oldList!.nextElementSibling)
-        this.selfRef.current.insertBefore(this.currentDiv, newList)
-        if (!newList.hasChildNodes()) newList.remove()
-        if (!oldList.hasChildNodes()) oldList.remove()
-        this.select(this.currentDiv.children[0].childNodes[0], 0)
-        this.update()
-      }
-      e.preventDefault()
-    } else if (e.key === 'Enter') {
-      const newDiv =
-        (this.currentDiv.nodeName === 'DIV' && !this.onList) || e.shiftKey
-          ? createNewElement('div')
-          : createNewElement('li')
-      const newSpan = createNewElement('span')
-      newSpan.setAttribute('style', this.currentChild.getAttribute('style')!)
+        break
+      case e.ctrlKey && 'y':
+      case e.ctrlKey && 'Y':
+        this.commitChanges('forward')
+        e.preventDefault()
+        break
+      case 'Enter':
+        this.addToHistory()
 
-      if (this.isRanged()) {
-        const selElems = this.getChildsWithinSelect(sel!, true)!
+        const newDiv =
+          (this.currentDiv.nodeName === 'DIV' && !this.onList) || e.shiftKey
+            ? createNewElement('div')
+            : createNewElement('li')
+        const newSpan = createNewElement('span')
+        newSpan.setAttribute('style', this.currentChild.getAttribute('style')!)
 
-        const selDivs = selElems[0] as HTMLElement[]
-        const selDivsTrimCopy = selDivs.slice(1, -1)
+        if (this.isRanged()) {
+          const selElems = this.getChildsWithinSelect(sel!, true)!
 
-        const selChilds = selElems[1] as HTMLElement[]
-        const selChildsTrimCopy = selChilds.slice(1, -1)
+          const selDivs = selElems[0] as HTMLElement[]
+          const selDivsTrimCopy = selDivs.slice(1, -1)
 
-        selChildsTrimCopy.forEach((child) => {
-          child.remove()
-        })
+          const selChilds = selElems[1] as HTMLElement[]
+          const selChildsTrimCopy = selChilds.slice(1, -1)
 
-        selDivsTrimCopy.forEach((div) => {
-          div.remove()
-        })
+          selChildsTrimCopy.forEach((child) => {
+            child.remove()
+          })
 
-        const startOffset = Math.min(sel!.anchorOffset, sel!.focusOffset)
-        const endOffset = Math.max(sel!.anchorOffset, sel!.focusOffset)
+          selDivsTrimCopy.forEach((div) => {
+            div.remove()
+          })
 
-        const text =
-          selChilds.length === 1 && selChilds[0].innerText.slice(endOffset)
-            ? selChilds[0].innerText.slice(endOffset)
+          const startOffset = Math.min(sel!.anchorOffset, sel!.focusOffset)
+          const endOffset = Math.max(sel!.anchorOffset, sel!.focusOffset)
+
+          const text =
+            selChilds.length === 1 && selChilds[0].innerText.slice(endOffset)
+              ? selChilds[0].innerText.slice(endOffset)
+              : '\u200b'
+
+          selChilds[0].innerText = selChilds[0].innerText.substring(
+            0,
+            startOffset
+          )
+          selChilds[selChilds.length - 1].innerText =
+            selChilds.length === 1
+              ? selChilds[0].innerText
+              : selChilds[selChilds.length - 1].innerText.slice(endOffset)
+
+          newSpan.innerText = text
+        } else {
+          newSpan.innerText = this.currentChild.innerText.slice(
+            sel!.anchorOffset
+          )
+            ? this.currentChild.innerText.slice(sel!.anchorOffset)
             : '\u200b'
+          this.currentChild.innerText = this.currentChild.innerText.slice(
+            0,
+            sel!.anchorOffset
+          )
+        }
 
-        selChilds[0].innerText = selChilds[0].innerText.substring(
-          0,
-          startOffset
+        newDiv.append(newSpan)
+        this.currentDiv.parentElement!.insertBefore(
+          newDiv,
+          this.currentDiv.nextSibling
         )
-        selChilds[selChilds.length - 1].innerText =
-          selChilds.length === 1
-            ? selChilds[0].innerText
-            : selChilds[selChilds.length - 1].innerText.slice(endOffset)
-
-        newSpan.innerText = text
-      } else {
-        newSpan.innerText = this.currentChild.innerText.slice(sel!.anchorOffset)
-          ? this.currentChild.innerText.slice(sel!.anchorOffset)
-          : '\u200b'
-        this.currentChild.innerText = this.currentChild.innerText.slice(
-          0,
-          sel!.anchorOffset
-        )
-      }
-
-      newDiv.append(newSpan)
-      this.currentDiv.parentElement!.insertBefore(
-        newDiv,
-        this.currentDiv.nextSibling
-      )
-      this.props.setCaretDelay('0ms')
-      this.props.setIsCaretHidden(false)
-      this.select(newSpan.childNodes[0], +(newSpan.innerText.length === 1))
-      e.preventDefault()
-    } else if ((e.key === 'A' || e.key === 'a') && e.ctrlKey) {
-      this.selAll = true
+        this.props.setCaretDelay('0ms')
+        this.props.setIsCaretHidden(false)
+        this.select(newSpan.childNodes[0], +(newSpan.innerText.length === 1))
+        e.preventDefault()
+        break
+      case e.ctrlKey && 'A':
+      case e.ctrlKey && 'a':
+        this.addToHistory()
+        this.selAll = true
+        break
+      default:
     }
   }
 
@@ -1255,11 +1303,16 @@ class Editor extends React.Component<EditorProps> {
 
   onSelect = () => {
     this.update()
-    const fontSizeMenu = FontSizeMenu.getInstance()
-    if (fontSizeMenu && this.currentChild.style.fontSize)
-      fontSizeMenu.setState({
-        fontSize: parseInt(this.currentChild.style.fontSize)
+
+    this.props.fontSizeMenu === null &&
+      this.props.fontSizeMenu.setState({
+        fontSize: parseInt(
+          this.currentChild.style.fontSize
+            ? this.currentChild.style.fontSize
+            : this.props.defaultFontSize
+        )
       })
+
     this.setCaretHeight(this.currentChild.style.fontSize)
     this.currentDiv.style.lineHeight =
       !this.currentDiv.style.lineHeight ||
@@ -1267,6 +1320,8 @@ class Editor extends React.Component<EditorProps> {
         parseInt(this.currentDiv.style.lineHeight)
         ? this.currentChild.style.fontSize
         : this.currentDiv.style.lineHeight
+
+    this.props.setCaretPos(this.getCaretPos())
   }
 
   makeSelectRect = () => {
@@ -1295,7 +1350,7 @@ class Editor extends React.Component<EditorProps> {
     }
 
     let cDiv = nodesWithinEnds[0][0] as HTMLElement | null
-    let cChild = nodesWithinEnds[0][1]
+    let cChild = nodesWithinEnds[0][1] as HTMLElement | null
 
     if (cDiv === null || cChild === null) {
       alert('cChild or cDiv is null')
@@ -1304,6 +1359,7 @@ class Editor extends React.Component<EditorProps> {
 
     while (cDiv !== null) {
       divs.push(cDiv)
+
       while (cChild !== null) {
         childs.push(cChild)
         if (cChild.isSameNode(nodesWithinEnds[1][1])) {
@@ -1312,9 +1368,9 @@ class Editor extends React.Component<EditorProps> {
         }
         cChild = cChild.nextElementSibling as HTMLElement
       }
-      if (cDiv === null) break
-      cDiv = cDiv.nextElementSibling as HTMLElement
-      if (cDiv) cChild = cDiv.firstElementChild as HTMLElement
+
+      cDiv = cDiv && (cDiv.nextElementSibling as HTMLElement)
+      cChild = cDiv ? (cDiv.firstElementChild as HTMLElement) : null
     }
 
     return withDivs ? [divs, childs] : childs
@@ -1407,26 +1463,30 @@ class Editor extends React.Component<EditorProps> {
   }
 
   setSub = () => {
-    if (this.isRanged()) {
-      this.replaceSelectedTextChildsWith(['SPAN', 'SUP'], 'sub', 'span')
-    } else {
-      this.insertNewTextElement(
-        this.currentChild.nodeName === 'SUB' ? 'span' : 'sub'
-      )
-    }
+    this.addToHistory()
+
+    this.isRanged()
+      ? this.replaceSelectedTextChildsWith(['SPAN', 'SUP'], 'sub', 'span')
+      : this.insertNewTextElement(
+          this.currentChild.nodeName === 'SUB' ? 'span' : 'sub'
+        )
+    this.addToHistory()
   }
 
   setSup = () => {
-    if (this.isRanged()) {
-      this.replaceSelectedTextChildsWith(['SPAN', 'SUB'], 'sup', 'span')
-    } else {
-      this.insertNewTextElement(
-        this.currentChild.nodeName === 'SUP' ? 'span' : 'sup'
-      )
-    }
+    this.addToHistory()
+
+    this.isRanged()
+      ? this.replaceSelectedTextChildsWith(['SPAN', 'SUB'], 'sup', 'span')
+      : this.insertNewTextElement(
+          this.currentChild.nodeName === 'SUP' ? 'span' : 'sup'
+        )
+    this.addToHistory()
   }
 
   addList = (type: 'ul' | 'ol', css: string = '') => {
+    this.addToHistory()
+
     const list = createNewElement(type)
     list.setAttribute('style', css)
     this.selfRef.current.insertBefore(list, this.currentDiv.nextElementSibling)
@@ -1444,6 +1504,8 @@ class Editor extends React.Component<EditorProps> {
     } else {
       this.addListItem(list)
     }
+
+    this.addToHistory()
   }
 
   addListItem = (list: HTMLElement) => {
@@ -1531,6 +1593,7 @@ class Editor extends React.Component<EditorProps> {
       this.props.setIsCaretHidden(true)
       // img.style.float = 'left'
       this.update()
+      this.props.setCaretPos(this.getCaretPos())
 
       ev.preventDefault()
     })
@@ -1569,8 +1632,13 @@ class Editor extends React.Component<EditorProps> {
     }
 
     const selectCssObj = stringToCssObj(selectCss)
-    if (!('width' in selectCssObj)) selectCssObj['width'] = img.style.width
-    if (!('height' in selectCssObj)) selectCssObj['height'] = img.style.height
+    selectCssObj['width'] = !('width' in selectCssObj)
+      ? img.style.width
+      : selectCssObj['width']
+
+    selectCssObj['height'] = !('height' in selectCssObj)
+      ? img.style.height
+      : selectCssObj['height']
 
     selectCss = cssObjToString(selectCssObj)
     img.setAttribute('data-selectstyle', selectCss)
@@ -1591,6 +1659,7 @@ class Editor extends React.Component<EditorProps> {
   deleteSelectedImage = () => {
     this.selImage?.remove()
     this.update()
+    this.props.setCaretPos(this.getCaretPos())
 
     this.props.setIsCaretHidden(false)
   }
@@ -1635,7 +1704,7 @@ class Editor extends React.Component<EditorProps> {
     })
   }
 
-  resetCells = (clearArr = true) => {
+  resetCells = () => {
     const rowsKeys = Object.keys(this.selectedCells)
 
     for (let i = 0; i < rowsKeys.length; i++) {
@@ -1646,7 +1715,8 @@ class Editor extends React.Component<EditorProps> {
         cell.className = ''
       }
     }
-    if (clearArr) this.selectedCells = []
+
+    this.selectedCells = []
   }
 
   onMouseDown = (e: React.MouseEvent) => {
@@ -1661,6 +1731,7 @@ class Editor extends React.Component<EditorProps> {
       this.selTable = null
       this.resetCells()
     }
+
     if (this.selImage && !img) {
       this.selImage = null
       this.props.setIsCaretHidden(false)
@@ -1674,7 +1745,6 @@ class Editor extends React.Component<EditorProps> {
   render() {
     return (
       <ContentEditable
-        css={this.props.css}
         onPaste={this.onPaste}
         padding={this.props.padding}
         onInput={() => this.onInput()}
@@ -1706,6 +1776,9 @@ class Editor extends React.Component<EditorProps> {
         dir='auto'
         contentEditable
         dangerouslySetInnerHTML={{ __html: this.props.html }}
+        caretColor={this.props.caretColor}
+        disableSmoothCaret={this.props.disableSmoothCaret}
+        css={this.props.css}
       />
     )
   }

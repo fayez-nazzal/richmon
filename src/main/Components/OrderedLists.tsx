@@ -24,7 +24,7 @@ export default (props: OrderedListsProps) => {
         css='padding: 0;'
         leftChildren={<StyledNumberedListIcon />}
         leftAction={(actions) => {
-          actions.insertUList('disc')
+          actions.insertOList()
         }}
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}

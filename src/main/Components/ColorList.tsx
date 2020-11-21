@@ -6,7 +6,7 @@ import DropDownList from './DropDownList'
 import Flex from './Flex'
 import { Actions } from '../../EditorActions'
 import RichGrid from './RichGrid'
-import styles from '../../styles.module.css'
+import styled from 'styled-components'
 
 interface ColorListProps {
   action: 'textColor' | 'textShadow' | 'textHighlight'
@@ -26,6 +26,35 @@ interface ColorListProps {
   buttonWidth: string
   buttonHeight: string
 }
+
+const SliderInput = styled.input`
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  background: #dddddd;
+  outline: none;
+  opacity: 0.7;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: teal;
+    cursor: pointer;
+    border-radius: 0;
+  }
+
+  &::-moz-range-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: teal;
+    cursor: pointer;
+    border-radius: 0;
+  }
+`
 
 export default (props: ColorListProps) => {
   const [currentColor, setCurrentColor] = useState<string>(props.initialColor)
@@ -135,11 +164,10 @@ export default (props: ColorListProps) => {
         <Page>
           {props.action === 'textShadow' ? (
             <Flex height='23px'>
-              <input
+              <SliderInput
                 type='range'
                 min='0'
                 max='5'
-                className={styles.slider}
                 value={strokeSize}
                 step='1'
                 onChange={(e: any) => {

@@ -1,19 +1,23 @@
 import React from 'react'
 import styled from 'styled-components'
 
-const CaretSpan = styled.span`
+interface StyledCaretProps {
+  transitionDelay: string
+  color: string
+}
+const StyledCaret = styled.span`
   white-space: pre;
   position: absolute;
   pointer-events: none;
-  border-right: 1.2px solid black;
-  transition: left
-    ${(props: { transitionDelay: string }) => props.transitionDelay} ease-in;
+  border-right: 1.2px solid ${(props: StyledCaretProps) => props.color};
+  transition: left ${(props: StyledCaretProps) => props.transitionDelay} ease-in;
 `
 class Caret extends React.Component<
   {
     hidden: boolean
     top: number
     left: number
+    color: string
     height: string
     transitionDelay: string
   },
@@ -70,7 +74,7 @@ class Caret extends React.Component<
 
   render() {
     return (
-      <CaretSpan
+      <StyledCaret
         style={{
           left: this.props.left + 'px',
           top: this.props.top + 'px',
@@ -84,9 +88,10 @@ class Caret extends React.Component<
             ? true
             : this.state.hidden
         }
+        color={this.props.color}
       >
         {'\u200b'}
-      </CaretSpan>
+      </StyledCaret>
     )
   }
 }

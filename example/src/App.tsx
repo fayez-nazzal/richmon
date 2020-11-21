@@ -3,6 +3,7 @@ import { Richmon } from 'react-richmon'
 
 const App = () => {
   const [content, setContent] = useState('<div></div>')
+
   return (
     <Richmon
       content={content}
@@ -13,7 +14,6 @@ const App = () => {
         'sub',
         'sup',
         'thin-seperator',
-        'fontSize',
         'textColor',
         'textHighlight',
         'textShadow',
@@ -25,6 +25,7 @@ const App = () => {
       css='box-shadow: none !important;-webkit-box-shadow: none !important;'
       width='100wh'
       height='100vh'
+      disableSmootCaret
     />
   )
 }
