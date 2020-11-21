@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useRef, useState } from 'react'
 import styled from 'styled-components'
-import { RichButton } from './ButtonComponents'
+import RichButton from './RichButton'
 import { ReactComponent as Back } from '../../svgs/back.svg'
 import RichMenu from './RichMenu'
 import { Actions } from '../../Actions'

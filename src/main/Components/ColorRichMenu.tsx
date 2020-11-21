@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import Page from './Page'
 import ColorPickTools from './ColorInputs'
-import { RichButton } from './ButtonComponents'
+import RichButton from './RichButton'
 import DropDownList from './ArrowRichMenu'
 import Flex from './Flex'
 import { Actions } from '../../Actions'

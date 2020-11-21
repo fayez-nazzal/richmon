@@ -4,6 +4,7 @@ import Seperator from './Seperator'
 interface spacerProps {
   width: string
   height: string
+  css?: string
 }
 
 export default (props: spacerProps) => (
@@ -11,5 +12,6 @@ export default (props: spacerProps) => (
     thickness={props.width}
     color='transparent'
     height={props.height}
+    css={props.css}
   />
 )

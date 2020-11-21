@@ -1,6 +1,6 @@
 import React from 'react'
 import '../../richmonUtils'
-import styled, { css, CSSProperties } from 'styled-components'
+import styled, { css } from 'styled-components'
 import { Actions } from '../../Actions'
 import { EditorActions } from '../../Actions'
 import StyledButtonCss from './styledButtonCss'
@@ -76,29 +76,4 @@ const RichButton = React.memo((props: RichmonButtonProps) => {
   )
 })
 
-interface OptionProps {
-  action: { (actions: Actions): void }
-  children?: any
-  style?: CSSProperties
-  css?: string
-}
-
-const Option = (props: OptionProps) => {
-  return (
-    <RichButton
-      action={props.action}
-      css={`
-        flex: 1 1 auto;
-        outline: none !important;
-        ${props.css}
-      `}
-      style={props.style}
-      width='auto'
-      height='auto'
-    >
-      {props.children}
-    </RichButton>
-  )
-}
-
-export { RichButton, Option }
+export default RichButton

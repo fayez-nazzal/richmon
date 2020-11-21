@@ -5,9 +5,6 @@ import styled, { css } from 'styled-components'
 
 const Div = styled.div`
   background-color: #f7f7f7;
-  display: flex;
-  flesx-wrap: wrap;
-  align-items: center;
   padding: 1.5px 0;
   ${(props: { css: string; width: string }) => css`
     ${props.width};

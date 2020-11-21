@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { RichButton } from './ButtonComponents'
+import RichButton from './RichButton'
 
 interface TableListButtonProps {
   row: number

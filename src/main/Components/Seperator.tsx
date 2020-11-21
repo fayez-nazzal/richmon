@@ -1,10 +1,11 @@
 import React from 'react'
-import { RichButton } from './ButtonComponents'
+import RichButton from './RichButton'
 
 interface SeperatorProps {
   color: string
   thickness: string
   height?: string
+  css?: string
 }
 
 export default (props: SeperatorProps) => (
@@ -18,6 +19,7 @@ export default (props: SeperatorProps) => (
       padding: 0 !important;
       white-space: pre;
       margin: 0 2.4px;
+      ${props.css};
     `}
   >
     {' '}

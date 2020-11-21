@@ -1,7 +1,7 @@
 import React from 'react'
 import styled, { css, Keyframes, keyframes } from 'styled-components'
 import { Actions } from '../../Actions'
-import { RichButton } from './ButtonComponents'
+import RichButton from './RichButton'
 import StyledButtonCss from './styledButtonCss'
 
 interface ButtonPropTypes {
@@ -164,7 +164,7 @@ class RichMenu extends React.Component<RichMenuPropTypes, RichMenuState> {
 
   render() {
     return (
-      <span id='sppp' style={{ position: 'relative' }} ref={this.selfRef}>
+      <span style={{ position: 'relative' }} ref={this.selfRef}>
         <ButtonWrapper css={this.props.buttonWrapperCss}>
           {this.props.leftButtonChildren ? (
             <RichButton

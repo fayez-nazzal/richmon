@@ -1,5 +1,34 @@
 import Richmon from './main/Components/Richmon'
-import { RichButton, Option } from './main/Components/ButtonComponents'
-import RichMenu from './main/Components/Menu'
+import RichButton from './main/Components/RichButton'
+import RichOption from './main/Components/RichOption'
+import RichMenu from './main/Components/RichMenu'
+import Menu from './main/Components/Menu'
+import ArrowRichMenu from './main/Components/ArrowRichMenu'
+import FontSizeMenu from './main/Components/FontSizeMenu'
+import ColorRichMenu from './main/Components/ColorRichMenu'
+import Page from './main/Components/Page'
+import Spacer from './main/Components/Spacer'
+import Seperator from './main/Components/Seperator'
+import TableMenu from './main/Components/TableMenu'
+import Grid from './main/Components/Grid'
+import Flex from './main/Components/Flex'
 import styled, { css, keyframes } from 'styled-components'
-export { Richmon, RichButton, RichMenu, Option, styled, css, keyframes }
+export {
+  Richmon,
+  RichButton,
+  Menu,
+  RichMenu,
+  ArrowRichMenu,
+  Page,
+  Spacer,
+  Seperator,
+  Grid,
+  Flex,
+  TableMenu,
+  FontSizeMenu,
+  ColorRichMenu,
+  RichOption,
+  styled,
+  css,
+  keyframes
+}
