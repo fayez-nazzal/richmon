@@ -1,9 +1,9 @@
 import React, { MutableRefObject, useRef, useState } from 'react'
 import styled from 'styled-components'
-import RichmonButton from './RichButton'
+import { RichButton } from './ButtonComponents'
 import { ReactComponent as Back } from '../../svgs/back.svg'
-import List from './List'
-import { Actions } from '../../EditorActions'
+import RichMenu from './RichMenu'
+import { Actions } from '../../Actions'
 import { SliderPicker } from 'react-color'
 
 const Input = styled.input`
@@ -134,7 +134,7 @@ export default (props: {
     <React.Fragment>
       <StyledBack
         onClick={() => {
-          List.getOpened().previousPage()
+          RichMenu.getOpened().previousPage()
         }}
       />
       <SliderPicker
@@ -184,7 +184,7 @@ export default (props: {
         />
       </InputsFlex>
       <InputsFlex style={{ height: 'auto' }}>
-        <RichmonButton
+        <RichButton
           action={(actions) => {
             props.addCustomColor(hex)
             props.doAction(actions, hex)
@@ -199,7 +199,7 @@ export default (props: {
           height='auto'
         >
           Select
-        </RichmonButton>
+        </RichButton>
       </InputsFlex>
     </React.Fragment>
   )

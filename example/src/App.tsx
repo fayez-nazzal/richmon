@@ -25,7 +25,6 @@ const App = () => {
       css='box-shadow: none !important;-webkit-box-shadow: none !important;'
       width='100wh'
       height='100vh'
-      disableSmootCaret
     />
   )
 }

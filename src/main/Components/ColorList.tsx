@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react'
 import Page from './Page'
 import ColorPickTools from './ColorInputs'
-import RichmonButton from './RichButton'
-import DropDownList from './DropDownList'
+import { RichButton } from './ButtonComponents'
+import DropDownList from './ArrowRichMenu'
 import Flex from './Flex'
-import { Actions } from '../../EditorActions'
-import RichGrid from './RichGrid'
+import { Actions } from '../../Actions'
+import RichGrid from './Grid'
 import styled from 'styled-components'
 
 interface ColorListProps {
@@ -69,7 +69,7 @@ export default (props: ColorListProps) => {
     customColorsClone.splice(
       0,
       0,
-      <RichmonButton
+      <RichButton
         key={`custom-${customColors.length}`}
         action={(actions) => {
           doAction(actions, color)
@@ -100,7 +100,7 @@ export default (props: ColorListProps) => {
   const mapColors = (colors: string[], key: string) => {
     return colors.map((color, index) => {
       return (
-        <RichmonButton
+        <RichButton
           key={`${key}${index}`}
           colorize={color}
           action={(actions: Actions) => {
@@ -244,7 +244,7 @@ export default (props: ColorListProps) => {
             ''
           )}
           {props.hasCustom ? (
-            <RichmonButton
+            <RichButton
               action={(actions) => {
                 actions.nextPage()
               }}
@@ -254,7 +254,7 @@ export default (props: ColorListProps) => {
               height='auto'
             >
               custom
-            </RichmonButton>
+            </RichButton>
           ) : (
             ''
           )}

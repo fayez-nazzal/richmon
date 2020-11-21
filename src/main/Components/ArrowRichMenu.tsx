@@ -1,23 +1,23 @@
 import React from 'react'
-import List from './List'
+import RichMenu from './RichMenu'
 import { ReactComponent as Down } from '../../svgs/down.svg'
-import { Actions } from '../../EditorActions'
+import { Actions } from '../../Actions'
 
 interface DropDownListProps {
-  leftAction?: { (actions: Actions): void }
-  leftChildren: (JSX.Element | string)[] | JSX.Element | string
   children?: any
-  css?: string
-  height?: string
   width?: string
+  height?: string
   buttonHeight: string
   buttonWidth: string
+  leftAction?: { (actions: Actions): void }
+  leftChildren: (JSX.Element | string)[] | JSX.Element | string
+  css?: string
 }
 
 export default (props: DropDownListProps) => {
   return (
     <React.Fragment>
-      <List
+      <RichMenu
         css={props.css ? props.css : 'padding: 10px;'}
         buttonChildren={<Down style={{ marginBottom: '-2px' }} />}
         leftButtonCss={`font-weight: normal;padding-left: 4px;padding-right:2px;border-right:none;&:hover{outline:none;}`}
@@ -43,7 +43,7 @@ export default (props: DropDownListProps) => {
         height={props.height}
       >
         {props.children}
-      </List>
+      </RichMenu>
     </React.Fragment>
   )
 }

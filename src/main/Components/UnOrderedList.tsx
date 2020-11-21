@@ -1,10 +1,10 @@
 import React from 'react'
 import Page from './Page'
+import Flex from './Flex'
 import { ReactComponent as BulletListIcon } from '../../svgs/bulletList.svg'
 import styled from 'styled-components'
-import DropDownList from './DropDownList'
+import DropDownList from './ArrowRichMenu'
 import ListTemplateButton from './ListTemplateButton'
-import RichGrid from './RichGrid'
 
 interface OrderedListsProps {
   buttonWidth: string
@@ -12,8 +12,6 @@ interface OrderedListsProps {
 }
 
 const StyledNumberedListIcon = styled(BulletListIcon)`
-  width: 12px;
-  height: 12px;
   margin-bottom: -4px;
 `
 
@@ -24,19 +22,17 @@ export default (props: OrderedListsProps) => {
         css='padding: 0;'
         leftChildren={<StyledNumberedListIcon />}
         leftAction={(actions) => {
-          actions.insertOList()
+          actions.insertUList('disc')
         }}
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}
-        width='125px'
+        width='105px'
       >
         <Page>
-          <RichGrid rows={2} cols={2}>
-            <ListTemplateButton listType='ol' listStyleType='lower-alpha' />
-            <ListTemplateButton listType='ol' listStyleType='upper-alpha' />
-            <ListTemplateButton listType='ol' listStyleType='lower-roman' />
-            <ListTemplateButton listType='ol' listStyleType='upper-roman' />
-          </RichGrid>
+          <Flex>
+            <ListTemplateButton listType='ul' listStyleType='square' />
+            <ListTemplateButton listType='ul' listStyleType='circle' />
+          </Flex>
         </Page>
       </DropDownList>
     </React.Fragment>

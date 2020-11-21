@@ -1,5 +1,5 @@
 import React from 'react'
-import RichButton from './RichButton'
+import { RichButton } from './ButtonComponents'
 
 interface SeperatorProps {
   color: string
@@ -10,6 +10,8 @@ interface SeperatorProps {
 export default (props: SeperatorProps) => (
   <RichButton
     action={(_actions) => {}}
+    width={props.thickness}
+    height={props.height ? props.height : 'auto'}
     css={`
       background-color: ${props.color} !important;
       outline: none !important;
@@ -17,8 +19,6 @@ export default (props: SeperatorProps) => (
       white-space: pre;
       margin: 0 2.4px;
     `}
-    width={props.thickness}
-    height={props.height ? props.height : 'auto'}
   >
     {' '}
   </RichButton>

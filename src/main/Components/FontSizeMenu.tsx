@@ -1,12 +1,12 @@
 import React from 'react'
-import RichMenu from './RichMenu'
-import RichOption from './RichOption'
+import RichMenu from './Menu'
+import { Option } from './ButtonComponents'
 
 const fontSizes: JSX.Element[] = []
 
 for (let i = 8; i <= 142; i++) {
   fontSizes.push(
-    <RichOption
+    <Option
       key={i}
       action={(actions) => {
         actions.setFontSize(`${i}px`)
@@ -14,7 +14,7 @@ for (let i = 8; i <= 142; i++) {
       css='padding: auto;'
     >
       {i}
-    </RichOption>
+    </Option>
   )
 }
 

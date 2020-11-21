@@ -1,6 +1,5 @@
 import Richmon from './main/Components/Richmon'
-import RichButton from './main/Components/RichButton'
-import RichMenu from './main/Components/RichMenu'
-import RichOption from './main/Components/RichOption'
-import styled, { css } from 'styled-components'
-export { Richmon, RichButton, RichMenu, RichOption, styled, css }
+import { RichButton, Option } from './main/Components/ButtonComponents'
+import RichMenu from './main/Components/Menu'
+import styled, { css, keyframes } from 'styled-components'
+export { Richmon, RichButton, RichMenu, Option, styled, css, keyframes }

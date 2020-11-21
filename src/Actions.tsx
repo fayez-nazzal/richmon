@@ -1,6 +1,6 @@
 import Editor from './main/Components/RichEditor'
 import FontSizeMenu from './main/Components/FontSizeMenu'
-import List from './main/Components/List'
+import RichMenu from './main/Components/RichMenu'
 import { stringToCssObj } from './richmonUtils'
 
 export type orderedListTypes =
@@ -100,11 +100,11 @@ const setTextHighlight = (color: string, canToggle = true) => {
 }
 
 const nextPage = () => {
-  List.getOpened().nextPage()
+  RichMenu.getOpened().nextPage()
 }
 
 const previousPage = () => {
-  List.getOpened().previousPage()
+  RichMenu.getOpened().previousPage()
 }
 
 const setBold = (canToggle = true) => {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import RichmonButton from './RichButton'
+import { RichButton } from './ButtonComponents'
 
 interface TableListButtonProps {
   row: number
@@ -33,7 +33,7 @@ export default React.memo((props: TableListButtonProps) => {
   return (
     <React.Fragment>
       <span ref={measuredRef}>
-        <RichmonButton
+        <RichButton
           action={(actions) => {
             actions.insertTable(props.row, props.col)
           }}

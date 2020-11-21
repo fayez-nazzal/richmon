@@ -12,7 +12,7 @@ import {
 } from '../../richmonUtils'
 import isEqual from 'lodash.isequal'
 import isEmpty from 'lodash.isempty'
-import { createTable } from './richtable'
+import { parseCSS } from 'css-parser'
 
 export interface EditorProps {
   html: string
@@ -99,6 +99,7 @@ class Editor extends React.Component<EditorProps> {
   }
   private lastKeyPressed: string
   private lastKeyPressedDate: Date
+  private lastCombPressed: string
   private backHistory: HistoryObject[] = []
   private forwardHistory: HistoryObject[] = []
   private static _instance: Editor
@@ -175,8 +176,6 @@ class Editor extends React.Component<EditorProps> {
     history === 'back'
       ? this.backHistory.push(obj)
       : this.forwardHistory.push(obj)
-
-    console.log(this.backHistory)
   }
 
   shouldComponentUpdate() {
@@ -268,6 +267,7 @@ class Editor extends React.Component<EditorProps> {
 
   historyAction = (action?: 'back' | 'forward') => {
     this.addToHistory(action === 'back' ? 'forward' : 'back')
+    this.props.setCaretDelay('0ms')
 
     const historyObj =
       action === 'back' ? this.backHistory.pop()! : this.forwardHistory.pop()!
@@ -1199,6 +1199,14 @@ class Editor extends React.Component<EditorProps> {
         this.commitChanges('forward')
         e.preventDefault()
         break
+      case e.ctrlKey && 'v':
+      case e.ctrlKey && 'V':
+        this.lastCombPressed === 'ctrl+v' && e.preventDefault()
+        this.lastCombPressed = 'ctrl+v'
+        setTimeout(() => {
+          this.lastCombPressed = ''
+        }, 400)
+        break
       case 'Enter':
         this.addToHistory()
 
@@ -1273,6 +1281,10 @@ class Editor extends React.Component<EditorProps> {
         break
       default:
     }
+  }
+
+  onKeyUp = () => {
+    this.lastCombPressed = ''
   }
 
   onPaste = (e: React.ClipboardEvent) => {
@@ -1542,15 +1554,149 @@ class Editor extends React.Component<EditorProps> {
       this.nextMainCurrentDiv = div as HTMLElement
     }
 
-    const table = createTable(
-      rows,
-      cols,
-      css,
-      this.currentDiv.getBoundingClientRect().width,
-      this.props.caretHeight,
-      this.nextMainCurrentDiv,
-      selectable
+    const tableWidth = this.currentDiv.getBoundingClientRect().width
+    const cellHeight = this.props.caretHeight
+    const nextDiv = this.nextMainCurrentDiv
+
+    const cssArr = parseCSS(css)
+    const insertRuleIfNotFound = (
+      index: number,
+      key: string,
+      value: string,
+      selector: any = false
+    ) => {
+      if (!cssArr[index].rules.includes(key)) {
+        css =
+          css +
+          `
+            ${selector ? selector + '{' : ''}
+            ${key}:${value};
+            ${selector ? '}' : ''}
+          `
+        cssArr[index].rules.push({ key, value })
+      }
+    }
+
+    const makeSureKeyExist = (index: number, key: string) => {
+      if (index === -1) {
+        cssArr.push({ selector: key, rules: [] })
+      }
+      return index === -1 ? cssArr.length - 1 : index
+    }
+
+    const tableStrIndex = css.indexOf('table')
+    const lastPara = css.indexOf('}', tableStrIndex)
+    if (tableStrIndex !== -1) {
+      css =
+        css.slice(0, tableStrIndex) +
+        css.slice(tableStrIndex + 6, lastPara) +
+        css.slice(lastPara + 1)
+    }
+
+    let tableIndex = -1
+    let tdIndex = -1
+    let thIndex = -1
+
+    for (let i = 0; i < cssArr.length; i++) {
+      if (cssArr[i].selector === 'table') tableIndex = i
+      else if (cssArr[i].selector === 'td') tdIndex = i
+      else if (cssArr[i].selector === 'th') thIndex = i
+    }
+
+    tableIndex = makeSureKeyExist(tableIndex, 'td')
+    tdIndex = makeSureKeyExist(tdIndex, 'td')
+    thIndex = makeSureKeyExist(thIndex, 'th')
+
+    insertRuleIfNotFound(tableIndex, 'table-layout', 'fixed')
+    insertRuleIfNotFound(tableIndex, 'margin', '5px')
+    insertRuleIfNotFound(tableIndex, 'border-collapse', 'collapse')
+
+    const colWidth = rows > 1 || cols > 1 ? tableWidth / (cols + 1) : 200
+
+    insertRuleIfNotFound(tdIndex, 'width', `${colWidth}px`, 'td')
+    insertRuleIfNotFound(thIndex, 'width', `${colWidth}px`, 'th')
+    insertRuleIfNotFound(tdIndex, 'font-size', `${cellHeight}`, 'td')
+    insertRuleIfNotFound(thIndex, 'font-size', `${cellHeight}`, 'th')
+    insertRuleIfNotFound(tdIndex, 'max-width', `${colWidth}px`, 'td')
+    insertRuleIfNotFound(tdIndex, 'word-break', 'break-all', 'td')
+    insertRuleIfNotFound(tdIndex, 'white-space', 'pre-wrap', 'td')
+    insertRuleIfNotFound(tdIndex, 'text-align', 'center', 'td')
+    insertRuleIfNotFound(tdIndex, 'border', 'thin solid #5e646e70', 'th')
+    insertRuleIfNotFound(tdIndex, 'border', 'thin solid #9ba4b470', 'td')
+    insertRuleIfNotFound(thIndex, 'background-color', '#ebecf1', 'th')
+    insertRuleIfNotFound(thIndex, 'font-weight', 'normal', 'th')
+
+    if (selectable) {
+      insertRuleIfNotFound(thIndex, 'background-color', '#d2d3c970', 'th')
+      insertRuleIfNotFound(tdIndex, 'background-color', '#ffffff', 'td')
+      insertRuleIfNotFound(thIndex, 'select-color', '#5a868370', 'th')
+      insertRuleIfNotFound(tdIndex, 'select-color', '#68b0ab50', 'td')
+      insertRuleIfNotFound(tdIndex, 'drag-color', '#4ba4bb70', 'td')
+      insertRuleIfNotFound(thIndex, 'drag-color', '#3b666870', 'th')
+    }
+
+    let tdDefaultStyle: any = {}
+    let thDefaultStyle: any = {}
+
+    const tdRules = cssArr[tdIndex].rules
+    const thRules = cssArr[thIndex].rules
+    for (let i = 0; i < tdRules.length; i++) {
+      tdDefaultStyle[tdRules[i].key] = tdRules[i].value
+    }
+    for (let i = 0; i < thRules.length; i++) {
+      thDefaultStyle[thRules[i].key] = thRules[i].value
+    }
+
+    const Table = styled.table`
+      ${css}
+    `
+
+    let table = createElementFromHTML(
+      ReactDOMServer.renderToStaticMarkup(<Table />)
     )
+
+    if (selectable) table.setAttribute('data-selectable', 'true')
+
+    nextDiv.parentElement!.insertBefore(table, nextDiv)
+
+    for (let i = 0; i < rows; i++) {
+      const tr = createNewElement('tr')
+      table.appendChild(tr)
+
+      for (let j = 0; j < cols; j++) {
+        const cell = i === 0 ? createNewElement('th') : createNewElement('td')
+
+        const div = createNewElement('div')
+        const span = createNewElement('span')
+
+        if (selectable) {
+          cell.setAttribute(
+            'data-selectcolor',
+            i === 0
+              ? thDefaultStyle['select-color']
+              : tdDefaultStyle['select-color']
+          )
+          cell.setAttribute(
+            'data-dragcolor',
+            i === 0
+              ? thDefaultStyle['drag-color']
+              : tdDefaultStyle['drag-color']
+          )
+          cell.setAttribute(
+            'data-defaultcolor',
+            i === 0
+              ? thDefaultStyle['background-color']
+              : tdDefaultStyle['background-color']
+          )
+        }
+
+        div.contentEditable = 'true'
+        span.innerHTML = '\u200b'
+        tr.appendChild(cell)
+        cell.appendChild(div)
+        div.appendChild(span)
+      }
+    }
 
     for (let i = 0; i < table.children.length; i++)
       for (let cell of [].slice.call(table.children[i].children)) {
@@ -1758,7 +1904,7 @@ class Editor extends React.Component<EditorProps> {
         onMouseUp={this.onMouseUp}
         onMouseDown={this.onMouseDown}
         onKeyDown={this.onKeyDown}
-        onKeyUp={() => {}}
+        onKeyUp={this.onKeyUp}
         onSelect={this.onSelect}
         ref={this.selfRef}
         onDragEnter={(e: React.DragEvent) => {

@@ -1,9 +1,9 @@
 import React from 'react'
 import '../../richmonUtils'
-import styled, { css } from 'styled-components'
-import { Actions } from '../../EditorActions'
-import { EditorActions } from '../../EditorActions'
-import StyledButtonCss from './StyledButtonCss'
+import styled, { css, CSSProperties } from 'styled-components'
+import { Actions } from '../../Actions'
+import { EditorActions } from '../../Actions'
+import StyledButtonCss from './styledButtonCss'
 
 interface RichmonButtonProps {
   action: { (actions: Actions): void }
@@ -53,7 +53,7 @@ const StyledButton = styled.button`
   `}
 `
 
-export default React.memo((props: RichmonButtonProps) => {
+const RichButton = React.memo((props: RichmonButtonProps) => {
   const onCLick = (_e: React.MouseEvent) => {
     props.action(EditorActions)
     _e.preventDefault()
@@ -75,3 +75,30 @@ export default React.memo((props: RichmonButtonProps) => {
     </StyledButton>
   )
 })
+
+interface OptionProps {
+  action: { (actions: Actions): void }
+  children?: any
+  style?: CSSProperties
+  css?: string
+}
+
+const Option = (props: OptionProps) => {
+  return (
+    <RichButton
+      action={props.action}
+      css={`
+        flex: 1 1 auto;
+        outline: none !important;
+        ${props.css}
+      `}
+      style={props.style}
+      width='auto'
+      height='auto'
+    >
+      {props.children}
+    </RichButton>
+  )
+}
+
+export { RichButton, Option }

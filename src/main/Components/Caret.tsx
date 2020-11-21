@@ -12,7 +12,7 @@ const StyledCaret = styled.span`
   border-right: 1.2px solid ${(props: StyledCaretProps) => props.color};
   transition: left ${(props: StyledCaretProps) => props.transitionDelay} ease-in;
 `
-class Caret extends React.Component<
+class Caret extends React.PureComponent<
   {
     hidden: boolean
     top: number
