@@ -1,9 +1,9 @@
 import React, { CSSProperties } from 'react'
-import { Actions } from '../../Actions'
+import { ActionTypes } from '../../Actions'
 import RichButton from './RichButton'
 
 interface OptionProps {
-  action: { (actions: Actions): void }
+  action: { (actions: ActionTypes): void }
   children?: any
   style?: CSSProperties
   css?: string

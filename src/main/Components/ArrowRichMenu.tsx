@@ -1,7 +1,7 @@
 import React from 'react'
 import RichMenu from './RichMenu'
 import { ReactComponent as Down } from '../../svgs/down.svg'
-import { Actions } from '../../Actions'
+import { ActionTypes } from '../../Actions'
 
 interface DropDownListProps {
   children?: any
@@ -9,7 +9,7 @@ interface DropDownListProps {
   height?: string
   buttonHeight: string
   buttonWidth: string
-  leftAction?: { (actions: Actions): void }
+  leftAction?: { (actions: ActionTypes): void }
   leftChildren: (JSX.Element | string)[] | JSX.Element | string
   css?: string
 }

@@ -23,7 +23,7 @@ export type orderedListTypes =
 
 export type unOrderedListTypes = 'disc' | 'circle' | 'square'
 
-export interface Actions {
+export interface ActionTypes {
   setFontSize: { (fontSize: string): void }
   setCss: { (css: string, canToggle?: boolean): void }
   setTextShadow: { (color: string, length: string, canToggle?: boolean): void }
@@ -168,7 +168,7 @@ const insertUListWithStyleImages = (url: string, padding = '0 18px') => {
   )
 }
 
-export const EditorActions: Actions = {
+export const Actions: ActionTypes = {
   setCss,
   setTextShadow,
   setTextColor,

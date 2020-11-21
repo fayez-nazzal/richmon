@@ -40,7 +40,7 @@ class Caret extends React.PureComponent<
   setBlinkInterval() {
     this.blinkInterval = setInterval(() => {
       this.blink()
-    }, 550)
+    }, 500)
   }
 
   componentDidMount() {

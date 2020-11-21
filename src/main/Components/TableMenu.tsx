@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Page from './Page'
 import RichGrid from './Grid'
-import RichMenu from './RichMenu'
+import Menu from './RichMenu'
 import TableListButton from './TableListButton'
 import { ReactComponent as TableIcon } from '../../svgs/table.svg'
 import styled from 'styled-components'
@@ -9,6 +9,7 @@ import styled from 'styled-components'
 interface TableListProps {
   buttonWidth: string
   buttonHeight: string
+  css?: string
 }
 
 const StyledTableIcon = styled(TableIcon)`
@@ -30,8 +31,11 @@ export default (props: TableListProps) => {
 
   return (
     <React.Fragment>
-      <RichMenu
-        css='padding: 0px 8px 14px 6px;'
+      <Menu
+        css={`
+          padding: 0px 8px 14px 6px;
+          ${props.css};
+        `}
         buttonChildren={<StyledTableIcon />}
         buttonCss=''
         buttonWidth={props.buttonWidth}
@@ -50,7 +54,7 @@ export default (props: TableListProps) => {
             {[...buttons]}
           </RichGrid>
         </Page>
-      </RichMenu>
+      </Menu>
     </React.Fragment>
   )
 }

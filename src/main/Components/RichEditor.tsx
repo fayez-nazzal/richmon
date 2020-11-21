@@ -315,6 +315,9 @@ class Editor extends React.Component<EditorProps> {
     }
 
     if (!this.isRanged()) {
+      ;['\u200b', ''].includes(this.currentChild.innerHTML) &&
+        this.currentChild.remove()
+
       const cssIndex = this.cssSet.findIndex((obj: any) =>
         isEqual(obj.styles, styles)
       )
@@ -1133,9 +1136,10 @@ class Editor extends React.Component<EditorProps> {
         this.currentChild.innerText === '\u200b' &&
         'Backspace':
         if (
-          this.currentDiv.isSameNode(
+          (this.currentDiv.isSameNode(
             this.selfRef.current.firstElementChild.nextElementSibling
-          ) ||
+          ) &&
+            this.currentChild.isSameNode(this.currentDiv.firstElementChild!)) ||
           this.selTable !== null
         ) {
           e.preventDefault()

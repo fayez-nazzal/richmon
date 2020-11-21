@@ -22,6 +22,7 @@ interface FontSizeMenuProps {
   defaultFontSize: string
   buttonWidth: string
   buttonHeight: string
+  css?: string
 }
 
 interface FontSizeMenuState {
@@ -53,6 +54,7 @@ class FontSizeMenu extends React.PureComponent<
         buttonCss='background-color:white;'
         buttonWidth={this.props.buttonWidth}
         buttonHeight={this.props.buttonHeight}
+        css={this.props.css}
       >
         {fontSizes}
       </RichMenu>

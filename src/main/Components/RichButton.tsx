@@ -1,12 +1,12 @@
 import React from 'react'
 import '../../richmonUtils'
 import styled, { css } from 'styled-components'
+import { ActionTypes } from '../../Actions'
 import { Actions } from '../../Actions'
-import { EditorActions } from '../../Actions'
 import StyledButtonCss from './styledButtonCss'
 
 interface RichmonButtonProps {
-  action: { (actions: Actions): void }
+  action: { (actions: ActionTypes): void }
   style?: React.CSSProperties
   css?: string
   colorize?: string
@@ -48,14 +48,14 @@ const StyledButton = styled.button`
 
   ${(props: StyledButtonProps) => css`
     width: ${props.width ? props.width : 'auto'};
-    height: ${props.height ? props.height : 'auto'};
-    ${props.css}
+    height: ${props.height ? props.height : '97%'};
+    ${props.css};
   `}
 `
 
 const RichButton = React.memo((props: RichmonButtonProps) => {
   const onCLick = (_e: React.MouseEvent) => {
-    props.action(EditorActions)
+    props.action(Actions)
     _e.preventDefault()
   }
 

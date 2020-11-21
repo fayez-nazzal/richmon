@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import RichButton from './RichButton'
 import { ReactComponent as Back } from '../../svgs/back.svg'
 import RichMenu from './RichMenu'
-import { Actions } from '../../Actions'
+import { ActionTypes } from '../../Actions'
 import { SliderPicker } from 'react-color'
 
 const Input = styled.input`
@@ -57,7 +57,7 @@ const StyledBack = styled(Back)`
 export default (props: {
   parent?: any
   addCustomColor: any
-  doAction: { (actions: Actions, color: string): void }
+  doAction: { (actions: ActionTypes, color: string): void }
 }) => {
   const [hex, setHex] = useState('#000000')
   const [r, setR] = useState(0)

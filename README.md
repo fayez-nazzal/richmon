@@ -1,6 +1,6 @@
 # richmon
 
-> Richmon is a new rich text editor that is very easy to use, it's currently on the dev release and it's going to be documented soon.
+> Richmon is a new rich text editor for React that is very easy to use and customize, it's currently on the alpha release and - new features are listed to be added in future releases.
 
 [![NPM](https://img.shields.io/npm/v/richmon.svg)](https://www.npmjs.com/package/richmon) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
@@ -10,20 +10,41 @@
 npm install --save richmon
 ```
 
-## Usage
+## Getting started
 
-```tsx
-import React, { Component } from 'react'
+```js
+import React, { useState } from 'react'
 
-import MyComponent from 'richmon'
-import 'richmon/dist/index.css'
+import { Richmon } from 'richmon'
 
-class Example extends Component {
-  render() {
-    return <MyComponent />
-  }
+export default () => {
+  const [content, setContent] = useState('<div></div>')
+
+  return (
+    <Richmon
+      content={content}
+      onChange={setContent}
+      tools={[
+        'BIUS',
+        'thin-seperator',
+        'sub',
+        'sup',
+        'thin-seperator',
+        'fontSize',
+        'textColor',
+        'textHighlight',
+        'textShadow',
+        'thin-seperator',
+        'orderedList',
+        'unOrderedList',
+        'table'
+      ]}
+    />
+  )
 }
 ```
+
+If you don't want a smooth caret, just include the `disableSmoothCaret` prop.
 
 ## License
 

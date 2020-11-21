@@ -4,7 +4,7 @@ import ColorPickTools from './ColorInputs'
 import RichButton from './RichButton'
 import DropDownList from './ArrowRichMenu'
 import Flex from './Flex'
-import { Actions } from '../../Actions'
+import { ActionTypes } from '../../Actions'
 import RichGrid from './Grid'
 import styled from 'styled-components'
 
@@ -25,6 +25,7 @@ interface ColorListProps {
   customRows?: number
   buttonWidth: string
   buttonHeight: string
+  css?: string
 }
 
 const SliderInput = styled.input`
@@ -83,7 +84,7 @@ export default (props: ColorListProps) => {
     setCurrentColor(color)
   }
 
-  const doAction = (actions: Actions, color: string) => {
+  const doAction = (actions: ActionTypes, color: string) => {
     switch (props.action) {
       case 'textShadow':
         actions.setTextShadow(color, sliderRef.current.value)
@@ -103,7 +104,7 @@ export default (props: ColorListProps) => {
         <RichButton
           key={`${key}${index}`}
           colorize={color}
-          action={(actions: Actions) => {
+          action={(actions: ActionTypes) => {
             doAction(actions, color)
             setCurrentColor(color)
           }}
@@ -160,6 +161,7 @@ export default (props: ColorListProps) => {
             )}
           </div>
         }
+        css={props.css}
       >
         <Page>
           {props.action === 'textShadow' ? (

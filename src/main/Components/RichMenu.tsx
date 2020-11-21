@@ -1,6 +1,6 @@
 import React from 'react'
 import styled, { css, Keyframes, keyframes } from 'styled-components'
-import { Actions } from '../../Actions'
+import { ActionTypes } from '../../Actions'
 import RichButton from './RichButton'
 import StyledButtonCss from './styledButtonCss'
 
@@ -65,7 +65,7 @@ interface RichMenuPropTypes {
   width?: string
   height?: string
   buttonChildren: any
-  leftButtonAction?: { (actions: Actions): void }
+  leftButtonAction?: { (actions: ActionTypes): void }
   leftButtonChildren?: (JSX.Element | string)[] | JSX.Element | string
   buttonCss?: string
   buttonHeight: string

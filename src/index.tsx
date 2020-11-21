@@ -12,6 +12,8 @@ import Seperator from './main/Components/Seperator'
 import TableMenu from './main/Components/TableMenu'
 import Grid from './main/Components/Grid'
 import Flex from './main/Components/Flex'
+import { Actions } from './Actions'
+
 import styled, { css, keyframes } from 'styled-components'
 export {
   Richmon,
@@ -30,5 +32,6 @@ export {
   RichOption,
   styled,
   css,
-  keyframes
+  keyframes,
+  Actions
 }

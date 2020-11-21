@@ -6,7 +6,7 @@ import isEqual from 'lodash.isequal'
 import ColorList from './ColorRichMenu'
 import styled, { css } from 'styled-components'
 import FontSizeMenu from './FontSizeMenu'
-import TableList from './TableMenu'
+import TableMenu from './TableMenu'
 import UnOrderedLists from './UnOrderedList'
 import OrderedLists from './OrderedList'
 import Spacer from './Spacer'
@@ -26,12 +26,13 @@ interface RichmonPropTypes {
   caretColor: string
   defaultTextColor: string
   defaultFontSize: string
-  defaultHighlightColor: string
+  defaultButtonWidth: string
   defaultButtonHeight: string
+  defaultHighlightColor: string
   disableSmootCaret: boolean
   editorPadding: string
-  defaultButtonWidth: string
   caretDelay: string
+  defaultColorRichMenuCss: string
   defaultBasicTextColorsRows: number
   defaultBasicTextColorsCols: number
   defaultBasicTextHighlightColorsRows: number
@@ -98,6 +99,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     caretDelay: '55ms',
     defaultButtonWidth: '34px',
     defaultButtonHeight: '44px',
+    defaultColorRichMenuCss: '',
     disableSmootCaret: false,
     defaultBasicTextColorsRows: 5,
     defaultBasicTextColorsCols: 6,
@@ -449,6 +451,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 customRows={this.props.defaultCustomTextColorsRows}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                css={this.props.defaultColorRichMenuCss}
               />
             )
             break
@@ -471,6 +474,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 customRows={this.props.defaultCustomTextHighlightColorsRows}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                css={this.props.defaultColorRichMenuCss}
               />
             )
             break
@@ -492,6 +496,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 customRows={this.props.defaultCustomTextShadowColorsRows}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                css={this.props.defaultColorRichMenuCss}
               />
             )
             break
@@ -501,14 +506,16 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
                 defaultFontSize={this.props.defaultFontSize}
+                css={this.props.defaultColorRichMenuCss}
               />
             )
             break
           case 'table':
             tool_s = (
-              <TableList
+              <TableMenu
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                css={this.props.defaultColorRichMenuCss}
               />
             )
             break
