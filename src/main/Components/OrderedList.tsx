@@ -9,6 +9,9 @@ import RichGrid from './Grid'
 interface OrderedListsProps {
   buttonWidth: string
   buttonHeight: string
+  buttonCss?: string
+  actionButtonCss?: string
+  buttonWrapperCss?: string
 }
 
 const StyledNumberedListIcon = styled(NumberedListIcon)`
@@ -20,12 +23,15 @@ export default (props: OrderedListsProps) => {
     <React.Fragment>
       <DropDownList
         css='padding: 0;'
-        leftChildren={<StyledNumberedListIcon />}
-        leftAction={(actions) => {
-          actions.insertOList()
-        }}
+        actionButtonChildren={<StyledNumberedListIcon />}
+        buttonCss={props.buttonCss}
+        actionButtonCss={props.actionButtonCss}
+        buttonWrapperCss={props.buttonWrapperCss}
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}
+        actionButtonAction={(actions) => {
+          actions.insertOList()
+        }}
         width='120px'
       >
         <Page>

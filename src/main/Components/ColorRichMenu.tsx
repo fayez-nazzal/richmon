@@ -12,9 +12,9 @@ interface ColorListProps {
   action: 'textColor' | 'textShadow' | 'textHighlight'
   initialColor: string
   leftIcon?: JSX.Element | string
-  basicColors: string[]
-  basicRows: number
-  basicCols: number
+  basicColors?: string[]
+  basicRows?: number
+  basicCols?: number
   basicCss?: string[]
   featuredColors?: string[]
   featuredCss?: string[]
@@ -25,6 +25,9 @@ interface ColorListProps {
   customRows?: number
   buttonWidth: string
   buttonHeight: string
+  buttonCss?: string
+  actionButtonCss?: string
+  buttonWrapperCss?: string
   css?: string
 }
 
@@ -65,7 +68,10 @@ export default (props: ColorListProps) => {
 
   const addCustomColor = (color: string) => {
     const customColorsClone = [...customColors]
-    if (customColors.length / props.customRows! > props.basicCols)
+    if (
+      customColors.length / props.customRows! >
+      (props.basicCols || props.featuredCols || 6)
+    )
       customColorsClone.pop()
     customColorsClone.splice(
       0,
@@ -129,13 +135,13 @@ export default (props: ColorListProps) => {
   return (
     <React.Fragment>
       <DropDownList
-        leftAction={(actions) => {
+        actionButtonAction={(actions) => {
           doAction(actions, currentColor)
           setCurrentColor(currentColor)
         }}
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}
-        leftChildren={
+        actionButtonChildren={
           <div>
             {props.leftIcon}
             {!props.leftIcon && props.action === 'textShadow' ? (
@@ -161,6 +167,9 @@ export default (props: ColorListProps) => {
             )}
           </div>
         }
+        buttonCss={props.buttonCss}
+        actionButtonCss={props.actionButtonCss}
+        buttonWrapperCss={props.buttonWrapperCss}
         css={props.css}
       >
         <Page>
@@ -202,61 +211,72 @@ export default (props: ColorListProps) => {
           ) : (
             ''
           )}
-          <div
-            style={{
-              textAlign: 'center',
-              fontSize: '13px',
-              marginTop: '6px',
-              marginBottom: '-6px',
-              userSelect: 'none'
-            }}
-          >
-            Basic colors
-          </div>
-          <hr />
-          <RichGrid
-            key='grid 1'
-            rows={props.basicRows}
-            cols={props.basicCols}
-            css='margin-top:6px;'
-          >
-            {mapColors(props.basicColors, 'basic')}
-          </RichGrid>
-          <div
-            style={{
-              textAlign: 'center',
-              fontSize: '13px',
-              marginTop: '6px',
-              marginBottom: '-6px',
-              userSelect: 'none'
-            }}
-          >
-            Custom colors
-          </div>
-          <hr />
-          {props.hasCustom ? (
-            <RichGrid
-              rows={props.customRows!}
-              cols={props.customCols!}
-              shouldUpdate
-            >
-              {customColors}
-            </RichGrid>
+          {props.basicColors && props.basicColors.length ? (
+            <React.Fragment>
+              <div
+                style={{
+                  textAlign: 'center',
+                  fontSize: '13px',
+                  marginTop: '6px',
+                  marginBottom: '-6px',
+                  userSelect: 'none'
+                }}
+              >
+                Basic colors
+              </div>
+              <hr />
+              <RichGrid
+                key='grid 1'
+                rows={props.basicRows || 0}
+                cols={props.basicCols || 0}
+                css='margin-top:6px;'
+              >
+                {mapColors(props.basicColors, 'basic')}
+              </RichGrid>
+            </React.Fragment>
           ) : (
             ''
           )}
           {props.hasCustom ? (
-            <RichButton
-              action={(actions) => {
-                actions.nextPage()
-              }}
-              css='display:block;margin: 0 auto;text-align: center;margin-top: 8px;position:relative;'
-              pageButton
-              width='auto'
-              height='auto'
-            >
-              custom
-            </RichButton>
+            <React.Fragment>
+              <div
+                style={{
+                  textAlign: 'center',
+                  fontSize: '13px',
+                  marginTop: '6px',
+                  marginBottom: '-6px',
+                  userSelect: 'none'
+                }}
+              >
+                Custom colors
+              </div>
+              <hr />
+              <RichGrid
+                rows={props.customRows!}
+                cols={props.customCols!}
+                shouldUpdate
+              >
+                {customColors}
+              </RichGrid>
+              <RichButton
+                action={(actions) => {
+                  actions.nextPage()
+                }}
+                css={`
+                  display: block;
+                  margin: 0 auto;
+                  text-align: center;
+                  margin-top: 8px;
+                  position: relative;
+                  ${props.buttonCss}
+                `}
+                pageButton
+                width='auto'
+                height='auto'
+              >
+                custom
+              </RichButton>
+            </React.Fragment>
           ) : (
             ''
           )}

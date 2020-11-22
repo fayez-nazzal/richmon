@@ -5,7 +5,6 @@ import RichMenu from './main/Components/RichMenu'
 import Menu from './main/Components/Menu'
 import ArrowRichMenu from './main/Components/ArrowRichMenu'
 import FontSizeMenu from './main/Components/FontSizeMenu'
-import ColorRichMenu from './main/Components/ColorRichMenu'
 import Page from './main/Components/Page'
 import Spacer from './main/Components/Spacer'
 import Seperator from './main/Components/Seperator'
@@ -28,7 +27,6 @@ export {
   Flex,
   TableMenu,
   FontSizeMenu,
-  ColorRichMenu,
   RichOption,
   styled,
   css,

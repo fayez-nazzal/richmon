@@ -118,10 +118,16 @@ class Editor extends React.Component<EditorProps> {
   }
 
   init = () => {
+    if (this.props.html.includes('<')) {
+      throw new Error(
+        'Providing initial html content is not yet supported, please provide just text or empty string.'
+      )
+    } else this.selfRef.current.innerHTML = '<div></div>'
+
     const selfElem = this.selfRef.current as Element
     this.currentDiv = selfElem.children[0] as HTMLElement
     this.currentChild = createNewElement('span')
-    this.currentChild.innerText = '\u200b'
+    this.currentChild.innerText = this.props.html ? this.props.html : '\u200b'
     this.currentDiv.append(this.currentChild)
     this.currentChild.setAttribute('style', this.defaultCss)
     this.setCaretHeight(this.currentChild.style.fontSize)
@@ -133,8 +139,13 @@ class Editor extends React.Component<EditorProps> {
     this.RectangleSelector.style.backgroundColor = '#68b0ab50'
     this.RectangleSelector.style.pointerEvents = 'none'
     this.selfRef.current.prepend(this.RectangleSelector)
-    this.select(this.currentChild.childNodes[0], 1)
+    this.select(
+      this.currentChild.childNodes[0],
+      this.currentChild.innerText.length
+    )
+    this.currentDiv.style.lineHeight = this.props.caretHeight
     this.addToHistory()
+    this.selfRef.current.blur()
   }
 
   addToHistory = (history: 'back' | 'forward' = 'back') => {
@@ -300,19 +311,24 @@ class Editor extends React.Component<EditorProps> {
     )
   }
 
-  styleText = (styles: any, canToggle: boolean) => {
-    this.addToHistory()
-
-    let sel = window.getSelection()
-
-    // if nothing is selected, select current child
-    if (!sel || !sel.anchorNode) {
+  guaranteeSelection = (sel: Selection | null) => {
+    ;(!sel || !sel.anchorNode || !sel.focusNode) &&
       this.select(
         this.currentChild.childNodes[0],
         this.currentChild.innerHTML.length
       )
-      sel = window.getSelection()!
-    }
+  }
+
+  styleText = (styles: any, canToggle: boolean) => {
+    let sel = window.getSelection()
+
+    // if nothing is selected, select current child
+    this.guaranteeSelection(sel)
+    this.currentChild &&
+      this.currentChild.innerText !== '\u200b' &&
+      this.addToHistory()
+
+    sel = sel!
 
     if (!this.isRanged()) {
       ;['\u200b', ''].includes(this.currentChild.innerHTML) &&
@@ -601,6 +617,8 @@ class Editor extends React.Component<EditorProps> {
 
   update = () => {
     const sel = window.getSelection()!
+
+    this.guaranteeSelection(sel)
 
     const elems = this.getNodesFromSelectEnds(sel)
     const anchorElems = elems[0]

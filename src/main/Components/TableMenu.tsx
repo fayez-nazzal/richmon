@@ -9,6 +9,9 @@ import styled from 'styled-components'
 interface TableListProps {
   buttonWidth: string
   buttonHeight: string
+  buttonCss?: string
+  actionButtonCss?: string
+  buttonWrapperCss?: string
   css?: string
 }
 
@@ -36,8 +39,10 @@ export default (props: TableListProps) => {
           padding: 0px 8px 14px 6px;
           ${props.css};
         `}
+        buttonCss={props.buttonCss}
+        buttonWrapperCss={props.buttonWrapperCss}
+        actionButtonCss={props.actionButtonCss}
         buttonChildren={<StyledTableIcon />}
-        buttonCss=''
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}
       >

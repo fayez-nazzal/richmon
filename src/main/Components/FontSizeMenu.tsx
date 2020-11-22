@@ -1,5 +1,5 @@
 import React from 'react'
-import RichMenu from './Menu'
+import Menu from './Menu'
 import RichOption from './RichOption'
 
 const fontSizes: JSX.Element[] = []
@@ -22,6 +22,9 @@ interface FontSizeMenuProps {
   defaultFontSize: string
   buttonWidth: string
   buttonHeight: string
+  buttonCss?: string
+  actionButtonCss?: string
+  buttonWrapperCss?: string
   css?: string
 }
 
@@ -49,15 +52,19 @@ class FontSizeMenu extends React.PureComponent<
 
   render() {
     return (
-      <RichMenu
+      <Menu
         buttonChildren={this.state.fontSize}
-        buttonCss='background-color:white;'
+        buttonCss={`
+          ${this.props.buttonCss}
+        `}
         buttonWidth={this.props.buttonWidth}
         buttonHeight={this.props.buttonHeight}
+        buttonWrapperCss={this.props.buttonWrapperCss}
+        actionButtonCss={this.props.actionButtonCss}
         css={this.props.css}
       >
         {fontSizes}
-      </RichMenu>
+      </Menu>
     )
   }
 }

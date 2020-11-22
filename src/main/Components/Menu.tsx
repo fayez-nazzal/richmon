@@ -1,5 +1,5 @@
 import React from 'react'
-import DropDownList from './ArrowRichMenu'
+import ArrowRichMenu from './ArrowRichMenu'
 
 interface MenuPropTypes {
   children?: any
@@ -9,13 +9,15 @@ interface MenuPropTypes {
   buttonWidth: string
   buttonHeight: string
   buttonCss?: string
+  actionButtonCss?: string
+  buttonWrapperCss?: string
   css?: string
 }
 
 export default (props: MenuPropTypes) => {
   return (
-    <DropDownList
-      leftChildren={props.buttonChildren}
+    <ArrowRichMenu
+      actionButtonChildren={props.buttonChildren}
       css={`
         display: flex;
         flex-direction: column;
@@ -28,8 +30,10 @@ export default (props: MenuPropTypes) => {
       width='auto'
       buttonWidth={props.buttonWidth}
       buttonHeight={props.buttonHeight}
+      buttonCss={props.buttonCss}
+      actionButtonCss={props.actionButtonCss}
     >
       {props.children}
-    </DropDownList>
+    </ArrowRichMenu>
   )
 }

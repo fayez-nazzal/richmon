@@ -1,6 +1,6 @@
-# richmon
+# Richmon
 
-> Richmon is a new rich text editor for React that is very easy to use and customize, it's currently on the alpha release and - new features are listed to be added in future releases.
+> Richmon is a new rich text editor for React that is very easy to use and customize, it's currently on the alpha release - new features are listed to be added in future releases.
 
 [![NPM](https://img.shields.io/npm/v/richmon.svg)](https://www.npmjs.com/package/richmon) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
@@ -45,6 +45,20 @@ export default () => {
 ```
 
 If you don't want a smooth caret, just include the `disableSmoothCaret` prop.
+
+# Customization
+
+Basic customization can be done by providing props to the main `Richmon` Component, ['here']() is a list of all available props.
+
+If you want to customize more like providing custom buttons, custom menus there's components like `RichButton`, `RichMenu`, `FontSizeMenu`, `TableMenu` and more, they are listed to be documented soon.
+
+# Todos
+
+- add image and file upload support
+- write full documentation
+- provide inline tools for tables and images
+
+For suggestions just open an issue.
 
 ## License
 

@@ -5,8 +5,6 @@ export default `
   background-color: transparent;
   margin-bottom: 1px;
   &:hover {
-    background-color: #eceef5;
-    outline: 2px solid #e3e3e3;
     z-index: 1000;
     position: relative;
   }

@@ -70,13 +70,5 @@
     "lodash.isequal": "^4.5.0",
     "react-color": "2.18.1",
     "styled-components": "^5.2.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "ssh://git@github.com:fayez-nazzal/react-richmon.git",
-    "directory": "@fayez-nazzal/react-richmon"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/fayez-nazzal"
   }
 }

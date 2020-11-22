@@ -9,6 +9,9 @@ import ListTemplateButton from './ListTemplateButton'
 interface OrderedListsProps {
   buttonWidth: string
   buttonHeight: string
+  buttonCss?: string
+  actionButtonCss?: string
+  buttonWrapperCss?: string
 }
 
 const StyledNumberedListIcon = styled(BulletListIcon)`
@@ -20,13 +23,16 @@ export default (props: OrderedListsProps) => {
     <React.Fragment>
       <DropDownList
         css='padding: 0;'
-        leftChildren={<StyledNumberedListIcon />}
-        leftAction={(actions) => {
+        actionButtonChildren={<StyledNumberedListIcon />}
+        actionButtonAction={(actions) => {
           actions.insertUList('disc')
         }}
         buttonWidth={props.buttonWidth}
         buttonHeight={props.buttonHeight}
         width='105px'
+        buttonCss={props.buttonCss}
+        actionButtonCss={props.actionButtonCss}
+        buttonWrapperCss={props.buttonWrapperCss}
       >
         <Page>
           <Flex>

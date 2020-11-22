@@ -65,12 +65,12 @@ interface RichMenuPropTypes {
   width?: string
   height?: string
   buttonChildren: any
-  leftButtonAction?: { (actions: ActionTypes): void }
-  leftButtonChildren?: (JSX.Element | string)[] | JSX.Element | string
-  buttonCss?: string
   buttonHeight: string
   buttonWidth: string
-  leftButtonCss?: string
+  buttonCss?: string
+  actionButtonAction?: { (actions: ActionTypes): void }
+  actionButtonChildren?: (JSX.Element | string)[] | JSX.Element | string
+  actionButtonCss?: string
   buttonWrapperCss?: string
   css?: string
 }
@@ -97,6 +97,7 @@ class RichMenu extends React.Component<RichMenuPropTypes, RichMenuState> {
   }
 
   componentDidMount() {
+    console.log(this.props.actionButtonCss)
     document.addEventListener('mousedown', this.handleClickOutside)
   }
 
@@ -166,12 +167,12 @@ class RichMenu extends React.Component<RichMenuPropTypes, RichMenuState> {
     return (
       <span style={{ position: 'relative' }} ref={this.selfRef}>
         <ButtonWrapper css={this.props.buttonWrapperCss}>
-          {this.props.leftButtonChildren ? (
+          {this.props.actionButtonChildren ? (
             <RichButton
-              css={this.props.leftButtonCss}
+              css={this.props.actionButtonCss}
               action={
-                this.props.leftButtonAction
-                  ? this.props.leftButtonAction
+                this.props.actionButtonAction
+                  ? this.props.actionButtonAction
                   : () => {
                       this.onClick()
                     }
@@ -179,13 +180,15 @@ class RichMenu extends React.Component<RichMenuPropTypes, RichMenuState> {
               width={this.props.buttonWidth}
               height={this.props.buttonHeight}
             >
-              {this.props.leftButtonChildren}
+              {this.props.actionButtonChildren}
             </RichButton>
           ) : (
             ''
           )}
           <Button
-            width='auto'
+            width={
+              this.props.actionButtonChildren ? 'auto' : this.props.buttonWidth
+            }
             height={this.props.buttonHeight}
             onClick={this.onClick}
             onMouseDown={(e) => {

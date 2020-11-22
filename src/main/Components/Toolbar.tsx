@@ -6,6 +6,7 @@ import styled, { css } from 'styled-components'
 const Div = styled.div`
   background-color: #f7f7f7;
   padding: 1.5px 0;
+  user-select: none;
   ${(props: { css: string; width: string }) => css`
     ${props.width};
     ${props.css}

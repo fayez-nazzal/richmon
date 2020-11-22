@@ -3,12 +3,12 @@ import RichButton from './RichButton'
 import Toolbar from './Toolbar'
 import EditorWrapper from './EditorWrapper'
 import isEqual from 'lodash.isequal'
-import ColorList from './ColorRichMenu'
+import ColorRichMenu from './ColorRichMenu'
 import styled, { css } from 'styled-components'
 import FontSizeMenu from './FontSizeMenu'
 import TableMenu from './TableMenu'
-import UnOrderedLists from './UnOrderedList'
-import OrderedLists from './OrderedList'
+import UnOrderedList from './UnOrderedList'
+import OrderedList from './OrderedList'
 import Spacer from './Spacer'
 import Seperator from './Seperator'
 import { ReactComponent as PenIcon } from '../../svgs/pen.svg'
@@ -28,6 +28,9 @@ interface RichmonPropTypes {
   defaultFontSize: string
   defaultButtonWidth: string
   defaultButtonHeight: string
+  defaultButtonCss?: string
+  defaultActionButtonCss?: string
+  defaultButtonWrapperCss?: string
   defaultHighlightColor: string
   disableSmootCaret: boolean
   editorPadding: string
@@ -89,8 +92,8 @@ const Div = styled.div`
 
 class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
   public static defaultProps: Partial<RichmonPropTypes> = {
-    width: '400px',
-    height: '400px',
+    width: '600px',
+    height: '500px',
     caretColor: 'black',
     defaultTextColor: 'black',
     defaultFontSize: '16px',
@@ -99,6 +102,17 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     caretDelay: '55ms',
     defaultButtonWidth: '34px',
     defaultButtonHeight: '44px',
+    defaultButtonCss: `
+      &:hover{
+        background-color: #eceef5;
+        outline: 2px solid #e3e3e3;
+      }
+    `,
+    defaultButtonWrapperCss: `
+      &:hover{
+        outline: 2px solid #e3e3e3;
+      }
+    `,
     defaultColorRichMenuCss: '',
     disableSmootCaret: false,
     defaultBasicTextColorsRows: 5,
@@ -284,48 +298,11 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
       } else {
         const defaultButtonProps = {
           width: this.props.defaultButtonWidth,
-          height: this.props.defaultButtonHeight
+          height: this.props.defaultButtonHeight,
+          css: this.props.defaultButtonCss
         }
 
         switch (toolProp) {
-          case 'BIUS':
-            tool_s = [
-              <RichButton
-                action={(actions) => {
-                  actions.setBold()
-                }}
-                {...defaultButtonProps}
-              >
-                B
-              </RichButton>,
-              <RichButton
-                action={(actions) => {
-                  actions.setItalic()
-                }}
-                {...defaultButtonProps}
-              >
-                I
-              </RichButton>,
-              <RichButton
-                action={(actions) => {
-                  actions.setUnderline()
-                }}
-                {...defaultButtonProps}
-                css='text-decoration: underline;'
-              >
-                U
-              </RichButton>,
-              <RichButton
-                action={(actions) => {
-                  actions.setStrikeThrough()
-                }}
-                {...defaultButtonProps}
-                css='text-decoration: line-through;'
-              >
-                St
-              </RichButton>
-            ]
-            break
           case 'B':
           case 'bold':
             tool_s = (
@@ -360,7 +337,10 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                   actions.setUnderline()
                 }}
                 {...defaultButtonProps}
-                css='text-decoration: underline;'
+                css={`
+                  text-decoration: underline;
+                  ${this.props.defaultButtonCss};
+                `}
               >
                 U
               </RichButton>
@@ -375,7 +355,10 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                   actions.setStrikeThrough()
                 }}
                 {...defaultButtonProps}
-                css='text-decoration: line-through;'
+                css={`
+                  text-decoration: line-through;
+                  ${this.props.defaultButtonCss};
+                `}
               >
                 St
               </RichButton>
@@ -434,7 +417,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             break
           case 'textColor':
             tool_s = (
-              <ColorList
+              <ColorRichMenu
                 action='textColor'
                 initialColor='#000000'
                 leftIcon='A'
@@ -451,13 +434,16 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 customRows={this.props.defaultCustomTextColorsRows}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 css={this.props.defaultColorRichMenuCss}
               />
             )
             break
           case 'textHighlight':
             tool_s = (
-              <ColorList
+              <ColorRichMenu
                 action='textHighlight'
                 initialColor='#ffff00'
                 leftIcon={<PenIcon />}
@@ -474,13 +460,16 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 customRows={this.props.defaultCustomTextHighlightColorsRows}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 css={this.props.defaultColorRichMenuCss}
               />
             )
             break
           case 'textShadow':
             tool_s = (
-              <ColorList
+              <ColorRichMenu
                 action='textShadow'
                 initialColor='#ff3b3b'
                 basicColors={this.props.defaultBasicTextShadowColors}
@@ -496,6 +485,9 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 customRows={this.props.defaultCustomTextShadowColorsRows}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 css={this.props.defaultColorRichMenuCss}
               />
             )
@@ -506,6 +498,9 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
                 defaultFontSize={this.props.defaultFontSize}
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 css={this.props.defaultColorRichMenuCss}
               />
             )
@@ -515,13 +510,19 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
               <TableMenu
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 css={this.props.defaultColorRichMenuCss}
               />
             )
             break
-          case 'unorderedList':
+          case 'unOrderedList':
             tool_s = (
-              <UnOrderedLists
+              <UnOrderedList
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
               />
@@ -529,7 +530,10 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             break
           case 'orderedList':
             tool_s = (
-              <OrderedLists
+              <OrderedList
+                buttonCss={this.props.defaultButtonCss}
+                actionButtonCss={this.props.defaultActionButtonCss}
+                buttonWrapperCss={this.props.defaultButtonWrapperCss}
                 buttonWidth={this.props.defaultButtonWidth}
                 buttonHeight={this.props.defaultButtonHeight}
               />
@@ -578,11 +582,10 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
             )
             break
           default:
-            alert('un implement')
         }
       }
-      if (tool_s.length) for (let tool of tool_s) tools.push(tool)
-      else tools.push(tool_s)
+      if (tool_s && tool_s.length) for (let tool of tool_s) tools.push(tool)
+      else if (tool_s) tools.push(tool_s)
     }
     return tools
   }
