@@ -7,7 +7,7 @@
 ## Install
 
 ```bash
-npm install --save richmon
+npm install --save react-richmon
 ```
 
 ## Getting started
